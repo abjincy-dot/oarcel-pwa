@@ -1,9 +1,276 @@
-/* Prevent page zoom when interacting with PDF viewer */
-.viewer-body {
-    touch-action: pan-x pan-y pinch-zoom;
-    -webkit-overflow-scrolling: touch;
+/* ==================== BEAUTIFUL ICON STYLES ==================== */
+
+/* Animated folder icons */
+.fa-folder {
+    transition: all 0.3s ease;
 }
 
-iframe {
-    touch-action: pan-x pan-y pinch-zoom;
+.card:hover .fa-folder {
+    transform: scale(1.1);
+    filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.5));
+}
+
+/* Animated PDF icons */
+.fa-file-pdf {
+    transition: all 0.3s ease;
+}
+
+.card:hover .fa-file-pdf {
+    transform: scale(1.1);
+    filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.5));
+}
+
+/* Gradient icons for different folder types */
+.folder-icon-remelt {
+    background: linear-gradient(135deg, #f59e0b, #ef4444);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.folder-icon-caster {
+    background: linear-gradient(135deg, #10b981, #06b6d4);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.folder-icon-hrm {
+    background: linear-gradient(135deg, #8b5cf6, #d946ef);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.folder-icon-crm {
+    background: linear-gradient(135deg, #3b82f6, #2dd4bf);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+/* Action button icons */
+.action-btn i {
+    transition: transform 0.2s ease;
+}
+
+.action-btn:hover i {
+    transform: scale(1.2);
+}
+
+.rename-btn i {
+    color: #3b82f6;
+}
+
+.delete-folder-btn i {
+    color: #ef4444;
+}
+
+.add-folder-btn i {
+    color: #10b981;
+}
+
+/* Upload button icon animation */
+.btn-upload i {
+    animation: float 2s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+}
+
+/* Back button icon */
+.btn-back i {
+    transition: transform 0.2s ease;
+}
+
+.btn-back:hover i {
+    transform: translateX(-3px);
+}
+
+/* Toggle buttons icons */
+.toggle-btn i {
+    transition: all 0.2s ease;
+}
+
+.toggle-btn.active i {
+    transform: scale(1.1);
+}
+
+/* Stats icons with pulse effect */
+.stat-item i {
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 1; text-shadow: 0 0 4px currentColor; }
+}
+
+/* Logo icon animation */
+.logo i {
+    animation: rotate 10s linear infinite;
+}
+
+@keyframes rotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Breadcrumb home icon */
+.path-container i {
+    transition: all 0.2s ease;
+}
+
+.path-container:hover i {
+    transform: scale(1.1);
+    color: #3b82f6;
+}
+
+/* Delete button icons */
+.delete-btn i, .delete-btn-small i {
+    transition: all 0.2s ease;
+}
+
+.delete-btn:hover i, .delete-btn-small:hover i {
+    transform: scale(1.2);
+    color: white;
+}
+
+/* Empty state icon animation */
+.empty-state i {
+    animation: bounce 2s ease-in-out infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+/* Viewer header icon */
+.viewer-title i {
+    animation: spin 0.5s ease;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Toast notification icons */
+.toast i {
+    animation: checkmark 0.3s ease-out;
+}
+
+@keyframes checkmark {
+    0% { transform: scale(0); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* Custom folder icons with emoji fallback */
+.card[data-type="folder"] i {
+    font-size: 2.2rem;
+}
+
+/* PDF icon with document lines effect */
+.fa-file-pdf {
+    position: relative;
+}
+
+.fa-file-pdf::after {
+    content: '📄';
+    position: absolute;
+    font-size: 0.6rem;
+    bottom: -5px;
+    right: -5px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.card:hover .fa-file-pdf::after {
+    opacity: 1;
+}
+
+/* Glow effect for important icons */
+.btn-upload i {
+    filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.5));
+}
+
+/* Loading spinner for PDF viewer */
+.viewer-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+.viewer-loading i {
+    font-size: 3rem;
+    animation: spin 1s linear infinite;
+    color: #3b82f6;
+}
+
+/* Icon size adjustments for mobile */
+@media (max-width: 640px) {
+    .grid-view .card i:first-child {
+        font-size: 1.8rem;
+    }
+    
+    .list-view .card i:first-child {
+        font-size: 1.1rem;
+    }
+    
+    .stat-item i {
+        font-size: 1rem;
+    }
+    
+    .logo i {
+        font-size: 1.2rem;
+    }
+    
+    .action-btn i {
+        font-size: 0.8rem;
+    }
+}
+
+/* Hover effects for desktop */
+@media (min-width: 768px) {
+    .card {
+        transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+    }
+    
+    .card:hover i {
+        transform: scale(1.15) rotate(3deg);
+    }
+    
+    .btn-upload i {
+        transition: transform 0.2s ease;
+    }
+    
+    .btn-upload:hover i {
+        transform: translateY(-3px);
+    }
+}
+
+/* Icon color variations for different PDF types */
+.pdf-card[data-type="report"] .fa-file-pdf {
+    background: linear-gradient(135deg, #ef4444, #f59e0b);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.pdf-card[data-type="manual"] .fa-file-pdf {
+    background: linear-gradient(135deg, #3b82f6, #06b6d4);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.pdf-card[data-type="certificate"] .fa-file-pdf {
+    background: linear-gradient(135deg, #10b981, #8b5cf6);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
 }
