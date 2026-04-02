@@ -1,125 +1,219 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-<title>OARCEL | Document Manager</title>
+// ==================== OARCEL DOCUMENT MANAGER WITH PERMANENT STORAGE ====================
 
-<!-- PWA Meta Tags for iOS -->
-<link rel="manifest" href="manifest.json">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="OARCEL">
-<meta name="theme-color" content="#3b82f6">
-<link rel="apple-touch-icon" href="https://img.icons8.com/fluency/192/folder-invoices.png">
+const content = document.getElementById("content");
+const pathText = document.getElementById("path");
+const pathContainer = document.getElementById("pathContainer");
+const backBtn = document.getElementById("backBtn");
+const uploadBtn = document.getElementById("uploadBtn");
+const fileInput = document.getElementById("fileInput");
+const viewer = document.getElementById("viewer");
+const frame = document.getElementById("pdfFrame");
+const toast = document.getElementById("toast");
+const folderCountSpan = document.getElementById("folderCount");
+const fileCountSpan = document.getElementById("fileCount");
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link rel="stylesheet" href="style.css">
-</head>
+// View mode state
+let currentViewMode = "grid";
 
-<body>
+// Load saved files from localStorage (permanent!)
+let files = {};
 
-<div class="app">
-
-  <!-- Animated Background -->
-  <div class="bg-animation"></div>
-
-  <!-- Header -->
-  <div class="header">
-    <div class="logo">
-      <i class="fas fa-folder-open"></i>
-    </div>
-    <div class="header-title">
-      <h1>OARCEL</h1>
-      <span>Document Manager</span>
-    </div>
-    <div class="header-glow"></div>
-  </div>
-
-  <!-- Top Bar -->
-  <div class="top-bar">
-    <button id="backBtn" class="btn-back hidden" onclick="goBack()">
-      <i class="fas fa-arrow-left"></i>
-      <span>Back</span>
-    </button>
-
-    <div class="path-container" id="pathContainer">
-      <i class="fas fa-home"></i>
-      <span id="path">Home</span>
-    </div>
-
-    <div class="view-toggle">
-      <button id="gridViewBtn" class="toggle-btn active">
-        <i class="fas fa-th"></i>
-      </button>
-      <button id="listViewBtn" class="toggle-btn">
-        <i class="fas fa-list"></i>
-      </button>
-    </div>
-
-    <button id="uploadBtn" class="btn-upload hidden" onclick="triggerUpload()">
-      <i class="fas fa-cloud-upload-alt"></i>
-      <span>Upload</span>
-    </button>
-
-    <input type="file" id="fileInput" accept="application/pdf" multiple hidden>
-  </div>
-
-  <!-- Stats Bar -->
-  <div class="stats-bar" id="statsBar">
-    <div class="stat-item">
-      <i class="fas fa-folder"></i>
-      <span id="folderCount">0</span>
-      <label>Folders</label>
-    </div>
-    <div class="stat-item">
-      <i class="fas fa-file-pdf"></i>
-      <span id="fileCount">0</span>
-      <label>Documents</label>
-    </div>
-  </div>
-
-  <!-- Content -->
-  <div id="content" class="content grid-view"></div>
-
-</div>
-
-<!-- Viewer -->
-<div id="viewer" class="viewer hidden">
-  <div class="viewer-header">
-    <div class="viewer-title">
-      <i class="fas fa-file-pdf"></i>
-      <span>Document Viewer</span>
-    </div>
-    <button class="viewer-close" onclick="closeViewer()">
-      <i class="fas fa-times"></i>
-      <span>Close</span>
-    </button>
-  </div>
-  <div class="viewer-body">
-    <iframe id="pdfFrame"></iframe>
-  </div>
-</div>
-
-<!-- Toast Notification -->
-<div id="toast" class="toast hidden">
-  <i class="fas fa-check-circle"></i>
-  <span>Upload successful!</span>
-</div>
-
-<script src="app.js"></script>
-<script>
-// Service Worker Registration
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js')
-      .then(reg => console.log('Service Worker registered:', reg))
-      .catch(err => console.log('Service Worker failed:', err));
-  });
+// Load saved data on startup
+function loadSavedFiles() {
+    const saved = localStorage.getItem('oarcel_pdfs');
+    if (saved) {
+        files = JSON.parse(saved);
+        console.log('Loaded saved files:', files);
+    }
+    render();
 }
-</script>
-</body>
-</html>
+
+// Save files to localStorage
+function saveFiles() {
+    localStorage.setItem('oarcel_pdfs', JSON.stringify(files));
+    console.log('Files saved permanently');
+}
+
+// ==================== FOLDER STRUCTURE ====================
+const fileSystem = {
+    "REMELT": {
+        "A": {}, "B": {}, "C": {}, "D": {}, "E": {}, "F": {}, "G": {}, "H": {},
+        "I": {}, "J": {}, "K": {}, "L": {}, "M": {}, "N": {}, "O": {}, "P": {},
+        "Q": {}, "R": {}, "S": {}, "T": {}, "U": {}, "V": {}, "W": {}, "X": {},
+        "Y": {}, "Z": {}
+    },
+    "CASTER": {
+        "📊 Quality Reports": {}, "⚙️ Mechanical": {}, "🔧 Maintenance": {},
+        "📈 Production Data": {}, "🔬 Testing": {}, "📋 Checklists": {},
+        "⚠️ Safety": {}, "📚 Training": {}
+    },
+    "HRM": {
+        "📄 Employee Records": {}, "📋 Attendance": {}, "🏆 Performance": {},
+        "📚 Training Logs": {}, "⚠️ Safety Compliance": {}, "📜 Policies": {},
+        "📊 Reports": {}, "🎓 Certifications": {}
+    },
+    "CRM": {
+        "💻 PLC Programs": {}, "📐 CAD Drawings": {}, "🔌 Electrical": {},
+        "📡 SCADA": {}, "🔧 Automation": {}, "📊 Reports": {},
+        "⚙️ Configurations": {}, "📚 Manuals": {}
+    },
+    "ANNEALING": {
+        "🌡️ Temperature Control": {}, "⚙️ Process Parameters": {}, "📊 Quality Assurance": {},
+        "🔧 Maintenance": {}, "⚠️ Safety": {}, "📈 Production Logs": {},
+        "🔬 Testing": {}, "📚 SOP Documents": {}
+    },
+    "TLL": {
+        "💻 PLC Programs": {}, "📐 CAD Drawings": {}, "🔧 Maintenance": {},
+        "📈 Production Logs": {}, "⚙️ Process Optimization": {}, "📊 Quality Reports": {},
+        "📚 Manuals": {}, "⚠️ Safety": {}
+    },
+    "SLITTER": {
+        "⚙️ Blade Maintenance": {}, "📊 Quality Control": {}, "📈 Production Reports": {},
+        "🔧 Mechanical": {}, "⚠️ Safety": {}, "📋 Checklists": {},
+        "📚 Training": {}, "🔬 Testing": {}
+    },
+    "UTILITY": {
+        "⚡ Power Supply": {}, "💧 Water System": {}, "🔧 Compressed Air": {},
+        "🌡️ HVAC": {}, "📊 Reports": {}, "⚠️ Safety": {},
+        "📚 Manuals": {}, "🔬 Testing": {}
+    }
+};
+
+let currentPath = [];
+
+function showToast(message, isError = false) {
+    toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-circle' : 'fa-check-circle'}"></i><span>${message}</span>`;
+    toast.style.background = isError ? "linear-gradient(135deg, #ef4444, #dc2626)" : "linear-gradient(135deg, #10b981, #059669)";
+    toast.classList.remove("hidden");
+    setTimeout(() => toast.classList.add("hidden"), 2500);
+}
+
+function updateStats() {
+    let folderCount = 0, fileCount = 0;
+    function countRecursive(obj) {
+        for (let key in obj) {
+            if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
+                folderCount++;
+                countRecursive(obj[key]);
+            }
+        }
+    }
+    countRecursive(fileSystem);
+    for (let key in files) fileCount += files[key].length;
+    folderCountSpan.textContent = folderCount;
+    fileCountSpan.textContent = fileCount;
+}
+
+function getCurrentFolder() {
+    let folder = fileSystem;
+    for (let p of currentPath) {
+        if (folder[p]) folder = folder[p];
+        else return null;
+    }
+    return folder;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function createCard(icon, title, onClick, isFolder = true) {
+    const card = document.createElement("div");
+    card.className = "card";
+    const iconColor = isFolder ? "linear-gradient(135deg, #f59e0b, #ef4444)" : "linear-gradient(135deg, #3b82f6, #8b5cf6)";
+    const iconClass = isFolder ? "fa-folder" : "fa-file-pdf";
+    
+    if (currentViewMode === "list") {
+        card.innerHTML = `
+            <i class="fas ${iconClass}" style="background: ${iconColor}; -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+            <span>${escapeHtml(title)}</span>
+        `;
+    } else {
+        card.innerHTML = `
+            <i class="fas ${iconClass}" style="background: ${iconColor}; -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 2.2rem;"></i>
+            <span>${escapeHtml(title)}</span>
+        `;
+    }
+    card.onclick = onClick;
+    return card;
+}
+
+function render() {
+    content.innerHTML = "";
+    const folder = getCurrentFolder();
+    if (!folder) { currentPath = []; render(); return; }
+    
+    content.className = `content ${currentViewMode === "grid" ? "grid-view" : "list-view"}`;
+    pathText.innerText = currentPath.length === 0 ? "Home" : currentPath.join(" / ");
+    backBtn.classList.toggle("hidden", currentPath.length === 0);
+    
+    const isLeafFolder = Object.keys(folder).length === 0;
+    uploadBtn.classList.toggle("hidden", !isLeafFolder);
+    
+    for (let key in folder) {
+        content.appendChild(createCard(key, key, () => { currentPath.push(key); render(); }, true));
+    }
+    
+    if (isLeafFolder) {
+        const pathKey = currentPath.join("/");
+        const folderFiles = files[pathKey] || [];
+        if (folderFiles.length === 0) {
+            const emptyDiv = document.createElement("div");
+            emptyDiv.className = "empty-state";
+            emptyDiv.innerHTML = '<i class="fas fa-cloud-upload-alt"></i><p>No PDFs yet. Click Upload to add files. Files are saved permanently!</p>';
+            content.appendChild(emptyDiv);
+        }
+        folderFiles.forEach(f => {
+            content.appendChild(createCard(f.name, f.name, () => openPDF(f.url), false));
+        });
+    }
+    updateStats();
+}
+
+function triggerUpload() { fileInput.click(); }
+
+fileInput.addEventListener("change", (e) => {
+    const pathKey = currentPath.join("/");
+    if (!files[pathKey]) files[pathKey] = [];
+    
+    let uploadedCount = 0;
+    for (let file of e.target.files) {
+        if (file.type === "application/pdf") {
+            const fileUrl = URL.createObjectURL(file);
+            files[pathKey].push({ 
+                name: file.name, 
+                url: fileUrl,
+                date: new Date().toISOString(),
+                size: file.size
+            });
+            uploadedCount++;
+        }
+    }
+    
+    if (uploadedCount > 0) {
+        saveFiles(); // PERMANENTLY SAVE!
+        showToast(`${uploadedCount} PDF${uploadedCount > 1 ? 's' : ''} saved permanently!`);
+    }
+    
+    render();
+    fileInput.value = "";
+});
+
+function goBack() { if (currentPath.length > 0) { currentPath.pop(); render(); } }
+function openPDF(url) { frame.src = url; viewer.classList.remove("hidden"); document.body.style.overflow = "hidden"; }
+function closeViewer() { viewer.classList.add("hidden"); frame.src = ""; document.body.style.overflow = "auto"; }
+function setViewMode(mode) { currentViewMode = mode; render(); document.getElementById("gridViewBtn").classList.toggle("active", mode === "grid"); document.getElementById("listViewBtn").classList.toggle("active", mode === "list"); }
+
+pathContainer.addEventListener("click", () => { currentPath = []; render(); });
+document.getElementById("gridViewBtn").addEventListener("click", () => setViewMode("grid"));
+document.getElementById("listViewBtn").addEventListener("click", () => setViewMode("list"));
+
+window.goBack = goBack;
+window.triggerUpload = triggerUpload;
+window.closeViewer = closeViewer;
+window.openPDF = openPDF;
+
+// Load saved files on startup!
+loadSavedFiles();
