@@ -1,4 +1,4 @@
-// ==================== OARCEL DOCUMENT MANAGER ====================
+// ==================== OARCEL DOCUMENT MANAGER WITH PERMANENT STORAGE ====================
 
 const content = document.getElementById("content");
 const pathText = document.getElementById("path");
@@ -15,166 +15,256 @@ const fileCountSpan = document.getElementById("fileCount");
 // View mode state
 let currentViewMode = "grid";
 
+// Load saved files from localStorage (PERMANENT!)
+let files = {};
+
 // ==================== FOLDER STRUCTURE ====================
 const fileSystem = {
-  "REMELT": {
-    "A": {}, "B": {}, "C": {}, "D": {}, "E": {}, "F": {}, "G": {}, "H": {},
-    "I": {}, "J": {}, "K": {}, "L": {}, "M": {}, "N": {}, "O": {}, "P": {},
-    "Q": {}, "R": {}, "S": {}, "T": {}, "U": {}, "V": {}, "W": {}, "X": {},
-    "Y": {}, "Z": {}
-  },
-  "CASTER": {
-    "📊 Quality Reports": {}, "⚙️ Mechanical": {}, "🔧 Maintenance": {},
-    "📈 Production Data": {}, "🔬 Testing": {}, "📋 Checklists": {},
-    "⚠️ Safety": {}, "📚 Training": {}
-  },
-  "HRM": {
-    "📄 Employee Records": {}, "📋 Attendance": {}, "🏆 Performance": {},
-    "📚 Training Logs": {}, "⚠️ Safety Compliance": {}, "📜 Policies": {},
-    "📊 Reports": {}, "🎓 Certifications": {}
-  },
-  "CRM": {
-    "💻 PLC Programs": {}, "📐 CAD Drawings": {}, "🔌 Electrical": {},
-    "📡 SCADA": {}, "🔧 Automation": {}, "📊 Reports": {},
-    "⚙️ Configurations": {}, "📚 Manuals": {}
-  },
-  "ANNEALING": {
-    "🌡️ Temperature Control": {}, "⚙️ Process Parameters": {}, "📊 Quality Assurance": {},
-    "🔧 Maintenance": {}, "⚠️ Safety": {}, "📈 Production Logs": {},
-    "🔬 Testing": {}, "📚 SOP Documents": {}
-  },
-  "TLL": {
-    "💻 PLC Programs": {}, "📐 CAD Drawings": {}, "🔧 Maintenance": {},
-    "📈 Production Logs": {}, "⚙️ Process Optimization": {}, "📊 Quality Reports": {},
-    "📚 Manuals": {}, "⚠️ Safety": {}
-  },
-  "SLITTER": {
-    "⚙️ Blade Maintenance": {}, "📊 Quality Control": {}, "📈 Production Reports": {},
-    "🔧 Mechanical": {}, "⚠️ Safety": {}, "📋 Checklists": {},
-    "📚 Training": {}, "🔬 Testing": {}
-  },
-  "UTILITY": {
-    "⚡ Power Supply": {}, "💧 Water System": {}, "🔧 Compressed Air": {},
-    "🌡️ HVAC": {}, "📊 Reports": {}, "⚠️ Safety": {},
-    "📚 Manuals": {}, "🔬 Testing": {}
-  }
+    "REMELT": {
+        "A": {}, "B": {}, "C": {}, "D": {}, "E": {}, "F": {}, "G": {}, "H": {},
+        "I": {}, "J": {}, "K": {}, "L": {}, "M": {}, "N": {}, "O": {}, "P": {},
+        "Q": {}, "R": {}, "S": {}, "T": {}, "U": {}, "V": {}, "W": {}, "X": {},
+        "Y": {}, "Z": {}
+    },
+    "CASTER": {
+        "📊 Quality Reports": {}, "⚙️ Mechanical": {}, "🔧 Maintenance": {},
+        "📈 Production Data": {}, "🔬 Testing": {}, "📋 Checklists": {},
+        "⚠️ Safety": {}, "📚 Training": {}
+    },
+    "HRM": {
+        "📄 Employee Records": {}, "📋 Attendance": {}, "🏆 Performance": {},
+        "📚 Training Logs": {}, "⚠️ Safety Compliance": {}, "📜 Policies": {},
+        "📊 Reports": {}, "🎓 Certifications": {}
+    },
+    "CRM": {
+        "💻 PLC Programs": {}, "📐 CAD Drawings": {}, "🔌 Electrical": {},
+        "📡 SCADA": {}, "🔧 Automation": {}, "📊 Reports": {},
+        "⚙️ Configurations": {}, "📚 Manuals": {}
+    },
+    "ANNEALING": {
+        "🌡️ Temperature Control": {}, "⚙️ Process Parameters": {}, "📊 Quality Assurance": {},
+        "🔧 Maintenance": {}, "⚠️ Safety": {}, "📈 Production Logs": {},
+        "🔬 Testing": {}, "📚 SOP Documents": {}
+    },
+    "TLL": {
+        "💻 PLC Programs": {}, "📐 CAD Drawings": {}, "🔧 Maintenance": {},
+        "📈 Production Logs": {}, "⚙️ Process Optimization": {}, "📊 Quality Reports": {},
+        "📚 Manuals": {}, "⚠️ Safety": {}
+    },
+    "SLITTER": {
+        "⚙️ Blade Maintenance": {}, "📊 Quality Control": {}, "📈 Production Reports": {},
+        "🔧 Mechanical": {}, "⚠️ Safety": {}, "📋 Checklists": {},
+        "📚 Training": {}, "🔬 Testing": {}
+    },
+    "UTILITY": {
+        "⚡ Power Supply": {}, "💧 Water System": {}, "🔧 Compressed Air": {},
+        "🌡️ HVAC": {}, "📊 Reports": {}, "⚠️ Safety": {},
+        "📚 Manuals": {}, "🔬 Testing": {}
+    }
 };
 
 let currentPath = [];
-let files = {};
+
+// Load saved files from localStorage on startup
+function loadSavedFiles() {
+    const saved = localStorage.getItem('oarcel_files');
+    if (saved) {
+        files = JSON.parse(saved);
+        console.log('Loaded saved files:', files);
+        showToast(`${Object.keys(files).reduce((sum, key) => sum + files[key].length, 0)} files loaded from storage`, false);
+    } else {
+        files = {};
+    }
+    render();
+}
+
+// Save files to localStorage (PERMANENT)
+function saveFiles() {
+    localStorage.setItem('oarcel_files', JSON.stringify(files));
+    const totalFiles = Object.keys(files).reduce((sum, key) => sum + files[key].length, 0);
+    console.log(`Saved ${totalFiles} files permanently`);
+}
 
 function showToast(message, isError = false) {
-  toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-circle' : 'fa-check-circle'}"></i><span>${message}</span>`;
-  toast.style.background = isError ? "linear-gradient(135deg, #ef4444, #dc2626)" : "linear-gradient(135deg, #10b981, #059669)";
-  toast.classList.remove("hidden");
-  setTimeout(() => toast.classList.add("hidden"), 2500);
+    toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-circle' : 'fa-check-circle'}"></i><span>${message}</span>`;
+    toast.style.background = isError ? "linear-gradient(135deg, #ef4444, #dc2626)" : "linear-gradient(135deg, #10b981, #059669)";
+    toast.classList.remove("hidden");
+    setTimeout(() => toast.classList.add("hidden"), 3000);
 }
 
 function updateStats() {
-  let folderCount = 0, fileCount = 0;
-  function countRecursive(obj) {
-    for (let key in obj) {
-      if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
-        folderCount++;
-        countRecursive(obj[key]);
-      }
+    let folderCount = 0;
+    function countRecursive(obj) {
+        for (let key in obj) {
+            if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
+                folderCount++;
+                countRecursive(obj[key]);
+            }
+        }
     }
-  }
-  countRecursive(fileSystem);
-  for (let key in files) fileCount += files[key].length;
-  folderCountSpan.textContent = folderCount;
-  fileCountSpan.textContent = fileCount;
+    countRecursive(fileSystem);
+    
+    let fileCount = 0;
+    for (let key in files) {
+        fileCount += files[key].length;
+    }
+    
+    folderCountSpan.textContent = folderCount;
+    fileCountSpan.textContent = fileCount;
 }
 
 function getCurrentFolder() {
-  let folder = fileSystem;
-  for (let p of currentPath) {
-    if (folder[p]) folder = folder[p];
-    else return null;
-  }
-  return folder;
+    let folder = fileSystem;
+    for (let p of currentPath) {
+        if (folder[p]) folder = folder[p];
+        else return null;
+    }
+    return folder;
 }
 
 function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 function createCard(icon, title, onClick, isFolder = true) {
-  const card = document.createElement("div");
-  card.className = "card";
-  const iconColor = isFolder ? "linear-gradient(135deg, #f59e0b, #ef4444)" : "linear-gradient(135deg, #3b82f6, #8b5cf6)";
-  const iconClass = isFolder ? "fa-folder" : "fa-file-pdf";
-  
-  if (currentViewMode === "list") {
-    card.innerHTML = `
-      <i class="fas ${iconClass}" style="background: ${iconColor}; -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
-      <span>${escapeHtml(title)}</span>
-    `;
-  } else {
-    card.innerHTML = `
-      <i class="fas ${iconClass}" style="background: ${iconColor}; -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 2.2rem;"></i>
-      <span>${escapeHtml(title)}</span>
-    `;
-  }
-  card.onclick = onClick;
-  return card;
+    const card = document.createElement("div");
+    card.className = "card";
+    const iconColor = isFolder ? "linear-gradient(135deg, #f59e0b, #ef4444)" : "linear-gradient(135deg, #3b82f6, #8b5cf6)";
+    const iconClass = isFolder ? "fa-folder" : "fa-file-pdf";
+    
+    if (currentViewMode === "list") {
+        card.innerHTML = `
+            <i class="fas ${iconClass}" style="background: ${iconColor}; -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+            <span>${escapeHtml(title)}</span>
+        `;
+    } else {
+        card.innerHTML = `
+            <i class="fas ${iconClass}" style="background: ${iconColor}; -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 2.2rem;"></i>
+            <span>${escapeHtml(title)}</span>
+        `;
+    }
+    card.onclick = onClick;
+    return card;
 }
 
 function render() {
-  content.innerHTML = "";
-  const folder = getCurrentFolder();
-  if (!folder) { currentPath = []; render(); return; }
-  
-  content.className = `content ${currentViewMode === "grid" ? "grid-view" : "list-view"}`;
-  pathText.innerText = currentPath.length === 0 ? "Home" : currentPath.join(" / ");
-  backBtn.classList.toggle("hidden", currentPath.length === 0);
-  
-  const isLeafFolder = Object.keys(folder).length === 0;
-  uploadBtn.classList.toggle("hidden", !isLeafFolder);
-  
-  for (let key in folder) {
-    content.appendChild(createCard(key, key, () => { currentPath.push(key); render(); }, true));
-  }
-  
-  if (isLeafFolder) {
-    const pathKey = currentPath.join("/");
-    const folderFiles = files[pathKey] || [];
-    if (folderFiles.length === 0) {
-      const emptyDiv = document.createElement("div");
-      emptyDiv.className = "empty-state";
-      emptyDiv.innerHTML = '<i class="fas fa-cloud-upload-alt"></i><p>No PDFs yet. Click Upload to add files.</p>';
-      content.appendChild(emptyDiv);
+    content.innerHTML = "";
+    const folder = getCurrentFolder();
+    if (!folder) { currentPath = []; render(); return; }
+    
+    content.className = `content ${currentViewMode === "grid" ? "grid-view" : "list-view"}`;
+    pathText.innerText = currentPath.length === 0 ? "Home" : currentPath.join(" / ");
+    backBtn.classList.toggle("hidden", currentPath.length === 0);
+    
+    const isLeafFolder = Object.keys(folder).length === 0;
+    uploadBtn.classList.toggle("hidden", !isLeafFolder);
+    
+    // Show subfolders
+    for (let key in folder) {
+        content.appendChild(createCard(key, key, () => { currentPath.push(key); render(); }, true));
     }
-    folderFiles.forEach(f => {
-      content.appendChild(createCard(f.name, f.name, () => openPDF(f.url), false));
-    });
-  }
-  updateStats();
+    
+    // Show files if leaf folder
+    if (isLeafFolder) {
+        const pathKey = currentPath.join("/");
+        const folderFiles = files[pathKey] || [];
+        
+        if (folderFiles.length === 0 && Object.keys(folder).length === 0) {
+            const emptyDiv = document.createElement("div");
+            emptyDiv.className = "empty-state";
+            emptyDiv.innerHTML = '<i class="fas fa-cloud-upload-alt"></i><p>No PDFs yet. Click Upload to add files. Files are saved permanently!</p>';
+            content.appendChild(emptyDiv);
+        } else {
+            folderFiles.forEach((f, index) => {
+                const card = createCard(f.name, f.name, () => openPDF(f.dataUrl), false);
+                content.appendChild(card);
+            });
+        }
+    }
+    updateStats();
 }
 
+// Convert file to base64 for permanent storage
+function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+    });
+}
+
+// Upload files
 function triggerUpload() { fileInput.click(); }
 
-fileInput.addEventListener("change", (e) => {
-  const pathKey = currentPath.join("/");
-  if (!files[pathKey]) files[pathKey] = [];
-  let uploadedCount = 0;
-  for (let file of e.target.files) {
-    if (file.type === "application/pdf") {
-      files[pathKey].push({ name: file.name, url: URL.createObjectURL(file) });
-      uploadedCount++;
+fileInput.addEventListener("change", async (e) => {
+    const pathKey = currentPath.join("/");
+    if (!files[pathKey]) files[pathKey] = [];
+    
+    let uploadedCount = 0;
+    for (let file of e.target.files) {
+        if (file.type === "application/pdf") {
+            const base64Data = await fileToBase64(file);
+            files[pathKey].push({ 
+                name: file.name, 
+                dataUrl: base64Data,
+                date: new Date().toISOString(),
+                size: file.size
+            });
+            uploadedCount++;
+        }
     }
-  }
-  if (uploadedCount > 0) showToast(`${uploadedCount} PDF${uploadedCount > 1 ? 's' : ''} uploaded!`);
-  render();
-  fileInput.value = "";
+    
+    if (uploadedCount > 0) {
+        saveFiles(); // PERMANENTLY SAVE TO LOCALSTORAGE
+        showToast(`${uploadedCount} PDF${uploadedCount > 1 ? 's' : ''} saved permanently!`);
+    }
+    
+    render();
+    fileInput.value = "";
 });
 
+// Delete file function
+function deleteFile(folderPath, fileName) {
+    if (confirm(`Delete "${fileName}"? This cannot be undone.`)) {
+        const folderFiles = files[folderPath];
+        if (folderFiles) {
+            const index = folderFiles.findIndex(f => f.name === fileName);
+            if (index !== -1) {
+                folderFiles.splice(index, 1);
+                if (folderFiles.length === 0) {
+                    delete files[folderPath];
+                }
+                saveFiles();
+                render();
+                showToast(`"${fileName}" deleted`, false);
+            }
+        }
+    }
+}
+
 function goBack() { if (currentPath.length > 0) { currentPath.pop(); render(); } }
-function openPDF(url) { frame.src = url; viewer.classList.remove("hidden"); document.body.style.overflow = "hidden"; }
-function closeViewer() { viewer.classList.add("hidden"); frame.src = ""; document.body.style.overflow = "auto"; }
-function setViewMode(mode) { currentViewMode = mode; render(); document.getElementById("gridViewBtn").classList.toggle("active", mode === "grid"); document.getElementById("listViewBtn").classList.toggle("active", mode === "list"); }
+
+function openPDF(dataUrl) { 
+    frame.src = dataUrl; 
+    viewer.classList.remove("hidden"); 
+    document.body.style.overflow = "hidden"; 
+}
+
+function closeViewer() { 
+    viewer.classList.add("hidden"); 
+    frame.src = ""; 
+    document.body.style.overflow = "auto"; 
+}
+
+function setViewMode(mode) { 
+    currentViewMode = mode; 
+    render(); 
+    document.getElementById("gridViewBtn").classList.toggle("active", mode === "grid"); 
+    document.getElementById("listViewBtn").classList.toggle("active", mode === "list"); 
+}
 
 pathContainer.addEventListener("click", () => { currentPath = []; render(); });
 document.getElementById("gridViewBtn").addEventListener("click", () => setViewMode("grid"));
@@ -185,4 +275,5 @@ window.triggerUpload = triggerUpload;
 window.closeViewer = closeViewer;
 window.openPDF = openPDF;
 
-render();
+// Load saved files on startup!
+loadSavedFiles();
