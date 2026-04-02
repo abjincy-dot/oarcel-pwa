@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+<title>OARCEL | Document Manager</title>
+
+<!-- PWA Meta Tags for iOS -->
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="OARCEL">
+<meta name="theme-color" content="#3b82f6">
+<link rel="apple-touch-icon" href="https://img.icons8.com/fluency/192/folder-invoices.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="app">
+
+  <!-- Animated Background -->
+  <div class="bg-animation"></div>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">
+      <i class="fas fa-folder-open"></i>
+    </div>
+    <div class="header-title">
+      <h1>OARCEL</h1>
+      <span>Document Manager</span>
+    </div>
+    <div class="header-glow"></div>
+  </div>
+
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <button id="backBtn" class="btn-back hidden" onclick="goBack()">
+      <i class="fas fa-arrow-left"></i>
+      <span>Back</span>
+    </button>
+
+    <div class="path-container" id="pathContainer">
+      <i class="fas fa-home"></i>
+      <span id="path">Home</span>
+    </div>
+
+    <div class="view-toggle">
+      <button id="gridViewBtn" class="toggle-btn active">
+        <i class="fas fa-th"></i>
+      </button>
+      <button id="listViewBtn" class="toggle-btn">
+        <i class="fas fa-list"></i>
+      </button>
+    </div>
+
+    <button id="uploadBtn" class="btn-upload hidden" onclick="triggerUpload()">
+      <i class="fas fa-cloud-upload-alt"></i>
+      <span>Upload</span>
+    </button>
+
+    <input type="file" id="fileInput" accept="application/pdf" multiple hidden>
+  </div>
+
+  <!-- Stats Bar -->
+  <div class="stats-bar" id="statsBar">
+    <div class="stat-item">
+      <i class="fas fa-folder"></i>
+      <span id="folderCount">0</span>
+      <label>Folders</label>
+    </div>
+    <div class="stat-item">
+      <i class="fas fa-file-pdf"></i>
+      <span id="fileCount">0</span>
+      <label>Documents</label>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div id="content" class="content grid-view"></div>
+
+</div>
+
+<!-- Viewer -->
+<div id="viewer" class="viewer hidden">
+  <div class="viewer-header">
+    <div class="viewer-title">
+      <i class="fas fa-file-pdf"></i>
+      <span>Document Viewer</span>
+    </div>
+    <button class="viewer-close" onclick="closeViewer()">
+      <i class="fas fa-times"></i>
+      <span>Close</span>
+    </button>
+  </div>
+  <div class="viewer-body">
+    <iframe id="pdfFrame"></iframe>
+  </div>
+</div>
+
+<!-- Toast Notification -->
+<div id="toast" class="toast hidden">
+  <i class="fas fa-check-circle"></i>
+  <span>Upload successful!</span>
+</div>
+
+<script src="app.js"></script>
+<script>
+// Service Worker Registration
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .then(reg => console.log('Service Worker registered:', reg))
+      .catch(err => console.log('Service Worker failed:', err));
+  });
+}
+</script>
+</body>
+</html>
