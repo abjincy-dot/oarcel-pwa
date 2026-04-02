@@ -1,44 +1,489 @@
-/* Action Bar - Rename, Delete, Add Folder buttons */
-.action-bar {
-    grid-column: 1 / -1;
-    display: flex;
-    gap: 12px;
-    padding: 10px;
-    flex-wrap: wrap;
-    justify-content: center;
-    margin-bottom: 10px;
+// ==================== OARCEL DOCUMENT MANAGER WITH FIXED PDF ZOOM ====================
+
+const content = document.getElementById("content");
+const pathText = document.getElementById("path");
+const pathContainer = document.getElementById("pathContainer");
+const backBtn = document.getElementById("backBtn");
+const uploadBtn = document.getElementById("uploadBtn");
+const fileInput = document.getElementById("fileInput");
+const viewer = document.getElementById("viewer");
+const frame = document.getElementById("pdfFrame");
+const toast = document.getElementById("toast");
+const folderCountSpan = document.getElementById("folderCount");
+const fileCountSpan = document.getElementById("fileCount");
+
+// View mode state
+let currentViewMode = "grid";
+
+// Global files object
+let allFiles = {};
+
+// ==================== FOLDER STRUCTURE ====================
+let fileSystem = {
+    "REMELT": {
+        "A": {}, "B": {}, "C": {}, "D": {}, "E": {}, "F": {}, "G": {}, "H": {},
+        "I": {}, "J": {}, "K": {}, "L": {}, "M": {}, "N": {}, "O": {}, "P": {},
+        "Q": {}, "R": {}, "S": {}, "T": {}, "U": {}, "V": {}, "W": {}, "X": {},
+        "Y": {}, "Z": {}
+    },
+    "CASTER": {
+        "📊 Quality Reports": {}, "⚙️ Mechanical": {}, "🔧 Maintenance": {},
+        "📈 Production Data": {}, "🔬 Testing": {}, "📋 Checklists": {},
+        "⚠️ Safety": {}, "📚 Training": {}
+    },
+    "HRM": {
+        "📄 Employee Records": {}, "📋 Attendance": {}, "🏆 Performance": {},
+        "📚 Training Logs": {}, "⚠️ Safety Compliance": {}, "📜 Policies": {},
+        "📊 Reports": {}, "🎓 Certifications": {}
+    },
+    "CRM": {
+        "💻 PLC Programs": {}, "📐 CAD Drawings": {}, "🔌 Electrical": {},
+        "📡 SCADA": {}, "🔧 Automation": {}, "📊 Reports": {},
+        "⚙️ Configurations": {}, "📚 Manuals": {}
+    },
+    "ANNEALING": {
+        "🌡️ Temperature Control": {}, "⚙️ Process Parameters": {}, "📊 Quality Assurance": {},
+        "🔧 Maintenance": {}, "⚠️ Safety": {}, "📈 Production Logs": {},
+        "🔬 Testing": {}, "📚 SOP Documents": {}
+    },
+    "TLL": {
+        "💻 PLC Programs": {}, "📐 CAD Drawings": {}, "🔧 Maintenance": {},
+        "📈 Production Logs": {}, "⚙️ Process Optimization": {}, "📊 Quality Reports": {},
+        "📚 Manuals": {}, "⚠️ Safety": {}
+    },
+    "SLITTER": {
+        "⚙️ Blade Maintenance": {}, "📊 Quality Control": {}, "📈 Production Reports": {},
+        "🔧 Mechanical": {}, "⚠️ Safety": {}, "📋 Checklists": {},
+        "📚 Training": {}, "🔬 Testing": {}
+    },
+    "UTILITY": {
+        "⚡ Power Supply": {}, "💧 Water System": {}, "🔧 Compressed Air": {},
+        "🌡️ HVAC": {}, "📊 Reports": {}, "⚠️ Safety": {},
+        "📚 Manuals": {}, "🔬 Testing": {}
+    }
+};
+
+let currentPath = [];
+
+// Save folder structure to localStorage
+function saveFolderStructure() {
+    localStorage.setItem('oarcel_folders', JSON.stringify(fileSystem));
 }
 
-.action-btn {
-    background: rgba(30, 30, 50, 0.8);
-    border: 1px solid rgba(59, 130, 246, 0.3);
-    padding: 8px 16px;
-    border-radius: 30px;
-    color: white;
-    cursor: pointer;
-    font-size: 0.8rem;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: all 0.2s;
+// Load folder structure from localStorage
+function loadFolderStructure() {
+    const saved = localStorage.getItem('oarcel_folders');
+    if (saved) {
+        fileSystem = JSON.parse(saved);
+        console.log('Folder structure loaded');
+    }
 }
 
-.action-btn:hover {
-    transform: translateY(-2px);
+// ==================== PERMANENT STORAGE FUNCTIONS ====================
+
+function saveAllFiles() {
+    try {
+        const toSave = {};
+        for (const folder in allFiles) {
+            toSave[folder] = allFiles[folder].map(file => ({
+                name: file.name,
+                dataUrl: file.dataUrl,
+                date: file.date,
+                size: file.size
+            }));
+        }
+        localStorage.setItem('oarcel_all_files', JSON.stringify(toSave));
+        return true;
+    } catch (e) {
+        console.error('Save failed:', e);
+        return false;
+    }
 }
 
-.rename-btn:hover {
-    background: #3b82f6;
-    border-color: #3b82f6;
+function loadAllFiles() {
+    try {
+        const saved = localStorage.getItem('oarcel_all_files');
+        if (saved) {
+            allFiles = JSON.parse(saved);
+            let total = 0;
+            for (const folder in allFiles) {
+                total += allFiles[folder].length;
+            }
+            if (total > 0) {
+                showToast(`Loaded ${total} saved file${total > 1 ? 's' : ''}`, false);
+            }
+            return true;
+        } else {
+            allFiles = {};
+            return false;
+        }
+    } catch (e) {
+        console.error('Load failed:', e);
+        allFiles = {};
+        return false;
+    }
 }
 
-.delete-folder-btn:hover {
-    background: #ef4444;
-    border-color: #ef4444;
+function getFilesForCurrentFolder() {
+    const folderPath = currentPath.join("/");
+    return allFiles[folderPath] || [];
 }
 
-.add-folder-btn:hover {
-    background: #10b981;
-    border-color: #10b981;
+async function addFileToCurrentFolder(file) {
+    const folderPath = currentPath.join("/");
+    if (!allFiles[folderPath]) {
+        allFiles[folderPath] = [];
+    }
+    
+    const base64Data = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.readAsDataURL(file);
+    });
+    
+    allFiles[folderPath].push({
+        name: file.name,
+        dataUrl: base64Data,
+        date: new Date().toISOString(),
+        size: file.size
+    });
+    
+    saveAllFiles();
+    return true;
 }
+
+function deleteFileFromFolder(folderPath, fileName) {
+    if (allFiles[folderPath]) {
+        const index = allFiles[folderPath].findIndex(f => f.name === fileName);
+        if (index !== -1) {
+            allFiles[folderPath].splice(index, 1);
+            if (allFiles[folderPath].length === 0) {
+                delete allFiles[folderPath];
+            }
+            saveAllFiles();
+            render();
+            showToast(`Deleted "${fileName}"`, false);
+            return true;
+        }
+    }
+    return false;
+}
+
+// ==================== FOLDER MANAGEMENT FUNCTIONS ====================
+
+function renameCurrentFolder() {
+    if (currentPath.length === 0) {
+        showToast("Cannot rename root folder", true);
+        return;
+    }
+    
+    const oldName = currentPath[currentPath.length - 1];
+    const newName = prompt("Enter new folder name:", oldName);
+    
+    if (newName && newName !== oldName) {
+        const parentPath = currentPath.slice(0, -1);
+        let parent = fileSystem;
+        for (let p of parentPath) {
+            parent = parent[p];
+        }
+        
+        parent[newName] = parent[oldName];
+        delete parent[oldName];
+        
+        const oldFolderPath = currentPath.join("/");
+        const newFolderPath = [...parentPath, newName].join("/");
+        
+        if (allFiles[oldFolderPath]) {
+            allFiles[newFolderPath] = allFiles[oldFolderPath];
+            delete allFiles[oldFolderPath];
+        }
+        
+        currentPath[parentPath.length] = newName;
+        
+        saveFolderStructure();
+        saveAllFiles();
+        render();
+        showToast(`Renamed to "${newName}"`, false);
+    }
+}
+
+function addNewFolder() {
+    const folderName = prompt("Enter new folder name:", "New Folder");
+    
+    if (folderName) {
+        const currentFolder = getCurrentFolderObject();
+        if (currentFolder && !currentFolder[folderName]) {
+            currentFolder[folderName] = {};
+            saveFolderStructure();
+            render();
+            showToast(`Folder "${folderName}" created`, false);
+        } else if (currentFolder && currentFolder[folderName]) {
+            showToast("Folder already exists!", true);
+        }
+    }
+}
+
+function deleteCurrentFolder() {
+    if (currentPath.length === 0) {
+        showToast("Cannot delete root folder", true);
+        return;
+    }
+    
+    const folderName = currentPath[currentPath.length - 1];
+    if (confirm(`Delete folder "${folderName}" and ALL its contents? This cannot be undone!`)) {
+        const folderPath = currentPath.join("/");
+        if (allFiles[folderPath]) {
+            delete allFiles[folderPath];
+        }
+        
+        const parentPath = currentPath.slice(0, -1);
+        let parent = fileSystem;
+        for (let p of parentPath) {
+            parent = parent[p];
+        }
+        delete parent[folderName];
+        
+        currentPath.pop();
+        
+        saveFolderStructure();
+        saveAllFiles();
+        render();
+        showToast(`Folder "${folderName}" deleted`, false);
+    }
+}
+
+function getCurrentFolderObject() {
+    let folder = fileSystem;
+    for (let p of currentPath) {
+        if (folder[p]) folder = folder[p];
+        else return null;
+    }
+    return folder;
+}
+
+// ==================== UI FUNCTIONS ====================
+
+function showToast(message, isError = false) {
+    toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-circle' : 'fa-check-circle'}"></i><span>${message}</span>`;
+    toast.style.background = isError ? "linear-gradient(135deg, #ef4444, #dc2626)" : "linear-gradient(135deg, #10b981, #059669)";
+    toast.classList.remove("hidden");
+    setTimeout(() => toast.classList.add("hidden"), 3000);
+}
+
+function updateStats() {
+    let folderCount = 0;
+    function countRecursive(obj) {
+        for (let key in obj) {
+            if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
+                folderCount++;
+                countRecursive(obj[key]);
+            }
+        }
+    }
+    countRecursive(fileSystem);
+    
+    let fileCount = 0;
+    for (let key in allFiles) {
+        fileCount += allFiles[key].length;
+    }
+    
+    folderCountSpan.textContent = folderCount;
+    fileCountSpan.textContent = fileCount;
+}
+
+function getCurrentFolder() {
+    let folder = fileSystem;
+    for (let p of currentPath) {
+        if (folder[p]) folder = folder[p];
+        else return null;
+    }
+    return folder;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function createCard(icon, title, onClick, isFolder = true, showDelete = false) {
+    const card = document.createElement("div");
+    card.className = "card";
+    const iconColor = isFolder ? "linear-gradient(135deg, #f59e0b, #ef4444)" : "linear-gradient(135deg, #3b82f6, #8b5cf6)";
+    const iconClass = isFolder ? "fa-folder" : "fa-file-pdf";
+    
+    if (currentViewMode === "list") {
+        card.innerHTML = `
+            <i class="fas ${iconClass}" style="background: ${iconColor}; -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+            <span style="flex:1">${escapeHtml(title)}</span>
+            ${showDelete ? `<button class="delete-btn" onclick="event.stopPropagation(); window.deleteFileFromFolder('${currentPath.join("/")}', '${title}')"><i class="fas fa-trash"></i></button>` : ''}
+        `;
+    } else {
+        card.innerHTML = `
+            <i class="fas ${iconClass}" style="background: ${iconColor}; -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 2rem;"></i>
+            <span>${escapeHtml(title)}</span>
+            ${showDelete ? `<button class="delete-btn-small" onclick="event.stopPropagation(); window.deleteFileFromFolder('${currentPath.join("/")}', '${title}')"><i class="fas fa-trash"></i></button>` : ''}
+        `;
+    }
+    card.onclick = onClick;
+    return card;
+}
+
+// ==================== FIXED PDF ZOOM FUNCTION ====================
+function openPDF(dataUrl) {
+    // Show viewer immediately
+    viewer.classList.remove("hidden");
+    document.body.style.overflow = "hidden";
+    
+    // Show loading indicator
+    frame.src = "about:blank";
+    
+    // For base64 PDFs (stored files)
+    if (dataUrl.startsWith('data:application/pdf')) {
+        fetch(dataUrl)
+            .then(res => res.blob())
+            .then(blob => {
+                const blobUrl = URL.createObjectURL(blob);
+                // Use Google Docs Viewer for proper mobile zoom
+                const viewerUrl = `https://docs.google.com/viewer?embedded=true&url=${encodeURIComponent(blobUrl)}`;
+                frame.src = viewerUrl;
+            })
+            .catch(err => {
+                console.error('Error loading PDF:', err);
+                frame.src = dataUrl;
+            });
+        return;
+    }
+    
+    // For external URLs
+    const viewerUrl = `https://docs.google.com/viewer?embedded=true&url=${encodeURIComponent(dataUrl)}`;
+    frame.src = viewerUrl;
+}
+
+function closeViewer() { 
+    viewer.classList.add("hidden"); 
+    frame.src = ""; 
+    document.body.style.overflow = "auto"; 
+}
+
+function goBack() { 
+    if (currentPath.length > 0) { 
+        currentPath.pop(); 
+        render(); 
+    } 
+}
+
+function triggerUpload() { 
+    fileInput.click(); 
+}
+
+fileInput.addEventListener("change", async (e) => {
+    const files_list = e.target.files;
+    if (!files_list.length) return;
+    
+    let uploadedCount = 0;
+    for (let file of files_list) {
+        if (file.type === "application/pdf") {
+            await addFileToCurrentFolder(file);
+            uploadedCount++;
+        }
+    }
+    
+    if (uploadedCount > 0) {
+        showToast(`${uploadedCount} PDF${uploadedCount > 1 ? 's' : ''} saved permanently!`);
+        render();
+    }
+    
+    fileInput.value = "";
+});
+
+function setViewMode(mode) { 
+    currentViewMode = mode; 
+    render(); 
+    document.getElementById("gridViewBtn").classList.toggle("active", mode === "grid"); 
+    document.getElementById("listViewBtn").classList.toggle("active", mode === "list"); 
+}
+
+function render() {
+    content.innerHTML = "";
+    const folder = getCurrentFolder();
+    if (!folder) { currentPath = []; render(); return; }
+    
+    content.className = `content ${currentViewMode === "grid" ? "grid-view" : "list-view"}`;
+    pathText.innerText = currentPath.length === 0 ? "Home" : currentPath.join(" / ");
+    backBtn.classList.toggle("hidden", currentPath.length === 0);
+    
+    const isLeafFolder = Object.keys(folder).length === 0;
+    const isRoot = currentPath.length === 0;
+    
+    // Action buttons
+    if (!isRoot) {
+        const actionBar = document.createElement("div");
+        actionBar.className = "action-bar";
+        actionBar.innerHTML = `
+            <button class="action-btn rename-btn" onclick="window.renameCurrentFolder()"><i class="fas fa-edit"></i> Rename</button>
+            <button class="action-btn delete-folder-btn" onclick="window.deleteCurrentFolder()"><i class="fas fa-trash-alt"></i> Delete</button>
+            <button class="action-btn add-folder-btn" onclick="window.addNewFolder()"><i class="fas fa-plus"></i> Add Subfolder</button>
+        `;
+        content.appendChild(actionBar);
+    }
+    
+    if (isRoot) {
+        const actionBar = document.createElement("div");
+        actionBar.className = "action-bar";
+        actionBar.innerHTML = `
+            <button class="action-btn add-folder-btn" onclick="window.addNewFolder()"><i class="fas fa-plus"></i> Add New Department</button>
+        `;
+        content.appendChild(actionBar);
+    }
+    
+    // Show subfolders
+    for (let key in folder) {
+        content.appendChild(createCard(key, key, () => { currentPath.push(key); render(); }, true));
+    }
+    
+    // Show upload button and files
+    if (isLeafFolder) {
+        uploadBtn.classList.toggle("hidden", false);
+        const folderFiles = getFilesForCurrentFolder();
+        
+        if (folderFiles.length === 0 && Object.keys(folder).length === 0) {
+            const emptyDiv = document.createElement("div");
+            emptyDiv.className = "empty-state";
+            emptyDiv.innerHTML = '<i class="fas fa-cloud-upload-alt"></i><p>No PDFs yet. Click Upload to add files.<br>Pinch to zoom PDFs!</p>';
+            content.appendChild(emptyDiv);
+        } else {
+            folderFiles.forEach((f) => {
+                const card = createCard(f.name, f.name, () => openPDF(f.dataUrl), false, true);
+                content.appendChild(card);
+            });
+        }
+    } else {
+        uploadBtn.classList.toggle("hidden", true);
+    }
+    updateStats();
+}
+
+// Make functions global
+window.deleteFileFromFolder = (folderPath, fileName) => {
+    if (confirm(`Delete "${fileName}"? This cannot be undone.`)) {
+        deleteFileFromFolder(folderPath, fileName);
+    }
+};
+window.renameCurrentFolder = renameCurrentFolder;
+window.deleteCurrentFolder = deleteCurrentFolder;
+window.addNewFolder = addNewFolder;
+
+pathContainer.addEventListener("click", () => { currentPath = []; render(); });
+document.getElementById("gridViewBtn").addEventListener("click", () => setViewMode("grid"));
+document.getElementById("listViewBtn").addEventListener("click", () => setViewMode("list"));
+
+window.goBack = goBack;
+window.triggerUpload = triggerUpload;
+window.closeViewer = closeViewer;
+window.openPDF = openPDF;
+
+// ==================== INITIALIZATION ====================
+loadFolderStructure();
+loadAllFiles();
+render();
