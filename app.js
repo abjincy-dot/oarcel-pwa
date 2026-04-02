@@ -1,75 +1,476 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-<title>OARCEL | Document Manager</title>
+// ==================== OARCEL DOCUMENT MANAGER WITH FULL EDITING ====================
 
-<!-- PWA Meta Tags -->
-<link rel="manifest" href="manifest.json">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="OARCEL">
-<meta name="theme-color" content="#3b82f6">
-<link rel="apple-touch-icon" href="https://img.icons8.com/fluency/192/folder-invoices.png">
+const content = document.getElementById("content");
+const pathText = document.getElementById("path");
+const pathContainer = document.getElementById("pathContainer");
+const backBtn = document.getElementById("backBtn");
+const uploadBtn = document.getElementById("uploadBtn");
+const fileInput = document.getElementById("fileInput");
+const viewer = document.getElementById("viewer");
+const frame = document.getElementById("pdfFrame");
+const toast = document.getElementById("toast");
+const folderCountSpan = document.getElementById("folderCount");
+const fileCountSpan = document.getElementById("fileCount");
 
-<!-- Optimized - System font instead of Google Fonts (faster) -->
-<style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #0a0a1a; color: #ffffff; }
-</style>
+// View mode state
+let currentViewMode = "grid";
 
-<!-- Load CSS and JS in optimized order -->
-<link rel="stylesheet" href="style.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-</head>
-<body>
+// Global files object
+let allFiles = {};
 
-<div class="app">
-  <div class="bg-animation"></div>
+// ==================== FOLDER STRUCTURE ====================
+let fileSystem = {
+    "REMELT": {
+        "A": {}, "B": {}, "C": {}, "D": {}, "E": {}, "F": {}, "G": {}, "H": {},
+        "I": {}, "J": {}, "K": {}, "L": {}, "M": {}, "N": {}, "O": {}, "P": {},
+        "Q": {}, "R": {}, "S": {}, "T": {}, "U": {}, "V": {}, "W": {}, "X": {},
+        "Y": {}, "Z": {}
+    },
+    "CASTER": {
+        "📊 Quality Reports": {}, "⚙️ Mechanical": {}, "🔧 Maintenance": {},
+        "📈 Production Data": {}, "🔬 Testing": {}, "📋 Checklists": {},
+        "⚠️ Safety": {}, "📚 Training": {}
+    },
+    "HRM": {
+        "📄 Employee Records": {}, "📋 Attendance": {}, "🏆 Performance": {},
+        "📚 Training Logs": {}, "⚠️ Safety Compliance": {}, "📜 Policies": {},
+        "📊 Reports": {}, "🎓 Certifications": {}
+    },
+    "CRM": {
+        "💻 PLC Programs": {}, "📐 CAD Drawings": {}, "🔌 Electrical": {},
+        "📡 SCADA": {}, "🔧 Automation": {}, "📊 Reports": {},
+        "⚙️ Configurations": {}, "📚 Manuals": {}
+    },
+    "ANNEALING": {
+        "🌡️ Temperature Control": {}, "⚙️ Process Parameters": {}, "📊 Quality Assurance": {},
+        "🔧 Maintenance": {}, "⚠️ Safety": {}, "📈 Production Logs": {},
+        "🔬 Testing": {}, "📚 SOP Documents": {}
+    },
+    "TLL": {
+        "💻 PLC Programs": {}, "📐 CAD Drawings": {}, "🔧 Maintenance": {},
+        "📈 Production Logs": {}, "⚙️ Process Optimization": {}, "📊 Quality Reports": {},
+        "📚 Manuals": {}, "⚠️ Safety": {}
+    },
+    "SLITTER": {
+        "⚙️ Blade Maintenance": {}, "📊 Quality Control": {}, "📈 Production Reports": {},
+        "🔧 Mechanical": {}, "⚠️ Safety": {}, "📋 Checklists": {},
+        "📚 Training": {}, "🔬 Testing": {}
+    },
+    "UTILITY": {
+        "⚡ Power Supply": {}, "💧 Water System": {}, "🔧 Compressed Air": {},
+        "🌡️ HVAC": {}, "📊 Reports": {}, "⚠️ Safety": {},
+        "📚 Manuals": {}, "🔬 Testing": {}
+    }
+};
 
-  <div class="header">
-    <div class="logo"><i class="fas fa-folder-open"></i></div>
-    <div class="header-title"><h1>OARCEL</h1><span>Document Manager</span></div>
-    <div class="header-glow"></div>
-  </div>
+let currentPath = [];
 
-  <div class="top-bar">
-    <button id="backBtn" class="btn-back hidden" onclick="goBack()"><i class="fas fa-arrow-left"></i><span>Back</span></button>
-    <div class="path-container" id="pathContainer"><i class="fas fa-home"></i><span id="path">Home</span></div>
-    <div class="view-toggle">
-      <button id="gridViewBtn" class="toggle-btn active"><i class="fas fa-th"></i></button>
-      <button id="listViewBtn" class="toggle-btn"><i class="fas fa-list"></i></button>
-    </div>
-    <button id="uploadBtn" class="btn-upload hidden" onclick="triggerUpload()"><i class="fas fa-cloud-upload-alt"></i><span>Upload</span></button>
-    <input type="file" id="fileInput" accept="application/pdf" multiple hidden>
-  </div>
-
-  <div class="stats-bar" id="statsBar">
-    <div class="stat-item"><i class="fas fa-folder"></i><span id="folderCount">0</span><label>Folders</label></div>
-    <div class="stat-item"><i class="fas fa-file-pdf"></i><span id="fileCount">0</span><label>Documents</label></div>
-  </div>
-
-  <div id="content" class="content grid-view"></div>
-</div>
-
-<div id="viewer" class="viewer hidden">
-  <div class="viewer-header">
-    <div class="viewer-title"><i class="fas fa-file-pdf"></i><span>Document Viewer</span></div>
-    <button class="viewer-close" onclick="closeViewer()"><i class="fas fa-times"></i><span>Close</span></button>
-  </div>
-  <div class="viewer-body"><iframe id="pdfFrame"></iframe></div>
-</div>
-
-<div id="toast" class="toast hidden"><i class="fas fa-check-circle"></i><span>Upload successful!</span></div>
-
-<script src="app.js"></script>
-<script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(err => console.log('SW error:', err));
-  });
+// Save folder structure to localStorage
+function saveFolderStructure() {
+    localStorage.setItem('oarcel_folders', JSON.stringify(fileSystem));
 }
-</script>
-</body>
-</html>
+
+// Load folder structure from localStorage
+function loadFolderStructure() {
+    const saved = localStorage.getItem('oarcel_folders');
+    if (saved) {
+        fileSystem = JSON.parse(saved);
+        console.log('Folder structure loaded');
+    }
+}
+
+// ==================== PERMANENT STORAGE FUNCTIONS ====================
+
+function saveAllFiles() {
+    try {
+        const toSave = {};
+        for (const folder in allFiles) {
+            toSave[folder] = allFiles[folder].map(file => ({
+                name: file.name,
+                dataUrl: file.dataUrl,
+                date: file.date,
+                size: file.size
+            }));
+        }
+        localStorage.setItem('oarcel_all_files', JSON.stringify(toSave));
+        return true;
+    } catch (e) {
+        console.error('Save failed:', e);
+        return false;
+    }
+}
+
+function loadAllFiles() {
+    try {
+        const saved = localStorage.getItem('oarcel_all_files');
+        if (saved) {
+            allFiles = JSON.parse(saved);
+            let total = 0;
+            for (const folder in allFiles) {
+                total += allFiles[folder].length;
+            }
+            if (total > 0) {
+                showToast(`Loaded ${total} saved file${total > 1 ? 's' : ''}`, false);
+            }
+            return true;
+        } else {
+            allFiles = {};
+            return false;
+        }
+    } catch (e) {
+        console.error('Load failed:', e);
+        allFiles = {};
+        return false;
+    }
+}
+
+function getFilesForCurrentFolder() {
+    const folderPath = currentPath.join("/");
+    return allFiles[folderPath] || [];
+}
+
+async function addFileToCurrentFolder(file) {
+    const folderPath = currentPath.join("/");
+    if (!allFiles[folderPath]) {
+        allFiles[folderPath] = [];
+    }
+    
+    const base64Data = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.readAsDataURL(file);
+    });
+    
+    allFiles[folderPath].push({
+        name: file.name,
+        dataUrl: base64Data,
+        date: new Date().toISOString(),
+        size: file.size
+    });
+    
+    saveAllFiles();
+    return true;
+}
+
+function deleteFileFromFolder(folderPath, fileName) {
+    if (allFiles[folderPath]) {
+        const index = allFiles[folderPath].findIndex(f => f.name === fileName);
+        if (index !== -1) {
+            allFiles[folderPath].splice(index, 1);
+            if (allFiles[folderPath].length === 0) {
+                delete allFiles[folderPath];
+            }
+            saveAllFiles();
+            render();
+            showToast(`Deleted "${fileName}"`, false);
+            return true;
+        }
+    }
+    return false;
+}
+
+// ==================== FOLDER MANAGEMENT FUNCTIONS ====================
+
+// Rename current folder
+function renameCurrentFolder() {
+    if (currentPath.length === 0) {
+        showToast("Cannot rename root folder", true);
+        return;
+    }
+    
+    const oldName = currentPath[currentPath.length - 1];
+    const newName = prompt("Enter new folder name:", oldName);
+    
+    if (newName && newName !== oldName) {
+        // Navigate to parent
+        const parentPath = currentPath.slice(0, -1);
+        let parent = fileSystem;
+        for (let p of parentPath) {
+            parent = parent[p];
+        }
+        
+        // Move folder content
+        parent[newName] = parent[oldName];
+        delete parent[oldName];
+        
+        // Update file paths
+        const oldFolderPath = currentPath.join("/");
+        const newFolderPath = [...parentPath, newName].join("/");
+        
+        if (allFiles[oldFolderPath]) {
+            allFiles[newFolderPath] = allFiles[oldFolderPath];
+            delete allFiles[oldFolderPath];
+        }
+        
+        // Update current path
+        currentPath[parentPath.length] = newName;
+        
+        saveFolderStructure();
+        saveAllFiles();
+        render();
+        showToast(`Renamed to "${newName}"`, false);
+    }
+}
+
+// Add new folder inside current folder
+function addNewFolder() {
+    const folderName = prompt("Enter new folder name:", "New Folder");
+    
+    if (folderName) {
+        const currentFolder = getCurrentFolderObject();
+        if (currentFolder && !currentFolder[folderName]) {
+            currentFolder[folderName] = {};
+            saveFolderStructure();
+            render();
+            showToast(`Folder "${folderName}" created`, false);
+        } else if (currentFolder && currentFolder[folderName]) {
+            showToast("Folder already exists!", true);
+        }
+    }
+}
+
+// Delete current folder
+function deleteCurrentFolder() {
+    if (currentPath.length === 0) {
+        showToast("Cannot delete root folder", true);
+        return;
+    }
+    
+    const folderName = currentPath[currentPath.length - 1];
+    if (confirm(`Delete folder "${folderName}" and ALL its contents? This cannot be undone!`)) {
+        // Remove files in this folder
+        const folderPath = currentPath.join("/");
+        if (allFiles[folderPath]) {
+            delete allFiles[folderPath];
+        }
+        
+        // Remove from structure
+        const parentPath = currentPath.slice(0, -1);
+        let parent = fileSystem;
+        for (let p of parentPath) {
+            parent = parent[p];
+        }
+        delete parent[folderName];
+        
+        // Go back
+        currentPath.pop();
+        
+        saveFolderStructure();
+        saveAllFiles();
+        render();
+        showToast(`Folder "${folderName}" deleted`, false);
+    }
+}
+
+// Get current folder object
+function getCurrentFolderObject() {
+    let folder = fileSystem;
+    for (let p of currentPath) {
+        if (folder[p]) folder = folder[p];
+        else return null;
+    }
+    return folder;
+}
+
+// ==================== UI FUNCTIONS ====================
+
+function showToast(message, isError = false) {
+    toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-circle' : 'fa-check-circle'}"></i><span>${message}</span>`;
+    toast.style.background = isError ? "linear-gradient(135deg, #ef4444, #dc2626)" : "linear-gradient(135deg, #10b981, #059669)";
+    toast.classList.remove("hidden");
+    setTimeout(() => toast.classList.add("hidden"), 3000);
+}
+
+function updateStats() {
+    let folderCount = 0;
+    function countRecursive(obj) {
+        for (let key in obj) {
+            if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
+                folderCount++;
+                countRecursive(obj[key]);
+            }
+        }
+    }
+    countRecursive(fileSystem);
+    
+    let fileCount = 0;
+    for (let key in allFiles) {
+        fileCount += allFiles[key].length;
+    }
+    
+    folderCountSpan.textContent = folderCount;
+    fileCountSpan.textContent = fileCount;
+}
+
+function getCurrentFolder() {
+    let folder = fileSystem;
+    for (let p of currentPath) {
+        if (folder[p]) folder = folder[p];
+        else return null;
+    }
+    return folder;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function createCard(icon, title, onClick, isFolder = true, showDelete = false, deleteCallback = null) {
+    const card = document.createElement("div");
+    card.className = "card";
+    const iconColor = isFolder ? "linear-gradient(135deg, #f59e0b, #ef4444)" : "linear-gradient(135deg, #3b82f6, #8b5cf6)";
+    const iconClass = isFolder ? "fa-folder" : "fa-file-pdf";
+    
+    if (currentViewMode === "list") {
+        card.innerHTML = `
+            <i class="fas ${iconClass}" style="background: ${iconColor}; -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+            <span style="flex:1">${escapeHtml(title)}</span>
+            ${showDelete ? `<button class="delete-btn" onclick="event.stopPropagation(); window.deleteFileFromFolder('${currentPath.join("/")}', '${title}')"><i class="fas fa-trash"></i></button>` : ''}
+        `;
+    } else {
+        card.innerHTML = `
+            <i class="fas ${iconClass}" style="background: ${iconColor}; -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 2rem;"></i>
+            <span>${escapeHtml(title)}</span>
+            ${showDelete ? `<button class="delete-btn-small" onclick="event.stopPropagation(); window.deleteFileFromFolder('${currentPath.join("/")}', '${title}')"><i class="fas fa-trash"></i></button>` : ''}
+        `;
+    }
+    card.onclick = onClick;
+    return card;
+}
+
+function render() {
+    content.innerHTML = "";
+    const folder = getCurrentFolder();
+    if (!folder) { currentPath = []; render(); return; }
+    
+    content.className = `content ${currentViewMode === "grid" ? "grid-view" : "list-view"}`;
+    pathText.innerText = currentPath.length === 0 ? "Home" : currentPath.join(" / ");
+    backBtn.classList.toggle("hidden", currentPath.length === 0);
+    
+    const isLeafFolder = Object.keys(folder).length === 0;
+    const isRoot = currentPath.length === 0;
+    
+    // Show action buttons for folder management (only when inside a folder, not root)
+    if (!isRoot) {
+        const actionBar = document.createElement("div");
+        actionBar.className = "action-bar";
+        actionBar.innerHTML = `
+            <button class="action-btn rename-btn" onclick="renameCurrentFolder()"><i class="fas fa-edit"></i> Rename</button>
+            <button class="action-btn delete-folder-btn" onclick="deleteCurrentFolder()"><i class="fas fa-trash-alt"></i> Delete</button>
+            <button class="action-btn add-folder-btn" onclick="addNewFolder()"><i class="fas fa-plus"></i> Add Subfolder</button>
+        `;
+        content.appendChild(actionBar);
+    }
+    
+    // Add "Add Folder" button at root level too
+    if (isRoot) {
+        const actionBar = document.createElement("div");
+        actionBar.className = "action-bar";
+        actionBar.innerHTML = `
+            <button class="action-btn add-folder-btn" onclick="addNewFolder()"><i class="fas fa-plus"></i> Add New Department</button>
+        `;
+        content.appendChild(actionBar);
+    }
+    
+    // Show subfolders
+    for (let key in folder) {
+        content.appendChild(createCard(key, key, () => { currentPath.push(key); render(); }, true));
+    }
+    
+    // Show upload button and files if leaf folder
+    if (isLeafFolder) {
+        uploadBtn.classList.toggle("hidden", false);
+        const folderFiles = getFilesForCurrentFolder();
+        
+        if (folderFiles.length === 0 && Object.keys(folder).length === 0) {
+            const emptyDiv = document.createElement("div");
+            emptyDiv.className = "empty-state";
+            emptyDiv.innerHTML = '<i class="fas fa-cloud-upload-alt"></i><p>No PDFs yet. Click Upload to add files.<br>Files are saved permanently!</p>';
+            content.appendChild(emptyDiv);
+        } else {
+            folderFiles.forEach((f) => {
+                const card = createCard(f.name, f.name, () => openPDF(f.dataUrl), false, true);
+                content.appendChild(card);
+            });
+        }
+    } else {
+        uploadBtn.classList.toggle("hidden", true);
+    }
+    updateStats();
+}
+
+function triggerUpload() { 
+    fileInput.click(); 
+}
+
+fileInput.addEventListener("change", async (e) => {
+    const files_list = e.target.files;
+    if (!files_list.length) return;
+    
+    let uploadedCount = 0;
+    for (let file of files_list) {
+        if (file.type === "application/pdf") {
+            await addFileToCurrentFolder(file);
+            uploadedCount++;
+        }
+    }
+    
+    if (uploadedCount > 0) {
+        showToast(`${uploadedCount} PDF${uploadedCount > 1 ? 's' : ''} saved permanently!`);
+        render();
+    }
+    
+    fileInput.value = "";
+});
+
+function goBack() { 
+    if (currentPath.length > 0) { 
+        currentPath.pop(); 
+        render(); 
+    } 
+}
+
+function openPDF(dataUrl) { 
+    frame.src = dataUrl; 
+    viewer.classList.remove("hidden"); 
+    document.body.style.overflow = "hidden"; 
+}
+
+function closeViewer() { 
+    viewer.classList.add("hidden"); 
+    frame.src = ""; 
+    document.body.style.overflow = "auto"; 
+}
+
+function setViewMode(mode) { 
+    currentViewMode = mode; 
+    render(); 
+    document.getElementById("gridViewBtn").classList.toggle("active", mode === "grid"); 
+    document.getElementById("listViewBtn").classList.toggle("active", mode === "list"); 
+}
+
+// Make functions global
+window.deleteFileFromFolder = (folderPath, fileName) => {
+    if (confirm(`Delete "${fileName}"? This cannot be undone.`)) {
+        deleteFileFromFolder(folderPath, fileName);
+    }
+};
+window.renameCurrentFolder = renameCurrentFolder;
+window.deleteCurrentFolder = deleteCurrentFolder;
+window.addNewFolder = addNewFolder;
+
+pathContainer.addEventListener("click", () => { currentPath = []; render(); });
+document.getElementById("gridViewBtn").addEventListener("click", () => setViewMode("grid"));
+document.getElementById("listViewBtn").addEventListener("click", () => setViewMode("list"));
+
+window.goBack = goBack;
+window.triggerUpload = triggerUpload;
+window.closeViewer = closeViewer;
+window.openPDF = openPDF;
+
+// ==================== INITIALIZATION ====================
+loadFolderStructure();
+loadAllFiles();
+render();
