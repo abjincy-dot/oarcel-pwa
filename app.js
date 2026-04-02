@@ -15,8 +15,8 @@ const fileCountSpan = document.getElementById("fileCount");
 // View mode state
 let currentViewMode = "grid";
 
-// Load saved files from localStorage (PERMANENT!)
-let files = {};
+// Global files object
+let allFiles = {};
 
 // ==================== FOLDER STRUCTURE ====================
 const fileSystem = {
@@ -65,25 +65,110 @@ const fileSystem = {
 
 let currentPath = [];
 
-// Load saved files from localStorage on startup
-function loadSavedFiles() {
-    const saved = localStorage.getItem('oarcel_files');
-    if (saved) {
-        files = JSON.parse(saved);
-        console.log('Loaded saved files:', files);
-        showToast(`${Object.keys(files).reduce((sum, key) => sum + files[key].length, 0)} files loaded from storage`, false);
-    } else {
-        files = {};
+// ==================== PERMANENT STORAGE FUNCTIONS ====================
+
+// Save all files to localStorage
+function saveAllFiles() {
+    try {
+        // Create a clean object to save (without circular references)
+        const toSave = {};
+        for (const folder in allFiles) {
+            toSave[folder] = allFiles[folder].map(file => ({
+                name: file.name,
+                dataUrl: file.dataUrl,
+                date: file.date,
+                size: file.size
+            }));
+        }
+        localStorage.setItem('oarcel_all_files', JSON.stringify(toSave));
+        console.log('Files saved to localStorage');
+        return true;
+    } catch (e) {
+        console.error('Save failed:', e);
+        return false;
     }
-    render();
 }
 
-// Save files to localStorage (PERMANENT)
-function saveFiles() {
-    localStorage.setItem('oarcel_files', JSON.stringify(files));
-    const totalFiles = Object.keys(files).reduce((sum, key) => sum + files[key].length, 0);
-    console.log(`Saved ${totalFiles} files permanently`);
+// Load all files from localStorage
+function loadAllFiles() {
+    try {
+        const saved = localStorage.getItem('oarcel_all_files');
+        if (saved) {
+            allFiles = JSON.parse(saved);
+            console.log('Files loaded from localStorage:', allFiles);
+            
+            // Count total files
+            let total = 0;
+            for (const folder in allFiles) {
+                total += allFiles[folder].length;
+            }
+            if (total > 0) {
+                showToast(`Loaded ${total} saved file${total > 1 ? 's' : ''}`, false);
+            }
+            return true;
+        } else {
+            console.log('No saved files found');
+            allFiles = {};
+            return false;
+        }
+    } catch (e) {
+        console.error('Load failed:', e);
+        allFiles = {};
+        return false;
+    }
 }
+
+// Get files for current folder
+function getFilesForCurrentFolder() {
+    const folderPath = currentPath.join("/");
+    return allFiles[folderPath] || [];
+}
+
+// Add a file to current folder
+async function addFileToCurrentFolder(file) {
+    const folderPath = currentPath.join("/");
+    if (!allFiles[folderPath]) {
+        allFiles[folderPath] = [];
+    }
+    
+    // Convert file to base64 for permanent storage
+    const base64Data = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.readAsDataURL(file);
+    });
+    
+    allFiles[folderPath].push({
+        name: file.name,
+        dataUrl: base64Data,
+        date: new Date().toISOString(),
+        size: file.size
+    });
+    
+    // Save immediately
+    saveAllFiles();
+    return true;
+}
+
+// Delete a file
+function deleteFileFromFolder(folderPath, fileName) {
+    if (allFiles[folderPath]) {
+        const index = allFiles[folderPath].findIndex(f => f.name === fileName);
+        if (index !== -1) {
+            allFiles[folderPath].splice(index, 1);
+            if (allFiles[folderPath].length === 0) {
+                delete allFiles[folderPath];
+            }
+            saveAllFiles();
+            render();
+            showToast(`Deleted "${fileName}"`, false);
+            return true;
+        }
+    }
+    return false;
+}
+
+// ==================== UI FUNCTIONS ====================
 
 function showToast(message, isError = false) {
     toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-circle' : 'fa-check-circle'}"></i><span>${message}</span>`;
@@ -105,8 +190,8 @@ function updateStats() {
     countRecursive(fileSystem);
     
     let fileCount = 0;
-    for (let key in files) {
-        fileCount += files[key].length;
+    for (let key in allFiles) {
+        fileCount += allFiles[key].length;
     }
     
     folderCountSpan.textContent = folderCount;
@@ -128,7 +213,7 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-function createCard(icon, title, onClick, isFolder = true) {
+function createCard(icon, title, onClick, isFolder = true, showDelete = false, deleteCallback = null) {
     const card = document.createElement("div");
     card.className = "card";
     const iconColor = isFolder ? "linear-gradient(135deg, #f59e0b, #ef4444)" : "linear-gradient(135deg, #3b82f6, #8b5cf6)";
@@ -137,12 +222,14 @@ function createCard(icon, title, onClick, isFolder = true) {
     if (currentViewMode === "list") {
         card.innerHTML = `
             <i class="fas ${iconClass}" style="background: ${iconColor}; -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
-            <span>${escapeHtml(title)}</span>
+            <span style="flex:1">${escapeHtml(title)}</span>
+            ${showDelete ? `<button class="delete-btn" onclick="event.stopPropagation(); deleteFileFromFolder('${currentPath.join("/")}', '${title}')"><i class="fas fa-trash"></i></button>` : ''}
         `;
     } else {
         card.innerHTML = `
             <i class="fas ${iconClass}" style="background: ${iconColor}; -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 2.2rem;"></i>
             <span>${escapeHtml(title)}</span>
+            ${showDelete ? `<button class="delete-btn-small" onclick="event.stopPropagation(); deleteFileFromFolder('${currentPath.join("/")}', '${title}')"><i class="fas fa-trash"></i></button>` : ''}
         `;
     }
     card.onclick = onClick;
@@ -168,17 +255,16 @@ function render() {
     
     // Show files if leaf folder
     if (isLeafFolder) {
-        const pathKey = currentPath.join("/");
-        const folderFiles = files[pathKey] || [];
+        const folderFiles = getFilesForCurrentFolder();
         
         if (folderFiles.length === 0 && Object.keys(folder).length === 0) {
             const emptyDiv = document.createElement("div");
             emptyDiv.className = "empty-state";
-            emptyDiv.innerHTML = '<i class="fas fa-cloud-upload-alt"></i><p>No PDFs yet. Click Upload to add files. Files are saved permanently!</p>';
+            emptyDiv.innerHTML = '<i class="fas fa-cloud-upload-alt"></i><p>No PDFs yet. Click Upload to add files.<br>Files are saved permanently!</p>';
             content.appendChild(emptyDiv);
         } else {
-            folderFiles.forEach((f, index) => {
-                const card = createCard(f.name, f.name, () => openPDF(f.dataUrl), false);
+            folderFiles.forEach((f) => {
+                const card = createCard(f.name, f.name, () => openPDF(f.dataUrl), false, true);
                 content.appendChild(card);
             });
         }
@@ -186,66 +272,37 @@ function render() {
     updateStats();
 }
 
-// Convert file to base64 for permanent storage
-function fileToBase64(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = error => reject(error);
-    });
+// Upload files
+function triggerUpload() { 
+    fileInput.click(); 
 }
 
-// Upload files
-function triggerUpload() { fileInput.click(); }
-
 fileInput.addEventListener("change", async (e) => {
-    const pathKey = currentPath.join("/");
-    if (!files[pathKey]) files[pathKey] = [];
+    const files_list = e.target.files;
+    if (!files_list.length) return;
     
     let uploadedCount = 0;
-    for (let file of e.target.files) {
+    for (let file of files_list) {
         if (file.type === "application/pdf") {
-            const base64Data = await fileToBase64(file);
-            files[pathKey].push({ 
-                name: file.name, 
-                dataUrl: base64Data,
-                date: new Date().toISOString(),
-                size: file.size
-            });
+            await addFileToCurrentFolder(file);
             uploadedCount++;
         }
     }
     
     if (uploadedCount > 0) {
-        saveFiles(); // PERMANENTLY SAVE TO LOCALSTORAGE
         showToast(`${uploadedCount} PDF${uploadedCount > 1 ? 's' : ''} saved permanently!`);
+        render();
     }
     
-    render();
     fileInput.value = "";
 });
 
-// Delete file function
-function deleteFile(folderPath, fileName) {
-    if (confirm(`Delete "${fileName}"? This cannot be undone.`)) {
-        const folderFiles = files[folderPath];
-        if (folderFiles) {
-            const index = folderFiles.findIndex(f => f.name === fileName);
-            if (index !== -1) {
-                folderFiles.splice(index, 1);
-                if (folderFiles.length === 0) {
-                    delete files[folderPath];
-                }
-                saveFiles();
-                render();
-                showToast(`"${fileName}" deleted`, false);
-            }
-        }
-    }
+function goBack() { 
+    if (currentPath.length > 0) { 
+        currentPath.pop(); 
+        render(); 
+    } 
 }
-
-function goBack() { if (currentPath.length > 0) { currentPath.pop(); render(); } }
 
 function openPDF(dataUrl) { 
     frame.src = dataUrl; 
@@ -266,6 +323,13 @@ function setViewMode(mode) {
     document.getElementById("listViewBtn").classList.toggle("active", mode === "list"); 
 }
 
+// Make delete function global
+window.deleteFileFromFolder = (folderPath, fileName) => {
+    if (confirm(`Delete "${fileName}"? This cannot be undone.`)) {
+        deleteFileFromFolder(folderPath, fileName);
+    }
+};
+
 pathContainer.addEventListener("click", () => { currentPath = []; render(); });
 document.getElementById("gridViewBtn").addEventListener("click", () => setViewMode("grid"));
 document.getElementById("listViewBtn").addEventListener("click", () => setViewMode("list"));
@@ -275,5 +339,7 @@ window.triggerUpload = triggerUpload;
 window.closeViewer = closeViewer;
 window.openPDF = openPDF;
 
-// Load saved files on startup!
-loadSavedFiles();
+// ==================== INITIALIZATION ====================
+// Load saved files first, then render
+loadAllFiles();
+render();
