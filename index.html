@@ -59,19 +59,20 @@
   .logo {
     width: 60px;
     height: 60px;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, #2d2d4a, #1a1a2e);
     border-radius: 15px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 2rem;
-    color: white;
+    color: #667eea;
     animation: pulse 2s infinite;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
   }
 
   @keyframes pulse {
     0%, 100% {
-      box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.4);
+      box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.2);
     }
     50% {
       box-shadow: 0 0 0 10px rgba(102, 126, 234, 0);
@@ -89,7 +90,7 @@
 
   .header-title span {
     font-size: 0.8rem;
-    color: rgba(255, 255, 255, 0.6);
+    color: rgba(255, 255, 255, 0.5);
   }
 
   /* Top Bar */
@@ -127,7 +128,7 @@
     width: 100%;
     padding: 12px 20px 12px 45px;
     background: rgba(0, 0, 0, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 40px;
     color: white;
     font-size: 0.9rem;
@@ -138,12 +139,12 @@
     outline: none;
     background: rgba(0, 0, 0, 0.7);
     border-color: #667eea;
-    box-shadow: 0 0 15px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 0 15px rgba(102, 126, 234, 0.2);
     transform: scale(1.02);
   }
 
   .search-box::placeholder {
-    color: rgba(255, 255, 255, 0.4);
+    color: rgba(255, 255, 255, 0.3);
   }
 
   .search-icon {
@@ -151,7 +152,7 @@
     left: 18px;
     top: 50%;
     transform: translateY(-50%);
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(255, 255, 255, 0.4);
     transition: all 0.3s;
   }
 
@@ -166,7 +167,7 @@
     transform: translateY(-50%);
     background: none;
     border: none;
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(255, 255, 255, 0.4);
     cursor: pointer;
     display: none;
     font-size: 1rem;
@@ -174,7 +175,7 @@
   }
 
   .clear-search:hover {
-    color: white;
+    color: #f87171;
     transform: translateY(-50%) rotate(90deg);
   }
 
@@ -184,10 +185,10 @@
     top: 50%;
     transform: translateY(-50%);
     font-size: 0.75rem;
-    background: rgba(102, 126, 234, 0.3);
+    background: rgba(102, 126, 234, 0.2);
     padding: 2px 8px;
     border-radius: 20px;
-    color: white;
+    color: rgba(255, 255, 255, 0.8);
     display: none;
   }
 
@@ -214,7 +215,7 @@
     width: 0;
     height: 0;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.1);
     transform: translate(-50%, -50%);
     transition: width 0.6s, height 0.6s;
   }
@@ -225,24 +226,28 @@
   }
 
   .btn-back {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.08);
   }
 
   .btn-back:hover {
-    background: rgba(99, 102, 241, 0.4);
+    background: rgba(99, 102, 241, 0.3);
     transform: translateX(-3px);
+    color: white;
   }
 
   .btn-upload {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
+    background: linear-gradient(135deg, #2d2d4a, #1a1a2e);
+    color: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(102, 126, 234, 0.3);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
   }
 
   .btn-upload:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.2);
+    border-color: rgba(102, 126, 234, 0.5);
   }
 
   .path-container {
@@ -254,13 +259,13 @@
     background: rgba(0, 0, 0, 0.4);
     border-radius: 40px;
     font-size: 0.9rem;
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(255, 255, 255, 0.7);
     cursor: pointer;
     transition: all 0.3s;
   }
 
   .path-container:hover {
-    background: rgba(102, 126, 234, 0.3);
+    background: rgba(102, 126, 234, 0.2);
     color: white;
     transform: translateX(5px);
   }
@@ -276,7 +281,7 @@
   .toggle-btn {
     background: transparent;
     border: none;
-    color: rgba(255, 255, 255, 0.6);
+    color: rgba(255, 255, 255, 0.5);
     padding: 8px 20px;
     border-radius: 30px;
     cursor: pointer;
@@ -285,13 +290,14 @@
   }
 
   .toggle-btn.active {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
+    background: linear-gradient(135deg, #2d2d4a, #1a1a2e);
+    color: #667eea;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(102, 126, 234, 0.3);
   }
 
   .toggle-btn:hover:not(.active) {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
     transform: translateY(-2px);
   }
 
@@ -335,33 +341,31 @@
   }
 
   .stat-item:hover {
-    background: rgba(102, 126, 234, 0.2);
+    background: rgba(102, 126, 234, 0.1);
     transform: translateY(-3px);
   }
 
   .stat-item i {
     font-size: 2rem;
-    color: #a855f7;
-    animation: float 3s ease-in-out infinite;
+    color: #4a4a6a;
+    transition: all 0.3s;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
   }
 
-  @keyframes float {
-    0%, 100% {
-      transform: translateY(0);
-    }
-    50% {
-      transform: translateY(-5px);
-    }
+  .stat-item:hover i {
+    color: #667eea;
+    transform: scale(1.1);
   }
 
   .stat-item span {
     font-size: 1.8rem;
     font-weight: 700;
+    color: rgba(255, 255, 255, 0.9);
   }
 
   .stat-item label {
     font-size: 0.8rem;
-    color: rgba(255, 255, 255, 0.6);
+    color: rgba(255, 255, 255, 0.5);
     margin-left: auto;
   }
 
@@ -380,11 +384,11 @@
   }
 
   .action-btn {
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     padding: 12px 28px;
     border-radius: 40px;
-    color: white;
+    color: rgba(255, 255, 255, 0.8);
     cursor: pointer;
     font-size: 0.9rem;
     font-weight: 600;
@@ -403,7 +407,7 @@
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
     transition: left 0.5s;
   }
 
@@ -415,9 +419,9 @@
     transform: translateY(-3px) scale(1.05);
   }
 
-  .rename-btn:hover { background: #6366f1; box-shadow: 0 5px 20px rgba(99, 102, 241, 0.4); }
-  .delete-folder-btn:hover { background: #ec4899; box-shadow: 0 5px 20px rgba(236, 72, 153, 0.4); }
-  .add-folder-btn:hover { background: #10b981; box-shadow: 0 5px 20px rgba(16, 185, 129, 0.4); }
+  .rename-btn:hover { background: #2d2d4a; color: #667eea; border-color: #667eea; box-shadow: 0 5px 20px rgba(102, 126, 234, 0.2); }
+  .delete-folder-btn:hover { background: #2d1a2e; color: #f87171; border-color: #f87171; box-shadow: 0 5px 20px rgba(248, 113, 113, 0.2); }
+  .add-folder-btn:hover { background: #1a2e1a; color: #10b981; border-color: #10b981; box-shadow: 0 5px 20px rgba(16, 185, 129, 0.2); }
 
   /* Content Grid */
   .content {
@@ -437,14 +441,14 @@
 
   /* Cards with dark theme and animations */
   .grid-view .card {
-    background: linear-gradient(135deg, rgba(20, 20, 40, 0.8), rgba(30, 30, 50, 0.9));
+    background: linear-gradient(135deg, rgba(20, 20, 35, 0.9), rgba(15, 15, 25, 0.95));
     backdrop-filter: blur(10px);
     padding: 30px 15px;
     border-radius: 20px;
     text-align: center;
     cursor: pointer;
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.06);
     position: relative;
     overflow: hidden;
     animation: cardAppear 0.4s ease-out backwards;
@@ -475,7 +479,7 @@
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.03), transparent);
     transition: left 0.5s;
   }
 
@@ -485,8 +489,8 @@
 
   .grid-view .card:hover {
     transform: translateY(-10px) scale(1.02);
-    background: linear-gradient(135deg, rgba(40, 40, 60, 0.9), rgba(50, 50, 70, 0.95));
-    border-color: rgba(102, 126, 234, 0.5);
+    background: linear-gradient(135deg, rgba(30, 30, 50, 0.95), rgba(20, 20, 35, 0.98));
+    border-color: rgba(102, 126, 234, 0.3);
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
   }
 
@@ -494,22 +498,26 @@
     font-size: 3rem;
     margin-bottom: 15px;
     display: block;
+    color: #4a4a6a;
     transition: all 0.3s;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
   }
 
   .grid-view .card:hover i:first-child {
     transform: scale(1.1);
-    filter: drop-shadow(0 0 10px rgba(102, 126, 234, 0.5));
+    color: #667eea;
+    filter: drop-shadow(0 0 10px rgba(102, 126, 234, 0.3));
   }
 
   .grid-view .card span {
     font-size: 0.9rem;
     font-weight: 500;
+    color: rgba(255, 255, 255, 0.8);
   }
 
   /* List view cards */
   .list-view .card {
-    background: linear-gradient(90deg, rgba(20, 20, 40, 0.8), rgba(30, 30, 50, 0.9));
+    background: linear-gradient(90deg, rgba(20, 20, 35, 0.9), rgba(15, 15, 25, 0.95));
     backdrop-filter: blur(10px);
     padding: 15px 25px;
     border-radius: 15px;
@@ -517,7 +525,7 @@
     display: flex;
     align-items: center;
     gap: 15px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.06);
     position: relative;
     overflow: hidden;
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -541,49 +549,53 @@
   .list-view .card:nth-child(4) { animation-delay: 0.2s; }
 
   .list-view .card:hover {
-    background: linear-gradient(90deg, rgba(40, 40, 60, 0.9), rgba(60, 60, 80, 0.95));
+    background: linear-gradient(90deg, rgba(30, 30, 50, 0.95), rgba(20, 20, 35, 0.98));
     transform: translateX(8px) scale(1.01);
-    border-color: rgba(102, 126, 234, 0.5);
+    border-color: rgba(102, 126, 234, 0.3);
   }
 
   .list-view .card i:first-child {
     font-size: 1.5rem;
     width: 35px;
-    transition: transform 0.3s;
+    color: #4a4a6a;
+    transition: all 0.3s;
   }
 
   .list-view .card:hover i:first-child {
     transform: rotate(5deg) scale(1.1);
+    color: #667eea;
   }
 
   .list-view .card span {
     font-size: 0.9rem;
     flex: 1;
+    color: rgba(255, 255, 255, 0.8);
   }
 
   /* Search highlight */
   .search-highlight {
-    background: linear-gradient(135deg, rgba(255, 215, 0, 0.4), rgba(255, 165, 0, 0.3));
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3));
     padding: 2px 4px;
     border-radius: 4px;
     font-weight: bold;
+    color: #a855f7;
     animation: highlightPulse 0.5s ease;
   }
 
   @keyframes highlightPulse {
     0%, 100% {
-      background: rgba(255, 215, 0, 0.3);
+      background: rgba(102, 126, 234, 0.2);
     }
     50% {
-      background: rgba(255, 215, 0, 0.6);
+      background: rgba(102, 126, 234, 0.4);
     }
   }
 
   /* Delete Buttons */
   .delete-btn, .delete-btn-small {
-    background: rgba(239, 68, 68, 0.2);
-    border: 1px solid rgba(239, 68, 68, 0.3);
-    color: #fca5a5;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: #f87171;
     cursor: pointer;
     border-radius: 10px;
     display: flex;
@@ -614,7 +626,7 @@
     background: #ef4444; 
     color: white;
     transform: scale(1.1) rotate(90deg);
-    box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
   }
 
   /* Viewer */
@@ -652,16 +664,18 @@
     align-items: center;
     padding: 20px 30px;
     background: linear-gradient(135deg, #1a1a2e, #16213e);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   }
 
   .viewer-title {
     font-size: 1.2rem;
     font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
   }
 
   .viewer-title i { 
     margin-right: 10px; 
+    color: #667eea;
     animation: spin 0.5s ease;
   }
 
@@ -675,9 +689,9 @@
   }
 
   .viewer-close {
-    background: rgba(239, 68, 68, 0.2);
-    border: 1px solid rgba(239, 68, 68, 0.3);
-    color: white;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: #f87171;
     padding: 10px 25px;
     border-radius: 40px;
     cursor: pointer;
@@ -687,8 +701,9 @@
 
   .viewer-close:hover { 
     background: #ef4444; 
+    color: white;
     transform: scale(1.05);
-    box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
   }
 
   .viewer-body { 
@@ -720,7 +735,7 @@
     font-size: 0.9rem;
     z-index: 10001;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     animation: slideUp 0.3s ease;
   }
 
@@ -741,21 +756,20 @@
     grid-column: 1 / -1;
     text-align: center;
     padding: 80px 20px;
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(255, 255, 255, 0.02);
     border-radius: 20px;
     animation: fadeInUp 0.5s ease;
   }
 
   .empty-state i, .no-results i { 
     font-size: 4rem; 
-    color: #a855f7; 
+    color: #4a4a6a;
     margin-bottom: 20px;
-    animation: float 3s ease-in-out infinite;
   }
 
   .empty-state p, .no-results p {
     font-size: 1rem;
-    color: rgba(255, 255, 255, 0.6);
+    color: rgba(255, 255, 255, 0.5);
   }
 
   @media (max-width: 768px) {
@@ -833,7 +847,7 @@
 <div id="toast" class="toast hidden"><i class="fas fa-check-circle"></i><span>Upload successful!</span></div>
 
 <script>
-// ==================== OARCEL WITH DARK THEME & ANIMATIONS ====================
+// ==================== OARCEL WITH DARK ICONS & THEME ====================
 
 // DOM Elements
 const content = document.getElementById("content");
@@ -921,14 +935,14 @@ function renderSearchResults() {
     content.className = `content ${currentViewMode === "grid" ? "grid-view" : "list-view"}`;
     
     const searchHeader = document.createElement("div");
-    searchHeader.style.cssText = "grid-column: 1/-1; text-align: center; padding: 10px; background: rgba(102,126,234,0.2); border-radius: 40px; margin-bottom: 10px; backdrop-filter: blur(10px);";
-    searchHeader.innerHTML = `<i class="fas fa-search"></i> Search results for "${searchQuery}"`;
+    searchHeader.style.cssText = "grid-column: 1/-1; text-align: center; padding: 10px; background: rgba(102,126,234,0.1); border-radius: 40px; margin-bottom: 10px; backdrop-filter: blur(10px);";
+    searchHeader.innerHTML = `<i class="fas fa-search" style="color: #667eea;"></i> Search results for "${searchQuery}"`;
     content.appendChild(searchHeader);
     
     if (searchResults.length === 0) {
         const noResults = document.createElement("div");
         noResults.className = "no-results";
-        noResults.innerHTML = '<i class="fas fa-file-alt"></i><p>No files found matching your search.</p><small>Try different keywords or check spelling</small>';
+        noResults.innerHTML = '<i class="fas fa-file-alt"></i><p>No files found matching your search.</p><small style="color: rgba(255,255,255,0.4);">Try different keywords or check spelling</small>';
         content.appendChild(noResults);
         updateStats();
         return;
@@ -1410,7 +1424,7 @@ document.addEventListener('keydown', (e) => {
 loadFolderStructure();
 loadAllFiles();
 render();
-showToast("Welcome to OARCEL! Dark theme with smooth animations 🔮", false);
+showToast("Welcome to OARCEL! Dark icons & smooth animations 🎨", false);
 </script>
 </body>
 </html>
