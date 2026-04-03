@@ -84,6 +84,72 @@
     backdrop-filter: blur(10px);
   }
 
+  /* Search Bar - NEW */
+  .search-container {
+    flex: 2;
+    position: relative;
+    min-width: 200px;
+  }
+
+  .search-box {
+    width: 100%;
+    padding: 12px 20px 12px 45px;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 40px;
+    color: white;
+    font-size: 0.9rem;
+    transition: all 0.3s;
+  }
+
+  .search-box:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.5);
+  }
+
+  .search-box::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  .clear-search {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    display: none;
+    font-size: 1rem;
+  }
+
+  .clear-search:hover {
+    color: white;
+  }
+
+  .search-results-count {
+    position: absolute;
+    right: 45px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.75rem;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 2px 8px;
+    border-radius: 20px;
+    color: white;
+    display: none;
+  }
+
   .btn-back, .btn-upload {
     display: flex;
     align-items: center;
@@ -316,6 +382,14 @@
     flex: 1;
   }
 
+  /* Highlight search results */
+  .search-highlight {
+    background: rgba(255, 255, 0, 0.3);
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-weight: bold;
+  }
+
   /* Delete Buttons */
   .delete-btn, .delete-btn-small {
     background: rgba(239, 68, 68, 0.3);
@@ -466,6 +540,21 @@
     color: rgba(255, 255, 255, 0.7);
   }
 
+  /* No results */
+  .no-results {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 60px 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+  }
+
+  .no-results i {
+    font-size: 3rem;
+    color: #f59e0b;
+    margin-bottom: 15px;
+  }
+
   @media (max-width: 768px) {
     .app { padding: 15px; }
     .header { padding: 15px 20px; }
@@ -477,6 +566,7 @@
     .action-btn { padding: 10px 15px; }
     .btn-back span, .btn-upload span { display: none; }
     .btn-back, .btn-upload { padding: 10px 15px; }
+    .search-container { order: 1; width: 100%; }
   }
 </style>
 </head>
@@ -493,6 +583,15 @@
 
   <div class="top-bar">
     <button id="backBtn" class="btn-back hidden"><i class="fas fa-arrow-left"></i><span>Back</span></button>
+    
+    <!-- SEARCH BAR - NEW -->
+    <div class="search-container">
+      <i class="fas fa-search search-icon"></i>
+      <input type="text" id="searchInput" class="search-box" placeholder="Search files by name...">
+      <span id="searchResultsCount" class="search-results-count"></span>
+      <button id="clearSearchBtn" class="clear-search"><i class="fas fa-times"></i></button>
+    </div>
+    
     <div class="path-container" id="pathContainer">
       <i class="fas fa-home"></i>
       <span id="path">Home</span>
@@ -532,7 +631,7 @@
 <div id="toast" class="toast hidden"><i class="fas fa-check-circle"></i><span>Upload successful!</span></div>
 
 <script>
-// ==================== OARCEL - BEAUTIFUL WORKING VERSION ====================
+// ==================== OARCEL WITH SEARCH FUNCTIONALITY ====================
 
 // DOM Elements
 const content = document.getElementById("content");
@@ -549,10 +648,17 @@ const folderCountSpan = document.getElementById("folderCount");
 const fileCountSpan = document.getElementById("fileCount");
 const closeViewerBtn = document.getElementById("closeViewerBtn");
 
+// Search elements
+const searchInput = document.getElementById("searchInput");
+const clearSearchBtn = document.getElementById("clearSearchBtn");
+const searchResultsCount = document.getElementById("searchResultsCount");
+
 // State
 let currentViewMode = "grid";
 let allFiles = {};
 let currentPath = [];
+let searchQuery = "";
+let searchResults = [];
 
 // File System Structure
 let fileSystem = {
@@ -565,6 +671,88 @@ let fileSystem = {
     "SLITTER": { "Blade Maintenance": {}, "Quality Control": {}, "Production Reports": {}, "Mechanical": {}, "Safety": {}, "Checklists": {}, "Training": {}, "Testing": {} },
     "UTILITY": { "Power Supply": {}, "Water System": {}, "Compressed Air": {}, "HVAC": {}, "Reports": {}, "Safety": {}, "Manuals": {}, "Testing": {} }
 };
+
+// Search Function - NEW
+function performSearch(query) {
+    if (!query || query.trim() === "") {
+        searchQuery = "";
+        searchResults = [];
+        searchResultsCount.style.display = "none";
+        clearSearchBtn.style.display = "none";
+        render(); // Normal render
+        return;
+    }
+    
+    searchQuery = query.toLowerCase().trim();
+    searchResults = [];
+    
+    // Search through all files in all folders
+    for (const folderPath in allFiles) {
+        if (allFiles[folderPath] && Array.isArray(allFiles[folderPath])) {
+            allFiles[folderPath].forEach(file => {
+                if (file.name.toLowerCase().includes(searchQuery)) {
+                    searchResults.push({
+                        name: file.name,
+                        dataUrl: file.dataUrl,
+                        folderPath: folderPath,
+                        date: file.date
+                    });
+                }
+            });
+        }
+    }
+    
+    // Update results count display
+    const count = searchResults.length;
+    if (count > 0) {
+        searchResultsCount.textContent = `${count} result${count > 1 ? 's' : ''}`;
+        searchResultsCount.style.display = "block";
+    } else {
+        searchResultsCount.textContent = "No results";
+        searchResultsCount.style.display = "block";
+    }
+    clearSearchBtn.style.display = "block";
+    
+    // Render search results
+    renderSearchResults();
+}
+
+function renderSearchResults() {
+    content.innerHTML = "";
+    content.className = `content ${currentViewMode === "grid" ? "grid-view" : "list-view"}`;
+    
+    // Show search header
+    const searchHeader = document.createElement("div");
+    searchHeader.style.cssText = "grid-column: 1/-1; text-align: center; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 40px; margin-bottom: 10px;";
+    searchHeader.innerHTML = `<i class="fas fa-search"></i> Search results for "${searchQuery}"`;
+    content.appendChild(searchHeader);
+    
+    if (searchResults.length === 0) {
+        const noResults = document.createElement("div");
+        noResults.className = "no-results";
+        noResults.innerHTML = '<i class="fas fa-file-alt"></i><p>No files found matching your search.</p><small>Try different keywords or check spelling</small>';
+        content.appendChild(noResults);
+        updateStats();
+        return;
+    }
+    
+    // Display search results
+    searchResults.forEach(file => {
+        const card = createCard(file.name, () => openPDF(file.dataUrl, file.name), false, true, file.folderPath, file.name);
+        content.appendChild(card);
+    });
+    
+    updateStats();
+}
+
+function clearSearch() {
+    searchInput.value = "";
+    searchQuery = "";
+    searchResults = [];
+    searchResultsCount.style.display = "none";
+    clearSearchBtn.style.display = "none";
+    render();
+}
 
 // Storage Functions
 function saveFolderStructure() { 
@@ -624,17 +812,24 @@ async function addFileToCurrentFolder(file) {
     return true; 
 }
 
-function deleteFile(fileName) {
-    const folderPath = currentPath.join("/");
+function deleteFile(fileName, folderPath = null) {
+    const targetPath = folderPath || currentPath.join("/");
     
     if (confirm(`🗑️ Delete "${fileName}"? This cannot be undone!`)) {
-        if (allFiles[folderPath]) { 
-            const index = allFiles[folderPath].findIndex(f => f.name === fileName); 
+        if (allFiles[targetPath]) { 
+            const index = allFiles[targetPath].findIndex(f => f.name === fileName); 
             if (index !== -1) { 
-                allFiles[folderPath].splice(index, 1); 
-                if (allFiles[folderPath].length === 0) delete allFiles[folderPath]; 
+                allFiles[targetPath].splice(index, 1); 
+                if (allFiles[targetPath].length === 0) delete allFiles[targetPath]; 
                 saveAllFiles(); 
-                render(); 
+                
+                // If we're in search mode, refresh search results
+                if (searchQuery) {
+                    performSearch(searchQuery);
+                } else {
+                    render();
+                }
+                
                 showToast(`✅ Deleted "${fileName}"`); 
                 return true; 
             } 
@@ -810,6 +1005,7 @@ function closeViewer() {
 function goBack() { 
     if (currentPath.length > 0) { 
         currentPath.pop(); 
+        if (searchQuery) clearSearch();
         render(); 
     } 
 }
@@ -819,19 +1015,26 @@ function triggerUpload() {
 }
 
 // Create Card
-function createCard(title, onClick, isFolder = true, showDelete = false) {
+function createCard(title, onClick, isFolder = true, showDelete = false, deletePath = null, deleteName = null) {
     const card = document.createElement("div");
     card.className = "card";
     const iconClass = isFolder ? "fa-folder" : "fa-file-pdf";
     
+    // Highlight search term in title
+    let displayTitle = title;
+    if (searchQuery && !isFolder) {
+        const regex = new RegExp(`(${searchQuery})`, 'gi');
+        displayTitle = title.replace(regex, '<mark class="search-highlight">$1</mark>');
+    }
+    
     if (currentViewMode === "list") {
         card.innerHTML = `<i class="fas ${iconClass}"></i>
-                         <span style="flex:1">${escapeHtml(title)}</span>
-                         ${showDelete ? `<button class="delete-btn" data-file="${escapeHtml(title)}"><i class="fas fa-trash"></i></button>` : ''}`;
+                         <span style="flex:1">${displayTitle}</span>
+                         ${showDelete ? `<button class="delete-btn" data-file="${escapeHtml(title)}" data-path="${deletePath || ''}"><i class="fas fa-trash"></i></button>` : ''}`;
     } else {
         card.innerHTML = `<i class="fas ${iconClass}"></i>
-                         <span>${escapeHtml(title)}</span>
-                         ${showDelete ? `<button class="delete-btn-small" data-file="${escapeHtml(title)}"><i class="fas fa-trash"></i></button>` : ''}`;
+                         <span>${displayTitle}</span>
+                         ${showDelete ? `<button class="delete-btn-small" data-file="${escapeHtml(title)}" data-path="${deletePath || ''}"><i class="fas fa-trash"></i></button>` : ''}`;
     }
     
     card.onclick = (e) => {
@@ -847,7 +1050,13 @@ function createCard(title, onClick, isFolder = true, showDelete = false) {
             deleteBtn.onclick = (e) => {
                 e.stopPropagation();
                 const fileName = deleteBtn.getAttribute('data-file');
-                deleteFile(fileName);
+                const filePath = deleteBtn.getAttribute('data-path');
+                if (searchQuery && filePath) {
+                    deleteFile(fileName, filePath);
+                    performSearch(searchQuery);
+                } else {
+                    deleteFile(fileName);
+                }
             };
         }
     }
@@ -914,6 +1123,7 @@ function render() {
         if (folder.hasOwnProperty(key)) {
             content.appendChild(createCard(key, () => { 
                 currentPath.push(key); 
+                if (searchQuery) clearSearch();
                 render(); 
             }, true, false)); 
         }
@@ -929,7 +1139,7 @@ function render() {
         content.appendChild(emptyDiv);
     } else {
         folderFiles.forEach((f) => { 
-            content.appendChild(createCard(f.name, () => openPDF(f.dataUrl, f.name), false, true)); 
+            content.appendChild(createCard(f.name, () => openPDF(f.dataUrl, f.name), false, true, currentPath.join("/"), f.name)); 
         });
     }
     
@@ -938,7 +1148,11 @@ function render() {
 
 function setViewMode(mode) { 
     currentViewMode = mode; 
-    render(); 
+    if (searchQuery) {
+        renderSearchResults();
+    } else {
+        render();
+    }
     document.getElementById("gridViewBtn").classList.toggle("active", mode === "grid"); 
     document.getElementById("listViewBtn").classList.toggle("active", mode === "list"); 
 }
@@ -960,6 +1174,7 @@ fileInput.addEventListener("change", async (e) => {
     
     if (uploadedCount > 0) { 
         showToast(`${uploadedCount} PDF(s) uploaded successfully!`); 
+        if (searchQuery) clearSearch();
         render(); 
     } 
     fileInput.value = ""; 
@@ -967,6 +1182,7 @@ fileInput.addEventListener("change", async (e) => {
 
 pathContainer.addEventListener("click", () => { 
     currentPath = []; 
+    if (searchQuery) clearSearch();
     render(); 
 });
 
@@ -976,9 +1192,23 @@ closeViewerBtn.addEventListener("click", closeViewer);
 document.getElementById("gridViewBtn").addEventListener("click", () => setViewMode("grid"));
 document.getElementById("listViewBtn").addEventListener("click", () => setViewMode("list"));
 
+// Search event listeners
+searchInput.addEventListener("input", (e) => {
+    performSearch(e.target.value);
+});
+
+clearSearchBtn.addEventListener("click", () => {
+    clearSearch();
+});
+
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && !viewer.classList.contains('hidden')) {
         closeViewer();
+    }
+    // Ctrl+F or Cmd+F to focus search
+    if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        e.preventDefault();
+        searchInput.focus();
     }
 });
 
@@ -986,7 +1216,7 @@ document.addEventListener('keydown', (e) => {
 loadFolderStructure();
 loadAllFiles();
 render();
-showToast("Welcome to OARCEL Document Manager! ✨", false);
+showToast("Welcome to OARCEL! Use the search bar to find files 🔍", false);
 </script>
 </body>
 </html>
