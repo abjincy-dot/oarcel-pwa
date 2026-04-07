@@ -44,13 +44,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .delete-folder-btn:hover{background:#ec4899}
 .add-folder-btn:hover{background:#10b981}
 
-/* Department Cards */
-.departments-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px;margin-bottom:30px}
-.dept-card{background:linear-gradient(135deg,rgba(99,102,241,0.2),rgba(236,72,153,0.2));border:1px solid rgba(99,102,241,0.4);border-radius:20px;padding:20px 12px;text-align:center;cursor:pointer;transition:all 0.2s}
-.dept-card:hover{transform:translateY(-4px);background:linear-gradient(135deg,rgba(99,102,241,0.35),rgba(236,72,153,0.35));border-color:#6366f1}
-.dept-card i{font-size:2rem;margin-bottom:12px;display:block;background:linear-gradient(135deg,#6366f1,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.dept-card span{font-size:1rem;font-weight:600;display:block}
-.dept-card small{font-size:0.7rem;color:var(--text-secondary);display:block;margin-top:6px}
+/* Department Cards - MEDIUM SIZE PILLS */
+.departments-grid{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:25px}
+.dept-card{display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(236,72,153,0.15));border:1px solid rgba(99,102,241,0.4);border-radius:40px;padding:10px 22px;cursor:pointer;transition:all 0.2s}
+.dept-card:hover{transform:translateY(-2px);background:linear-gradient(135deg,rgba(99,102,241,0.3),rgba(236,72,153,0.3));border-color:#6366f1}
+.dept-card i{font-size:1.1rem;background:linear-gradient(135deg,#6366f1,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.dept-card span{font-size:0.9rem;font-weight:500}
+.dept-card small{font-size:0.7rem;color:var(--text-secondary);margin-left:4px}
 
 /* LIST VIEW ONLY - All items as list */
 .content{display:flex;flex-direction:column;gap:8px}
@@ -88,18 +88,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .clear-recent:hover{background:#ef4444;color:#fff}
 .recent-list{display:flex;gap:8px;flex-wrap:wrap}
 .recent-item{background:rgba(99,102,241,0.15);padding:4px 10px;border-radius:16px;font-size:0.7rem;cursor:pointer}
-.section-title{font-size:1rem;font-weight:600;margin:0 0 15px 0}
+.section-title{font-size:0.9rem;font-weight:600;margin:0 0 12px 0;display:flex;align-items:center;gap:8px}
 #fileInput{display:none}
 @media (max-width:640px){
     .app{padding:12px}
     .btn-back span,.btn-upload span,.theme-toggle span{display:none}
-    .departments-grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px}
-    .dept-card{padding:15px 8px}
-    .dept-card i{font-size:1.5rem}
-    .dept-card span{font-size:0.85rem}
+    .dept-card{padding:8px 16px}
+    .dept-card i{font-size:0.9rem}
+    .dept-card span{font-size:0.8rem}
+    .dept-card small{display:none}
     .card{padding:10px 12px}
     .card i:first-child{font-size:0.9rem;width:24px}
     .card span{font-size:0.75rem}
+    .delete-btn,.rename-file-btn{padding:4px 8px;font-size:0.65rem}
 }
 </style>
 </head>
@@ -389,7 +390,7 @@ function renderDepartmentButtons(){
         for(let dept in fileSystem){
             const subCount=Object.keys(fileSystem[dept]).length;
             const icon=departmentIcons[dept]||"fas fa-folder";
-            departmentsSection.innerHTML+=`<div class="dept-card" onclick="selectDepartment('${dept}')"><i class="${icon}"></i><span>${dept}</span><small>${subCount} folders</small></div>`;
+            departmentsSection.innerHTML+=`<div class="dept-card" onclick="selectDepartment('${dept}')"><i class="${icon}"></i><span>${dept}</span><small>(${subCount})</small></div>`;
         }
         departmentsSection.innerHTML+='</div>';
     }else{departmentsSection.innerHTML='';}
