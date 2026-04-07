@@ -11,6 +11,8 @@
 <meta name="theme-color" content="#6366f1">
 <link rel="apple-touch-icon" href="https://img.icons8.com/fluency/192/folder-invoices.png">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<!-- PDF.js library for zoom support -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#0f0c29,#1a1a3e,#24243e);color:#fff;min-height:100vh}
@@ -71,16 +73,152 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .viewer-title i{color:#6366f1;margin-right:8px}
 .viewer-close{background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.4);color:#f87171;padding:8px 20px;border-radius:40px;cursor:pointer}
 .viewer-close:hover{background:#ef4444;color:#fff}
-.viewer-body{flex:1;padding:20px}
-iframe{width:100%;height:100%;border:none;border-radius:16px;background:#fff}
+.viewer-body{flex:1;padding:20px;overflow:hidden}
 .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#10b981,#059669);color:#fff;padding:12px 24px;border-radius:50px;display:flex;align-items:center;gap:10px;font-size:0.85rem;z-index:1100}
 .toast.hidden{display:none}
 .empty-state{grid-column:1/-1;text-align:center;padding:60px 20px;background:rgba(255,255,255,0.04);border-radius:24px}
 .empty-state i{font-size:48px;color:#6366f1;margin-bottom:16px}
 .search-result-info{text-align:center;padding:10px;color:#aaa;font-size:0.8rem}
-@media (max-width:640px){.app{padding:12px}.header{padding:14px 18px}.logo{width:42px;height:42px;font-size:1.3rem}.header-title h1{font-size:1.3rem}.btn-back span,.btn-upload span{display:none}.btn-back,.btn-upload{padding:10px 14px}.content.grid-view{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px}.action-btn span{display:none}.action-btn{padding:10px 14px}.stat-item span{font-size:1.2rem}.stat-item i{font-size:1.1rem}.search-container{min-width:100%}}
 
-/* ========== FIX: Close button moved to bottom on mobile ========== */
+/* PDF Viewer with zoom support */
+.pdf-viewer-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: #1a1a1a;
+    overflow: hidden;
+}
+
+.pdf-canvas-wrapper {
+    flex: 1;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    background: #525659;
+}
+
+#pdfCanvas {
+    display: block;
+    margin: 0 auto;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    background: white;
+}
+
+.pdf-zoom-controls {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding: 12px 20px;
+    background: rgba(0,0,0,0.9);
+    border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.zoom-btn {
+    background: rgba(255,255,255,0.15);
+    border: none;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 40px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    touch-action: manipulation;
+    min-width: 80px;
+    justify-content: center;
+}
+
+.zoom-btn:active {
+    transform: scale(0.96);
+    background: #6366f1;
+}
+
+.zoom-level {
+    color: white;
+    font-size: 14px;
+    background: rgba(0,0,0,0.5);
+    padding: 8px 16px;
+    border-radius: 30px;
+    font-weight: 500;
+}
+
+.pdf-nav-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    padding: 12px 20px;
+    background: rgba(0,0,0,0.8);
+    border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.pdf-nav-controls button {
+    background: rgba(255,255,255,0.15);
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 40px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.pdf-nav-controls button:disabled {
+    opacity: 0.4;
+}
+
+.pdf-nav-controls button:active {
+    transform: scale(0.96);
+}
+
+#pdfPageInfo {
+    color: white;
+    font-size: 14px;
+}
+
+.zoom-hint {
+    position: absolute;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.7);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 30px;
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 20;
+    white-space: nowrap;
+    backdrop-filter: blur(10px);
+    animation: fadeOut 3s forwards;
+}
+
+@keyframes fadeOut {
+    0% { opacity: 1; }
+    70% { opacity: 1; }
+    100% { opacity: 0; visibility: hidden; }
+}
+
+@media (max-width:640px){
+    .app{padding:12px}
+    .header{padding:14px 18px}
+    .logo{width:42px;height:42px;font-size:1.3rem}
+    .header-title h1{font-size:1.3rem}
+    .btn-back span,.btn-upload span{display:none}
+    .btn-back,.btn-upload{padding:10px 14px}
+    .content.grid-view{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px}
+    .action-btn span{display:none}
+    .action-btn{padding:10px 14px}
+    .stat-item span{font-size:1.2rem}
+    .stat-item i{font-size:1.1rem}
+    .search-container{min-width:100%}
+}
+
+/* FIX: Close button moved to bottom on mobile */
 @media (max-width: 768px) {
     .viewer-close {
         position: fixed !important;
@@ -149,13 +287,18 @@ iframe{width:100%;height:100%;border:none;border-radius:16px;background:#fff}
     <div class="viewer-title"><i class="fas fa-file-pdf"></i><span>Document Viewer</span></div>
     <button class="viewer-close" onclick="closeViewer()"><i class="fas fa-times"></i><span>Close</span></button>
   </div>
-  <div class="viewer-body"><iframe id="pdfFrame"></iframe></div>
+  <div class="viewer-body" id="viewerBody">
+    <!-- PDF viewer will be injected here dynamically -->
+  </div>
 </div>
 
 <div id="toast" class="toast hidden"><i class="fas fa-check-circle"></i><span>Upload successful!</span></div>
 
 <script>
-// ==================== OARCEL - COMPLETE WITH SEARCH ====================
+// Initialize PDF.js worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+// ==================== OARCEL - COMPLETE WITH ZOOMABLE PDF ====================
 
 const content = document.getElementById("content");
 const pathText = document.getElementById("path");
@@ -164,7 +307,7 @@ const backBtn = document.getElementById("backBtn");
 const uploadBtn = document.getElementById("uploadBtn");
 const fileInput = document.getElementById("fileInput");
 const viewer = document.getElementById("viewer");
-const frame = document.getElementById("pdfFrame");
+const viewerBody = document.getElementById("viewerBody");
 const toast = document.getElementById("toast");
 const folderCountSpan = document.getElementById("folderCount");
 const fileCountSpan = document.getElementById("fileCount");
@@ -176,6 +319,12 @@ let currentViewMode = "grid";
 let allFiles = {};
 let currentPath = [];
 let isSearchMode = false;
+
+// PDF zoom variables
+let pdfDoc = null;
+let currentPageNum = 1;
+let currentZoom = 1.2;
+let totalPages = 0;
 
 // Folder structure
 let fileSystem = {
@@ -399,16 +548,184 @@ function createCard(title, onClick, isFolder = true, showDelete = false, deleteP
     card.onclick = onClick;
     return card;
 }
-function openPDF(dataUrl) { 
-    viewer.classList.remove("hidden"); 
-    document.body.style.overflow = "hidden"; 
-    frame.src = dataUrl; 
+
+// ========== ZOOMABLE PDF FUNCTIONS ==========
+async function loadPDFDocument(url) {
+    try {
+        const wrapper = document.getElementById('pdfCanvasWrapper');
+        if (wrapper) {
+            wrapper.style.display = 'flex';
+            wrapper.style.alignItems = 'center';
+            wrapper.style.justifyContent = 'center';
+        }
+        
+        pdfDoc = await pdfjsLib.getDocument(url).promise;
+        totalPages = pdfDoc.numPages;
+        currentPageNum = 1;
+        currentZoom = 1.2;
+        
+        updateZoomLevel();
+        renderPDFPage();
+        
+    } catch (error) {
+        console.error('Error loading PDF:', error);
+        const wrapper = document.getElementById('pdfCanvasWrapper');
+        if (wrapper) wrapper.innerHTML = '<div style="color:white; text-align:center; padding:40px">Failed to load PDF</div>';
+    }
 }
+
+async function renderPDFPage() {
+    if (!pdfDoc) return;
+    
+    try {
+        const page = await pdfDoc.getPage(currentPageNum);
+        const viewport = page.getViewport({ scale: currentZoom });
+        const canvas = document.getElementById('pdfCanvas');
+        if (!canvas) return;
+        
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        
+        const renderContext = {
+            canvasContext: canvas.getContext('2d'),
+            viewport: viewport
+        };
+        
+        await page.render(renderContext).promise;
+        
+        const pageInfo = document.getElementById('pdfPageInfo');
+        if (pageInfo) pageInfo.textContent = `Page ${currentPageNum} / ${totalPages}`;
+        
+        const prevBtn = document.getElementById('pdfPrevPage');
+        const nextBtn = document.getElementById('pdfNextPage');
+        if (prevBtn) prevBtn.disabled = (currentPageNum <= 1);
+        if (nextBtn) nextBtn.disabled = (currentPageNum >= totalPages);
+        
+        const wrapper = document.getElementById('pdfCanvasWrapper');
+        if (wrapper) wrapper.scrollTop = 0;
+        
+    } catch (error) {
+        console.error('Error rendering page:', error);
+    }
+}
+
+function zoomIn() {
+    if (currentZoom < 3.0) {
+        currentZoom = Math.min(3.0, currentZoom + 0.2);
+        updateZoomLevel();
+        renderPDFPage();
+    }
+}
+
+function zoomOut() {
+    if (currentZoom > 0.5) {
+        currentZoom = Math.max(0.5, currentZoom - 0.2);
+        updateZoomLevel();
+        renderPDFPage();
+    }
+}
+
+function updateZoomLevel() {
+    const zoomPercent = Math.round(currentZoom * 100);
+    const zoomLevelSpan = document.getElementById('zoomLevel');
+    if (zoomLevelSpan) zoomLevelSpan.textContent = `${zoomPercent}%`;
+}
+
+function prevPDFPage() {
+    if (currentPageNum <= 1) return;
+    currentPageNum--;
+    renderPDFPage();
+}
+
+function nextPDFPage() {
+    if (currentPageNum >= totalPages) return;
+    currentPageNum++;
+    renderPDFPage();
+}
+
+function openPDF(dataUrl) {
+    viewer.classList.remove("hidden");
+    document.body.style.overflow = "hidden";
+    
+    // Create PDF viewer container
+    viewerBody.innerHTML = `
+        <div id="pdfViewerContainer" class="pdf-viewer-container">
+            <div class="pdf-canvas-wrapper" id="pdfCanvasWrapper">
+                <canvas id="pdfCanvas"></canvas>
+            </div>
+            <div class="pdf-zoom-controls">
+                <button class="zoom-btn" id="zoomOutBtn"><i class="fas fa-search-minus"></i> Zoom Out</button>
+                <span class="zoom-level" id="zoomLevel">120%</span>
+                <button class="zoom-btn" id="zoomInBtn"><i class="fas fa-search-plus"></i> Zoom In</button>
+            </div>
+            <div class="pdf-nav-controls">
+                <button id="pdfPrevPage">◀ Previous</button>
+                <span id="pdfPageInfo">Page 1 / 1</span>
+                <button id="pdfNextPage">Next ▶</button>
+            </div>
+        </div>
+    `;
+    
+    // Add event listeners
+    document.getElementById('zoomInBtn').addEventListener('click', zoomIn);
+    document.getElementById('zoomOutBtn').addEventListener('click', zoomOut);
+    document.getElementById('pdfPrevPage').addEventListener('click', prevPDFPage);
+    document.getElementById('pdfNextPage').addEventListener('click', nextPDFPage);
+    
+    // Add pinch-to-zoom support
+    const wrapper = document.getElementById('pdfCanvasWrapper');
+    let initialDistance = 0;
+    
+    wrapper.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 2) {
+            initialDistance = Math.hypot(
+                e.touches[0].clientX - e.touches[1].clientX,
+                e.touches[0].clientY - e.touches[1].clientY
+            );
+        }
+    });
+    
+    wrapper.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 2 && initialDistance > 0) {
+            e.preventDefault();
+            const newDistance = Math.hypot(
+                e.touches[0].clientX - e.touches[1].clientX,
+                e.touches[0].clientY - e.touches[1].clientY
+            );
+            const delta = newDistance - initialDistance;
+            if (Math.abs(delta) > 10) {
+                if (delta > 0) zoomIn();
+                else zoomOut();
+                initialDistance = newDistance;
+            }
+        }
+    });
+    
+    // Show zoom hint on mobile
+    if (window.innerWidth <= 768) {
+        let hint = document.querySelector('.zoom-hint');
+        if (!hint) {
+            hint = document.createElement('div');
+            hint.className = 'zoom-hint';
+            hint.innerHTML = '💡 Pinch to zoom | Double tap to reset';
+            document.querySelector('.pdf-viewer-container').appendChild(hint);
+        }
+        setTimeout(() => { if (hint) hint.remove(); }, 3000);
+    }
+    
+    loadPDFDocument(dataUrl);
+}
+
 function closeViewer() { 
     viewer.classList.add("hidden"); 
-    frame.src = ""; 
+    viewerBody.innerHTML = "";
     document.body.style.overflow = "auto"; 
+    pdfDoc = null;
+    currentPageNum = 1;
+    currentZoom = 1.2;
+    totalPages = 0;
 }
+
 function goBack() { 
     if (currentPath.length > 0 && !isSearchMode) { 
         currentPath.pop(); 
@@ -565,7 +882,7 @@ document.getElementById("listViewBtn").addEventListener("click", () => setViewMo
 loadFolderStructure();
 loadAllFiles();
 render();
-console.log("App initialized with search");
+console.log("App initialized with zoomable PDF support");
 </script>
 </body>
 </html>
