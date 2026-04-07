@@ -11,7 +11,6 @@
 <meta name="theme-color" content="#6366f1">
 <link rel="apple-touch-icon" href="https://img.icons8.com/fluency/192/folder-invoices.png">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<!-- PDF.js library for zoom support -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -67,141 +66,46 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .delete-btn-small{position:absolute;top:10px;right:10px;width:28px;height:28px;font-size:0.75rem}
 .delete-btn:hover,.delete-btn-small:hover{background:#ef4444;color:#fff}
 .card{position:relative}
-.viewer{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.96);z-index:1000;display:flex;flex-direction:column}
+.viewer{position:fixed;top:0;left:0;width:100%;height:100%;background:#1a1a1a;z-index:1000;display:flex;flex-direction:column}
 .viewer.hidden{display:none}
-.viewer-header{display:flex;justify-content:space-between;align-items:center;padding:16px 24px;background:rgba(0,0,0,0.8);border-bottom:1px solid rgba(99,102,241,0.3)}
+.viewer-header{display:flex;justify-content:space-between;align-items:center;padding:12px 20px;background:#2c2c2e;border-bottom:1px solid #3a3a3c}
 .viewer-title i{color:#6366f1;margin-right:8px}
-.viewer-close{background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.4);color:#f87171;padding:8px 20px;border-radius:40px;cursor:pointer}
-.viewer-close:hover{background:#ef4444;color:#fff}
-.viewer-body{flex:1;padding:20px;overflow:hidden}
-.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#10b981,#059669);color:#fff;padding:12px 24px;border-radius:50px;display:flex;align-items:center;gap:10px;font-size:0.85rem;z-index:1100}
+.viewer-title span{font-size:15px;font-weight:500}
+.viewer-close{background:rgba(255,255,255,0.1);border:none;color:#fff;padding:8px 16px;border-radius:30px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:6px}
+.viewer-close:hover{background:#ff3b30}
+.viewer-body{flex:1;overflow:hidden;position:relative}
+
+/* Professional PDF Viewer */
+.pdf-container{width:100%;height:100%;display:flex;flex-direction:column;background:#525659}
+.pdf-canvas-wrapper{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;display:flex;justify-content:center;align-items:flex-start;background:#525659}
+#pdfCanvas{display:block;margin:0 auto;box-shadow:0 2px 8px rgba(0,0,0,0.2);background:#fff}
+
+/* Floating Action Button for Zoom */
+.fab-container{position:fixed;bottom:20px;right:20px;z-index:1002}
+.fab-main{width:50px;height:50px;background:#6366f1;border-radius:25px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.3);transition:all 0.2s;border:none;color:#fff;font-size:20px}
+.fab-main:active{transform:scale(0.94)}
+.fab-menu{position:absolute;bottom:60px;right:0;display:flex;flex-direction:column;gap:10px;opacity:0;visibility:hidden;transition:all 0.2s}
+.fab-container.open .fab-menu{opacity:1;visibility:visible}
+.fab-item{width:44px;height:44px;background:#2c2c2e;border-radius:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.3);border:none;color:#fff;font-size:16px}
+.fab-item:active{transform:scale(0.94)}
+.fab-item.reset{background:#ff3b30}
+.fab-item.zoom-in{background:#34c759}
+.fab-item.zoom-out{background:#ff9500}
+
+/* Bottom Navigation Bar */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:rgba(28,28,30,0.95);backdrop-filter:blur(20px);border-top:0.5px solid rgba(255,255,255,0.1);display:flex;justify-content:space-around;align-items:center;padding:8px 20px;z-index:1002}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:none;color:#8e8e93;padding:8px 16px;border-radius:30px;cursor:pointer;transition:all 0.2s}
+.nav-item i{font-size:20px}
+.nav-item span{font-size:11px}
+.nav-item.active{color:#6366f1;background:rgba(99,102,241,0.15)}
+.nav-item:active{transform:scale(0.95)}
+.page-info{color:#fff;font-size:13px;font-weight:500;background:rgba(0,0,0,0.5);padding:8px 16px;border-radius:30px}
+
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#10b981,#059669);color:#fff;padding:10px 20px;border-radius:40px;display:flex;align-items:center;gap:8px;font-size:0.8rem;z-index:1100}
 .toast.hidden{display:none}
 .empty-state{grid-column:1/-1;text-align:center;padding:60px 20px;background:rgba(255,255,255,0.04);border-radius:24px}
 .empty-state i{font-size:48px;color:#6366f1;margin-bottom:16px}
 .search-result-info{text-align:center;padding:10px;color:#aaa;font-size:0.8rem}
-
-/* PDF Viewer with zoom support */
-.pdf-viewer-container {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    background: #1a1a1a;
-    overflow: hidden;
-}
-
-.pdf-canvas-wrapper {
-    flex: 1;
-    overflow: auto;
-    -webkit-overflow-scrolling: touch;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    background: #525659;
-}
-
-#pdfCanvas {
-    display: block;
-    margin: 0 auto;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-    background: white;
-}
-
-.pdf-zoom-controls {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    padding: 12px 20px;
-    background: rgba(0,0,0,0.9);
-    border-top: 1px solid rgba(255,255,255,0.1);
-}
-
-.zoom-btn {
-    background: rgba(255,255,255,0.15);
-    border: none;
-    color: white;
-    padding: 12px 24px;
-    border-radius: 40px;
-    font-size: 18px;
-    font-weight: bold;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    touch-action: manipulation;
-    min-width: 80px;
-    justify-content: center;
-}
-
-.zoom-btn:active {
-    transform: scale(0.96);
-    background: #6366f1;
-}
-
-.zoom-level {
-    color: white;
-    font-size: 14px;
-    background: rgba(0,0,0,0.5);
-    padding: 8px 16px;
-    border-radius: 30px;
-    font-weight: 500;
-}
-
-.pdf-nav-controls {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 20px;
-    padding: 12px 20px;
-    background: rgba(0,0,0,0.8);
-    border-top: 1px solid rgba(255,255,255,0.1);
-}
-
-.pdf-nav-controls button {
-    background: rgba(255,255,255,0.15);
-    border: none;
-    color: white;
-    padding: 10px 20px;
-    border-radius: 40px;
-    font-size: 14px;
-    cursor: pointer;
-}
-
-.pdf-nav-controls button:disabled {
-    opacity: 0.4;
-}
-
-.pdf-nav-controls button:active {
-    transform: scale(0.96);
-}
-
-#pdfPageInfo {
-    color: white;
-    font-size: 14px;
-}
-
-.zoom-hint {
-    position: absolute;
-    bottom: 100px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0,0,0,0.7);
-    color: white;
-    padding: 8px 16px;
-    border-radius: 30px;
-    font-size: 12px;
-    pointer-events: none;
-    z-index: 20;
-    white-space: nowrap;
-    backdrop-filter: blur(10px);
-    animation: fadeOut 3s forwards;
-}
-
-@keyframes fadeOut {
-    0% { opacity: 1; }
-    70% { opacity: 1; }
-    100% { opacity: 0; visibility: hidden; }
-}
 
 @media (max-width:640px){
     .app{padding:12px}
@@ -216,32 +120,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     .stat-item span{font-size:1.2rem}
     .stat-item i{font-size:1.1rem}
     .search-container{min-width:100%}
-}
-
-/* FIX: Close button moved to bottom on mobile */
-@media (max-width: 768px) {
-    .viewer-close {
-        position: fixed !important;
-        bottom: 20px !important;
-        right: 20px !important;
-        top: auto !important;
-        left: auto !important;
-        background: #ef4444 !important;
-        padding: 14px 28px !important;
-        border-radius: 40px !important;
-        font-size: 16px !important;
-        z-index: 1001 !important;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
-        border: none !important;
-    }
-    
-    .viewer-header {
-        padding: 12px 16px !important;
-    }
-    
-    .viewer-title span {
-        font-size: 14px !important;
-    }
+    .nav-item span{display:none}
+    .nav-item{padding:8px 12px}
+    .page-info{font-size:11px;padding:6px 12px}
 }
 </style>
 </head>
@@ -269,7 +150,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       <button id="listViewBtn" class="toggle-btn"><i class="fas fa-list"></i></button>
     </div>
     
-    <button id="uploadBtn" class="btn-upload hidden" onclick="triggerUpload()"><i class="fas fa-cloud-upload-alt"></i><span>Upload</span></button>
+    <button id="uploadBtn" class="btn-upload" onclick="triggerUpload()"><i class="fas fa-cloud-upload-alt"></i><span>Upload</span></button>
     <input type="file" id="fileInput" accept="application/pdf" multiple hidden>
   </div>
 
@@ -285,22 +166,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 <div id="viewer" class="viewer hidden">
   <div class="viewer-header">
     <div class="viewer-title"><i class="fas fa-file-pdf"></i><span>Document Viewer</span></div>
-    <button class="viewer-close" onclick="closeViewer()"><i class="fas fa-times"></i><span>Close</span></button>
+    <button class="viewer-close" onclick="closeViewer()"><i class="fas fa-times"></i> Close</button>
   </div>
-  <div class="viewer-body" id="viewerBody">
-    <!-- PDF viewer will be injected here dynamically -->
-  </div>
+  <div class="viewer-body" id="viewerBody"></div>
 </div>
 
 <div id="toast" class="toast hidden"><i class="fas fa-check-circle"></i><span>Upload successful!</span></div>
 
 <script>
-// Initialize PDF.js worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-// ==================== OARCEL - COMPLETE WITH ZOOMABLE PDF ====================
-
-const content = document.getElementById("content");
+// ==================== APP STATE ====================
+const contentEl = document.getElementById("content");
 const pathText = document.getElementById("path");
 const pathContainer = document.getElementById("pathContainer");
 const backBtn = document.getElementById("backBtn");
@@ -320,7 +197,7 @@ let allFiles = {};
 let currentPath = [];
 let isSearchMode = false;
 
-// PDF zoom variables
+// PDF variables
 let pdfDoc = null;
 let currentPageNum = 1;
 let currentZoom = 1.2;
@@ -328,458 +205,241 @@ let totalPages = 0;
 
 // Folder structure
 let fileSystem = {
-    "REMELT": {
-        "A": {}, "B": {}, "C": {}, "D": {}, "E": {}, "F": {}, "G": {}, "H": {},
-        "I": {}, "J": {}, "K": {}, "L": {}, "M": {}, "N": {}, "O": {}, "P": {},
-        "Q": {}, "R": {}, "S": {}, "T": {}, "U": {}, "V": {}, "W": {}, "X": {},
-        "Y": {}, "Z": {}
-    },
-    "CASTER": {
-        "Quality Reports": {}, "Mechanical": {}, "Maintenance": {},
-        "Production Data": {}, "Testing": {}, "Checklists": {},
-        "Safety": {}, "Training": {}
-    },
-    "HRM": {
-        "Employee Records": {}, "Attendance": {}, "Performance": {},
-        "Training Logs": {}, "Safety Compliance": {}, "Policies": {},
-        "Reports": {}, "Certifications": {}
-    },
-    "CRM": {
-        "PLC Programs": {}, "CAD Drawings": {}, "Electrical": {},
-        "SCADA": {}, "Automation": {}, "Reports": {},
-        "Configurations": {}, "Manuals": {}
-    },
-    "ANNEALING": {
-        "Temperature Control": {}, "Process Parameters": {}, "Quality Assurance": {},
-        "Maintenance": {}, "Safety": {}, "Production Logs": {},
-        "Testing": {}, "SOP Documents": {}
-    },
-    "TLL": {
-        "PLC Programs": {}, "CAD Drawings": {}, "Maintenance": {},
-        "Production Logs": {}, "Process Optimization": {}, "Quality Reports": {},
-        "Manuals": {}, "Safety": {}
-    },
-    "SLITTER": {
-        "Blade Maintenance": {}, "Quality Control": {}, "Production Reports": {},
-        "Mechanical": {}, "Safety": {}, "Checklists": {},
-        "Training": {}, "Testing": {}
-    },
-    "UTILITY": {
-        "Power Supply": {}, "Water System": {}, "Compressed Air": {},
-        "HVAC": {}, "Reports": {}, "Safety": {},
-        "Manuals": {}, "Testing": {}
-    }
+    "REMELT":{"A":{},"B":{},"C":{},"D":{},"E":{},"F":{},"G":{},"H":{},"I":{},"J":{},"K":{},"L":{},"M":{},"N":{},"O":{},"P":{},"Q":{},"R":{},"S":{},"T":{},"U":{},"V":{},"W":{},"X":{},"Y":{},"Z":{}},
+    "CASTER":{"Quality Reports":{},"Mechanical":{},"Maintenance":{},"Production Data":{},"Testing":{},"Checklists":{},"Safety":{},"Training":{}},
+    "HRM":{"Employee Records":{},"Attendance":{},"Performance":{},"Training Logs":{},"Safety Compliance":{},"Policies":{},"Reports":{},"Certifications":{}},
+    "CRM":{"PLC Programs":{},"CAD Drawings":{},"Electrical":{},"SCADA":{},"Automation":{},"Reports":{},"Configurations":{},"Manuals":{}},
+    "ANNEALING":{"Temperature Control":{},"Process Parameters":{},"Quality Assurance":{},"Maintenance":{},"Safety":{},"Production Logs":{},"Testing":{},"SOP Documents":{}},
+    "TLL":{"PLC Programs":{},"CAD Drawings":{},"Maintenance":{},"Production Logs":{},"Process Optimization":{},"Quality Reports":{},"Manuals":{},"Safety":{}},
+    "SLITTER":{"Blade Maintenance":{},"Quality Control":{},"Production Reports":{},"Mechanical":{},"Safety":{},"Checklists":{},"Training":{},"Testing":{}},
+    "UTILITY":{"Power Supply":{},"Water System":{},"Compressed Air":{},"HVAC":{},"Reports":{},"Safety":{},"Manuals":{},"Testing":{}}
 };
 
-// Storage functions
-function saveFolderStructure() { localStorage.setItem('oarcel_folders', JSON.stringify(fileSystem)); }
-function loadFolderStructure() { const saved = localStorage.getItem('oarcel_folders'); if (saved) fileSystem = JSON.parse(saved); }
-function saveAllFiles() { 
-    try { 
-        const toSave = {}; 
-        for (const folder in allFiles) { 
-            toSave[folder] = allFiles[folder].map(file => ({ name: file.name, dataUrl: file.dataUrl })); 
-        } 
-        localStorage.setItem('oarcel_all_files', JSON.stringify(toSave)); 
-    } catch(e) {} 
-}
-function loadAllFiles() { 
-    try { 
-        const saved = localStorage.getItem('oarcel_all_files'); 
-        if (saved) allFiles = JSON.parse(saved); 
-    } catch(e) { allFiles = {}; } 
-}
-function getFilesForCurrentFolder() { return allFiles[currentPath.join("/")] || []; }
-async function addFileToCurrentFolder(file) {
-    const folderPath = currentPath.join("/");
-    if (!allFiles[folderPath]) allFiles[folderPath] = [];
-    const base64Data = await new Promise((resolve) => { const reader = new FileReader(); reader.onload = (e) => resolve(e.target.result); reader.readAsDataURL(file); });
-    allFiles[folderPath].push({ name: file.name, dataUrl: base64Data });
+// Storage
+function saveFolderStructure(){localStorage.setItem('oarcel_folders',JSON.stringify(fileSystem));}
+function loadFolderStructure(){const saved=localStorage.getItem('oarcel_folders');if(saved)fileSystem=JSON.parse(saved);}
+function saveAllFiles(){try{const toSave={};for(const folder in allFiles){toSave[folder]=allFiles[folder].map(f=>({name:f.name,dataUrl:f.dataUrl}));}localStorage.setItem('oarcel_all_files',JSON.stringify(toSave));}catch(e){}}
+function loadAllFiles(){try{const saved=localStorage.getItem('oarcel_all_files');if(saved)allFiles=JSON.parse(saved);}catch(e){allFiles={};}}
+function getFilesForCurrentFolder(){return allFiles[currentPath.join("/")]||[];}
+async function addFileToCurrentFolder(file){
+    const folderPath=currentPath.join("/");
+    if(!allFiles[folderPath])allFiles[folderPath]=[];
+    const base64Data=await new Promise(resolve=>{const reader=new FileReader();reader.onload=e=>resolve(e.target.result);reader.readAsDataURL(file);});
+    allFiles[folderPath].push({name:file.name,dataUrl:base64Data});
     saveAllFiles();
 }
-function deleteFileFromFolder(folderPath, fileName) {
-    if (allFiles[folderPath]) {
-        allFiles[folderPath] = allFiles[folderPath].filter(f => f.name !== fileName);
-        if (allFiles[folderPath].length === 0) delete allFiles[folderPath];
+function deleteFileFromFolder(folderPath,fileName){
+    if(allFiles[folderPath]){
+        allFiles[folderPath]=allFiles[folderPath].filter(f=>f.name!==fileName);
+        if(allFiles[folderPath].length===0)delete allFiles[folderPath];
         saveAllFiles();
         render();
         showToast(`✅ Deleted "${fileName}"`);
     }
 }
-
-// Get all files for search
-function getAllFiles() {
-    const results = [];
-    for (const folderPath in allFiles) {
-        allFiles[folderPath].forEach(file => {
-            results.push({
-                name: file.name,
-                dataUrl: file.dataUrl,
-                folder: folderPath
-            });
-        });
+function getAllFiles(){
+    const results=[];
+    for(const folderPath in allFiles){
+        allFiles[folderPath].forEach(file=>{results.push({name:file.name,dataUrl:file.dataUrl,folder:folderPath});});
     }
     return results;
 }
-
-// Search function
-function searchFiles(query) {
-    if (!query.trim()) return [];
-    const all = getAllFiles();
-    const lowerQuery = query.toLowerCase();
-    return all.filter(file => file.name.toLowerCase().includes(lowerQuery));
+function searchFiles(query){
+    if(!query.trim())return[];
+    const all=getAllFiles();
+    const lowerQuery=query.toLowerCase();
+    return all.filter(file=>file.name.toLowerCase().includes(lowerQuery));
 }
-
-// Folder management
-function renameCurrentFolder() {
-    if (currentPath.length === 0) { showToast("Cannot rename root", true); return; }
-    const oldName = currentPath[currentPath.length - 1];
-    const newName = prompt("Enter new folder name:", oldName);
-    if (newName && newName !== oldName && newName.trim()) {
-        const parentPath = currentPath.slice(0, -1);
-        let parent = fileSystem;
-        for (let p of parentPath) parent = parent[p];
-        parent[newName] = parent[oldName];
+function renameCurrentFolder(){
+    if(currentPath.length===0){showToast("Cannot rename root",true);return;}
+    const oldName=currentPath[currentPath.length-1];
+    const newName=prompt("Enter new folder name:",oldName);
+    if(newName&&newName!==oldName&&newName.trim()){
+        const parentPath=currentPath.slice(0,-1);
+        let parent=fileSystem;
+        for(let p of parentPath)parent=parent[p];
+        parent[newName]=parent[oldName];
         delete parent[oldName];
-        const oldFolderPath = currentPath.join("/");
-        const newFolderPath = [...parentPath, newName].join("/");
-        if (allFiles[oldFolderPath]) { allFiles[newFolderPath] = allFiles[oldFolderPath]; delete allFiles[oldFolderPath]; }
-        currentPath[parentPath.length] = newName;
-        saveFolderStructure(); saveAllFiles(); render();
+        const oldFolderPath=currentPath.join("/");
+        const newFolderPath=[...parentPath,newName].join("/");
+        if(allFiles[oldFolderPath]){allFiles[newFolderPath]=allFiles[oldFolderPath];delete allFiles[oldFolderPath];}
+        currentPath[parentPath.length]=newName;
+        saveFolderStructure();saveAllFiles();render();
         showToast(`✅ Renamed to "${newName}"`);
     }
 }
-function addNewFolder() {
-    const folderName = prompt("Enter new folder name:", "New Folder");
-    if (folderName && folderName.trim()) {
-        const currentFolder = getCurrentFolderObject();
-        if (currentFolder && !currentFolder[folderName]) { 
-            currentFolder[folderName] = {}; 
-            saveFolderStructure(); 
-            render(); 
-            showToast(`✅ Folder "${folderName}" created`);
-        } else { 
-            showToast("Folder already exists!", true); 
-        }
+function addNewFolder(){
+    const folderName=prompt("Enter new folder name:","New Folder");
+    if(folderName&&folderName.trim()){
+        const currentFolder=getCurrentFolderObject();
+        if(currentFolder&&!currentFolder[folderName]){currentFolder[folderName]={};saveFolderStructure();render();showToast(`✅ Folder "${folderName}" created`);}
+        else{showToast("Folder already exists!",true);}
     }
 }
-function addNewDepartment() {
-    const deptName = prompt("Enter new department name:", "New Department");
-    if (deptName && deptName.trim()) {
-        if (!fileSystem[deptName]) { 
-            fileSystem[deptName] = {}; 
-            saveFolderStructure(); 
-            render(); 
-            showToast(`✅ Department "${deptName}" created`);
-        } else { 
-            showToast("Department already exists!", true); 
-        }
+function addNewDepartment(){
+    const deptName=prompt("Enter new department name:","New Department");
+    if(deptName&&deptName.trim()){
+        if(!fileSystem[deptName]){fileSystem[deptName]={};saveFolderStructure();render();showToast(`✅ Department "${deptName}" created`);}
+        else{showToast("Department already exists!",true);}
     }
 }
-function deleteCurrentFolder() {
-    if (currentPath.length === 0) { showToast("Cannot delete root", true); return; }
-    const folderName = currentPath[currentPath.length - 1];
-    if (confirm(`Delete "${folderName}" and ALL contents?`)) {
-        const folderPath = currentPath.join("/");
-        if (allFiles[folderPath]) delete allFiles[folderPath];
-        const parentPath = currentPath.slice(0, -1);
-        let parent = fileSystem;
-        for (let p of parentPath) parent = parent[p];
+function deleteCurrentFolder(){
+    if(currentPath.length===0){showToast("Cannot delete root",true);return;}
+    const folderName=currentPath[currentPath.length-1];
+    if(confirm(`Delete "${folderName}" and ALL contents?`)){
+        const folderPath=currentPath.join("/");
+        if(allFiles[folderPath])delete allFiles[folderPath];
+        const parentPath=currentPath.slice(0,-1);
+        let parent=fileSystem;
+        for(let p of parentPath)parent=parent[p];
         delete parent[folderName];
         currentPath.pop();
-        saveFolderStructure(); saveAllFiles(); render();
+        saveFolderStructure();saveAllFiles();render();
         showToast(`🗑️ Folder "${folderName}" deleted`);
     }
 }
-function getCurrentFolderObject() { 
-    let folder = fileSystem; 
-    for (let p of currentPath) { 
-        if (folder[p]) folder = folder[p]; 
-        else return null; 
-    } 
-    return folder; 
-}
-
-// UI functions
-function showToast(message, isError = false) {
-    toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-circle' : 'fa-check-circle'}"></i><span>${message}</span>`;
-    toast.style.background = isError ? "linear-gradient(135deg, #ef4444, #dc2626)" : "linear-gradient(135deg, #10b981, #059669)";
+function getCurrentFolderObject(){let folder=fileSystem;for(let p of currentPath){if(folder[p])folder=folder[p];else return null;}return folder;}
+function showToast(message,isError=false){
+    toast.innerHTML=`<i class="fas ${isError?'fa-exclamation-circle':'fa-check-circle'}"></i><span>${message}</span>`;
+    toast.style.background=isError?"linear-gradient(135deg,#ef4444,#dc2626)":"linear-gradient(135deg,#10b981,#059669)";
     toast.classList.remove("hidden");
-    setTimeout(() => toast.classList.add("hidden"), 3000);
+    setTimeout(()=>toast.classList.add("hidden"),3000);
 }
-function updateStats() {
-    let folderCount = 0, fileCount = 0;
-    function countRecursive(obj) { 
-        for (let key in obj) { 
-            if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) { 
-                folderCount++; 
-                countRecursive(obj[key]); 
-            } 
-        } 
-    }
+function updateStats(){
+    let folderCount=0,fileCount=0;
+    function countRecursive(obj){for(let key in obj){if(typeof obj[key]==='object'&&obj[key]!==null&&!Array.isArray(obj[key])){folderCount++;countRecursive(obj[key]);}}}
     countRecursive(fileSystem);
-    for (let key in allFiles) fileCount += allFiles[key].length;
-    folderCountSpan.textContent = folderCount;
-    fileCountSpan.textContent = fileCount;
+    for(let key in allFiles)fileCount+=allFiles[key].length;
+    folderCountSpan.textContent=folderCount;
+    fileCountSpan.textContent=fileCount;
 }
-function getCurrentFolder() { 
-    let folder = fileSystem; 
-    for (let p of currentPath) { 
-        if (folder[p]) folder = folder[p]; 
-        else return null; 
-    } 
-    return folder; 
-}
-function escapeHtml(text) { 
-    const div = document.createElement('div'); 
-    div.textContent = text; 
-    return div.innerHTML; 
-}
-function createCard(title, onClick, isFolder = true, showDelete = false, deletePath = null, deleteName = null) {
-    const card = document.createElement("div");
-    card.className = "card";
-    const iconClass = isFolder ? "fa-folder" : "fa-file-pdf";
-    const iconColor = isFolder ? "linear-gradient(135deg, #f59e0b, #ef4444)" : "linear-gradient(135deg, #3b82f6, #8b5cf6)";
-    if (currentViewMode === "list") {
-        card.innerHTML = `<i class="fas ${iconClass}" style="background: ${iconColor}; -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i><span style="flex:1">${escapeHtml(title)}</span>${showDelete ? `<button class="delete-btn" onclick="event.stopPropagation(); window.deleteFileFromFolder('${deletePath}', '${deleteName}')"><i class="fas fa-trash"></i></button>` : ''}`;
-    } else {
-        card.innerHTML = `<i class="fas ${iconClass}" style="background: ${iconColor}; -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 2rem;"></i><span>${escapeHtml(title)}</span>${showDelete ? `<button class="delete-btn-small" onclick="event.stopPropagation(); window.deleteFileFromFolder('${deletePath}', '${deleteName}')"><i class="fas fa-trash"></i></button>` : ''}`;
+function getCurrentFolder(){let folder=fileSystem;for(let p of currentPath){if(folder[p])folder=folder[p];else return null;}return folder;}
+function escapeHtml(text){const div=document.createElement('div');div.textContent=text;return div.innerHTML;}
+function createCard(title,onClick,isFolder=true,showDelete=false,deletePath=null,deleteName=null){
+    const card=document.createElement("div");
+    card.className="card";
+    const iconClass=isFolder?"fa-folder":"fa-file-pdf";
+    const iconColor=isFolder?"linear-gradient(135deg,#f59e0b,#ef4444)":"linear-gradient(135deg,#3b82f6,#8b5cf6)";
+    if(currentViewMode==="list"){
+        card.innerHTML=`<i class="fas ${iconClass}" style="background:${iconColor};-webkit-background-clip:text;-webkit-text-fill-color:transparent;"></i><span style="flex:1">${escapeHtml(title)}</span>${showDelete?`<button class="delete-btn" onclick="event.stopPropagation(); window.deleteFileFromFolder('${deletePath}','${deleteName}')"><i class="fas fa-trash"></i></button>`:''}`;
+    }else{
+        card.innerHTML=`<i class="fas ${iconClass}" style="background:${iconColor};-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:2rem;"></i><span>${escapeHtml(title)}</span>${showDelete?`<button class="delete-btn-small" onclick="event.stopPropagation(); window.deleteFileFromFolder('${deletePath}','${deleteName}')"><i class="fas fa-trash"></i></button>`:''}`;
     }
-    card.onclick = onClick;
+    card.onclick=onClick;
     return card;
 }
 
-// ========== ZOOMABLE PDF FUNCTIONS ==========
-async function loadPDFDocument(url) {
-    try {
-        const wrapper = document.getElementById('pdfCanvasWrapper');
-        if (wrapper) {
-            wrapper.style.display = 'flex';
-            wrapper.style.alignItems = 'center';
-            wrapper.style.justifyContent = 'center';
-        }
-        
-        pdfDoc = await pdfjsLib.getDocument(url).promise;
-        totalPages = pdfDoc.numPages;
-        currentPageNum = 1;
-        currentZoom = 1.2;
-        
+// ========== PROFESSIONAL PDF VIEWER ==========
+async function loadPDFDocument(url){
+    try{
+        pdfDoc=await pdfjsLib.getDocument(url).promise;
+        totalPages=pdfDoc.numPages;
+        currentPageNum=1;
+        currentZoom=1.2;
         updateZoomLevel();
         renderPDFPage();
-        
-    } catch (error) {
-        console.error('Error loading PDF:', error);
-        const wrapper = document.getElementById('pdfCanvasWrapper');
-        if (wrapper) wrapper.innerHTML = '<div style="color:white; text-align:center; padding:40px">Failed to load PDF</div>';
-    }
+    }catch(error){console.error('Error loading PDF:',error);}
 }
 
-async function renderPDFPage() {
-    if (!pdfDoc) return;
-    
-    try {
-        const page = await pdfDoc.getPage(currentPageNum);
-        const viewport = page.getViewport({ scale: currentZoom });
-        const canvas = document.getElementById('pdfCanvas');
-        if (!canvas) return;
-        
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-        
-        const renderContext = {
-            canvasContext: canvas.getContext('2d'),
-            viewport: viewport
-        };
-        
-        await page.render(renderContext).promise;
-        
-        const pageInfo = document.getElementById('pdfPageInfo');
-        if (pageInfo) pageInfo.textContent = `Page ${currentPageNum} / ${totalPages}`;
-        
-        const prevBtn = document.getElementById('pdfPrevPage');
-        const nextBtn = document.getElementById('pdfNextPage');
-        if (prevBtn) prevBtn.disabled = (currentPageNum <= 1);
-        if (nextBtn) nextBtn.disabled = (currentPageNum >= totalPages);
-        
-        const wrapper = document.getElementById('pdfCanvasWrapper');
-        if (wrapper) wrapper.scrollTop = 0;
-        
-    } catch (error) {
-        console.error('Error rendering page:', error);
-    }
+async function renderPDFPage(){
+    if(!pdfDoc)return;
+    try{
+        const page=await pdfDoc.getPage(currentPageNum);
+        const viewport=page.getViewport({scale:currentZoom});
+        const canvas=document.getElementById('pdfCanvas');
+        if(!canvas)return;
+        canvas.width=viewport.width;
+        canvas.height=viewport.height;
+        await page.render({canvasContext:canvas.getContext('2d'),viewport:viewport}).promise;
+        document.getElementById('pdfPageInfo').textContent=`${currentPageNum} / ${totalPages}`;
+        document.getElementById('prevPageBtn').disabled=(currentPageNum<=1);
+        document.getElementById('nextPageBtn').disabled=(currentPageNum>=totalPages);
+        document.getElementById('pdfCanvasWrapper').scrollTop=0;
+    }catch(error){console.error('Error rendering page:',error);}
 }
 
-function zoomIn() {
-    if (currentZoom < 3.0) {
-        currentZoom = Math.min(3.0, currentZoom + 0.2);
-        updateZoomLevel();
-        renderPDFPage();
-    }
-}
+function zoomIn(){if(currentZoom<3.0){currentZoom=Math.min(3.0,currentZoom+0.2);updateZoomLevel();renderPDFPage();}}
+function zoomOut(){if(currentZoom>0.5){currentZoom=Math.max(0.5,currentZoom-0.2);updateZoomLevel();renderPDFPage();}}
+function resetZoom(){currentZoom=1.2;updateZoomLevel();renderPDFPage();}
+function updateZoomLevel(){document.getElementById('zoomLevel').textContent=`${Math.round(currentZoom*100)}%`;}
+function prevPage(){if(currentPageNum>1){currentPageNum--;renderPDFPage();}}
+function nextPage(){if(currentPageNum<totalPages){currentPageNum++;renderPDFPage();}}
 
-function zoomOut() {
-    if (currentZoom > 0.5) {
-        currentZoom = Math.max(0.5, currentZoom - 0.2);
-        updateZoomLevel();
-        renderPDFPage();
-    }
-}
-
-function updateZoomLevel() {
-    const zoomPercent = Math.round(currentZoom * 100);
-    const zoomLevelSpan = document.getElementById('zoomLevel');
-    if (zoomLevelSpan) zoomLevelSpan.textContent = `${zoomPercent}%`;
-}
-
-function prevPDFPage() {
-    if (currentPageNum <= 1) return;
-    currentPageNum--;
-    renderPDFPage();
-}
-
-function nextPDFPage() {
-    if (currentPageNum >= totalPages) return;
-    currentPageNum++;
-    renderPDFPage();
-}
-
-function openPDF(dataUrl) {
+function openPDF(dataUrl){
     viewer.classList.remove("hidden");
-    document.body.style.overflow = "hidden";
+    document.body.style.overflow="hidden";
     
-    // Create PDF viewer container
-    viewerBody.innerHTML = `
-        <div id="pdfViewerContainer" class="pdf-viewer-container">
+    viewerBody.innerHTML=`
+        <div class="pdf-container">
             <div class="pdf-canvas-wrapper" id="pdfCanvasWrapper">
                 <canvas id="pdfCanvas"></canvas>
             </div>
-            <div class="pdf-zoom-controls">
-                <button class="zoom-btn" id="zoomOutBtn"><i class="fas fa-search-minus"></i> Zoom Out</button>
-                <span class="zoom-level" id="zoomLevel">120%</span>
-                <button class="zoom-btn" id="zoomInBtn"><i class="fas fa-search-plus"></i> Zoom In</button>
+        </div>
+        <div class="fab-container" id="fabContainer">
+            <button class="fab-main" id="fabMain"><i class="fas fa-plus"></i></button>
+            <div class="fab-menu">
+                <button class="fab-item zoom-in" id="zoomInBtn"><i class="fas fa-search-plus"></i></button>
+                <button class="fab-item zoom-out" id="zoomOutBtn"><i class="fas fa-search-minus"></i></button>
+                <button class="fab-item reset" id="resetZoomBtn"><i class="fas fa-sync-alt"></i></button>
             </div>
-            <div class="pdf-nav-controls">
-                <button id="pdfPrevPage">◀ Previous</button>
-                <span id="pdfPageInfo">Page 1 / 1</span>
-                <button id="pdfNextPage">Next ▶</button>
-            </div>
+        </div>
+        <div class="bottom-nav">
+            <button class="nav-item" id="prevPageBtn"><i class="fas fa-chevron-left"></i><span>Previous</span></button>
+            <span class="page-info" id="pdfPageInfo">1 / 1</span>
+            <button class="nav-item" id="nextPageBtn"><i class="fas fa-chevron-right"></i><span>Next</span></button>
         </div>
     `;
     
-    // Add event listeners
-    document.getElementById('zoomInBtn').addEventListener('click', zoomIn);
-    document.getElementById('zoomOutBtn').addEventListener('click', zoomOut);
-    document.getElementById('pdfPrevPage').addEventListener('click', prevPDFPage);
-    document.getElementById('pdfNextPage').addEventListener('click', nextPDFPage);
+    // FAB toggle
+    const fabContainer=document.getElementById('fabContainer');
+    document.getElementById('fabMain').onclick=()=>fabContainer.classList.toggle('open');
     
-    // Add pinch-to-zoom support
-    const wrapper = document.getElementById('pdfCanvasWrapper');
-    let initialDistance = 0;
+    // Zoom buttons
+    document.getElementById('zoomInBtn').onclick=()=>{zoomIn();fabContainer.classList.remove('open');};
+    document.getElementById('zoomOutBtn').onclick=()=>{zoomOut();fabContainer.classList.remove('open');};
+    document.getElementById('resetZoomBtn').onclick=()=>{resetZoom();fabContainer.classList.remove('open');};
     
-    wrapper.addEventListener('touchstart', (e) => {
-        if (e.touches.length === 2) {
-            initialDistance = Math.hypot(
-                e.touches[0].clientX - e.touches[1].clientX,
-                e.touches[0].clientY - e.touches[1].clientY
-            );
-        }
-    });
+    // Page navigation
+    document.getElementById('prevPageBtn').onclick=prevPage;
+    document.getElementById('nextPageBtn').onclick=nextPage;
     
-    wrapper.addEventListener('touchmove', (e) => {
-        if (e.touches.length === 2 && initialDistance > 0) {
-            e.preventDefault();
-            const newDistance = Math.hypot(
-                e.touches[0].clientX - e.touches[1].clientX,
-                e.touches[0].clientY - e.touches[1].clientY
-            );
-            const delta = newDistance - initialDistance;
-            if (Math.abs(delta) > 10) {
-                if (delta > 0) zoomIn();
-                else zoomOut();
-                initialDistance = newDistance;
-            }
-        }
-    });
-    
-    // Show zoom hint on mobile
-    if (window.innerWidth <= 768) {
-        let hint = document.querySelector('.zoom-hint');
-        if (!hint) {
-            hint = document.createElement('div');
-            hint.className = 'zoom-hint';
-            hint.innerHTML = '💡 Pinch to zoom | Double tap to reset';
-            document.querySelector('.pdf-viewer-container').appendChild(hint);
-        }
-        setTimeout(() => { if (hint) hint.remove(); }, 3000);
-    }
+    // Pinch to zoom
+    const wrapper=document.getElementById('pdfCanvasWrapper');
+    let initialDistance=0;
+    wrapper.addEventListener('touchstart',(e)=>{if(e.touches.length===2){initialDistance=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);}});
+    wrapper.addEventListener('touchmove',(e)=>{if(e.touches.length===2&&initialDistance>0){e.preventDefault();const newDistance=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);const delta=newDistance-initialDistance;if(Math.abs(delta)>10){if(delta>0)zoomIn();else zoomOut();initialDistance=newDistance;}}});
     
     loadPDFDocument(dataUrl);
 }
 
-function closeViewer() { 
-    viewer.classList.add("hidden"); 
-    viewerBody.innerHTML = "";
-    document.body.style.overflow = "auto"; 
-    pdfDoc = null;
-    currentPageNum = 1;
-    currentZoom = 1.2;
-    totalPages = 0;
-}
+function closeViewer(){viewer.classList.add("hidden");viewerBody.innerHTML="";document.body.style.overflow="auto";pdfDoc=null;}
+function goBack(){if(currentPath.length>0&&!isSearchMode){currentPath.pop();render();}else if(isSearchMode){clearSearch();}}
+function triggerUpload(){fileInput.click();}
+function setViewMode(mode){currentViewMode=mode;render();document.getElementById("gridViewBtn").classList.toggle("active",mode==="grid");document.getElementById("listViewBtn").classList.toggle("active",mode==="list");}
+function clearSearch(){searchInput.value="";isSearchMode=false;searchInfo.classList.add("hidden");clearSearchBtn.classList.add("hidden");render();}
 
-function goBack() { 
-    if (currentPath.length > 0 && !isSearchMode) { 
-        currentPath.pop(); 
-        render(); 
-    } else if (isSearchMode) {
-        clearSearch();
-    }
-}
-function triggerUpload() { 
-    fileInput.click(); 
-}
-function setViewMode(mode) { 
-    currentViewMode = mode; 
-    render(); 
-    document.getElementById("gridViewBtn").classList.toggle("active", mode === "grid"); 
-    document.getElementById("listViewBtn").classList.toggle("active", mode === "list"); 
-}
-function clearSearch() {
-    searchInput.value = "";
-    isSearchMode = false;
-    searchInfo.classList.add("hidden");
-    clearSearchBtn.classList.add("hidden");
-    render();
-}
-
-// Main render
-function render() {
-    const searchQuery = searchInput.value.trim().toLowerCase();
-    const isSearching = searchQuery !== "";
+function render(){
+    const searchQuery=searchInput.value.trim().toLowerCase();
+    const isSearching=searchQuery!=="";
+    isSearchMode=isSearching;
     
-    isSearchMode = isSearching;
-    
-    if (isSearching) {
+    if(isSearching){
         clearSearchBtn.classList.remove("hidden");
-        const results = searchFiles(searchQuery);
+        const results=searchFiles(searchQuery);
         searchInfo.classList.remove("hidden");
-        searchInfo.innerHTML = `<i class="fas fa-search"></i> Found ${results.length} result(s) for "${escapeHtml(searchQuery)}" <button onclick="clearSearch()" style="background:none;border:none;color:#6366f1;cursor:pointer;margin-left:10px">Clear</button>`;
-        
-        content.innerHTML = "";
-        content.className = `content ${currentViewMode === "grid" ? "grid-view" : "list-view"}`;
-        backBtn.classList.toggle("hidden", false);
-        pathText.innerText = "Search Results";
-        uploadBtn.classList.toggle("hidden", true);
-        
-        if (results.length === 0) {
-            const emptyDiv = document.createElement("div");
-            emptyDiv.className = "empty-state";
-            emptyDiv.innerHTML = '<i class="fas fa-search"></i><p>No PDFs found matching your search.</p>';
-            content.appendChild(emptyDiv);
-        } else {
-            results.forEach(file => {
-                const card = createCard(file.name, () => openPDF(file.dataUrl), false, false);
-                content.appendChild(card);
-            });
+        searchInfo.innerHTML=`<i class="fas fa-search"></i> Found ${results.length} result(s) for "${escapeHtml(searchQuery)}" <button onclick="clearSearch()" style="background:none;border:none;color:#6366f1;cursor:pointer;margin-left:10px">Clear</button>`;
+        contentEl.innerHTML="";
+        contentEl.className=`content ${currentViewMode==="grid"?"grid-view":"list-view"}`;
+        backBtn.classList.toggle("hidden",false);
+        pathText.innerText="Search Results";
+        uploadBtn.classList.toggle("hidden",true);
+        if(results.length===0){
+            const emptyDiv=document.createElement("div");
+            emptyDiv.className="empty-state";
+            emptyDiv.innerHTML='<i class="fas fa-search"></i><p>No PDFs found matching your search.</p>';
+            contentEl.appendChild(emptyDiv);
+        }else{
+            results.forEach(file=>{contentEl.appendChild(createCard(file.name,()=>openPDF(file.dataUrl),false,false));});
         }
         updateStats();
         return;
@@ -787,102 +447,70 @@ function render() {
     
     clearSearchBtn.classList.add("hidden");
     searchInfo.classList.add("hidden");
+    contentEl.innerHTML="";
+    const folder=getCurrentFolder();
+    if(!folder){currentPath=[];render();return;}
+    contentEl.className=`content ${currentViewMode==="grid"?"grid-view":"list-view"}`;
+    pathText.innerText=currentPath.length===0?"Home":currentPath.join(" / ");
+    backBtn.classList.toggle("hidden",currentPath.length===0);
+    const isLeafFolder=Object.keys(folder).length===0;
+    const isRoot=currentPath.length===0;
     
-    content.innerHTML = "";
-    const folder = getCurrentFolder();
-    if (!folder) { 
-        currentPath = []; 
-        render(); 
-        return; 
+    if(!isRoot){
+        const actionBar=document.createElement("div");
+        actionBar.className="action-bar";
+        actionBar.innerHTML=`<button class="action-btn rename-btn" onclick="window.renameCurrentFolder()"><i class="fas fa-edit"></i> Rename</button><button class="action-btn delete-folder-btn" onclick="window.deleteCurrentFolder()"><i class="fas fa-trash-alt"></i> Delete</button><button class="action-btn add-folder-btn" onclick="window.addNewFolder()"><i class="fas fa-plus"></i> Add Subfolder</button>`;
+        contentEl.appendChild(actionBar);
     }
-    content.className = `content ${currentViewMode === "grid" ? "grid-view" : "list-view"}`;
-    pathText.innerText = currentPath.length === 0 ? "Home" : currentPath.join(" / ");
-    backBtn.classList.toggle("hidden", currentPath.length === 0);
-    const isLeafFolder = Object.keys(folder).length === 0;
-    const isRoot = currentPath.length === 0;
-    
-    if (!isRoot) {
-        const actionBar = document.createElement("div");
-        actionBar.className = "action-bar";
-        actionBar.innerHTML = `
-            <button class="action-btn rename-btn" onclick="window.renameCurrentFolder()"><i class="fas fa-edit"></i> Rename</button>
-            <button class="action-btn delete-folder-btn" onclick="window.deleteCurrentFolder()"><i class="fas fa-trash-alt"></i> Delete</button>
-            <button class="action-btn add-folder-btn" onclick="window.addNewFolder()"><i class="fas fa-plus"></i> Add Subfolder</button>
-        `;
-        content.appendChild(actionBar);
-    }
-    if (isRoot) {
-        const actionBar = document.createElement("div");
-        actionBar.className = "action-bar";
-        actionBar.innerHTML = `
-            <button class="action-btn add-folder-btn" onclick="window.addNewDepartment()"><i class="fas fa-building"></i> Add Department</button>
-        `;
-        content.appendChild(actionBar);
+    if(isRoot){
+        const actionBar=document.createElement("div");
+        actionBar.className="action-bar";
+        actionBar.innerHTML=`<button class="action-btn add-folder-btn" onclick="window.addNewDepartment()"><i class="fas fa-building"></i> Add Department</button>`;
+        contentEl.appendChild(actionBar);
     }
     
-    for (let key in folder) { 
-        content.appendChild(createCard(key, () => { currentPath.push(key); render(); }, true)); 
-    }
+    for(let key in folder){contentEl.appendChild(createCard(key,()=>{currentPath.push(key);render();},true));}
     
-    if (isLeafFolder) {
-        uploadBtn.classList.toggle("hidden", false);
-        const folderFiles = getFilesForCurrentFolder();
-        const folderPath = currentPath.join("/");
-        if (folderFiles.length === 0 && Object.keys(folder).length === 0) {
-            const emptyDiv = document.createElement("div");
-            emptyDiv.className = "empty-state";
-            emptyDiv.innerHTML = '<i class="fas fa-cloud-upload-alt"></i><p>No PDFs yet. Click Upload to add files.</p>';
-            content.appendChild(emptyDiv);
-        } else {
-            folderFiles.forEach((f) => { 
-                content.appendChild(createCard(f.name, () => openPDF(f.dataUrl), false, true, folderPath, f.name)); 
-            });
+    if(isLeafFolder){
+        uploadBtn.classList.toggle("hidden",false);
+        const folderFiles=getFilesForCurrentFolder();
+        const folderPath=currentPath.join("/");
+        if(folderFiles.length===0&&Object.keys(folder).length===0){
+            const emptyDiv=document.createElement("div");
+            emptyDiv.className="empty-state";
+            emptyDiv.innerHTML='<i class="fas fa-cloud-upload-alt"></i><p>No PDFs yet. Click Upload to add files.</p>';
+            contentEl.appendChild(emptyDiv);
+        }else{
+            folderFiles.forEach((f)=>{contentEl.appendChild(createCard(f.name,()=>openPDF(f.dataUrl),false,true,folderPath,f.name));});
         }
-    } else { 
-        uploadBtn.classList.toggle("hidden", true); 
-    }
+    }else{uploadBtn.classList.toggle("hidden",true);}
     updateStats();
 }
 
-// File upload
-fileInput.addEventListener("change", async (e) => {
-    for (let file of e.target.files) {
-        if (file.type === "application/pdf") { 
-            await addFileToCurrentFolder(file); 
-        }
-    }
-    showToast(`${e.target.files.length} PDF(s) saved!`);
-    render();
-    fileInput.value = "";
-});
+// Event listeners
+fileInput.addEventListener("change",async(e)=>{for(let file of e.target.files){if(file.type==="application/pdf"){await addFileToCurrentFolder(file);}}showToast(`${e.target.files.length} PDF(s) saved!`);render();fileInput.value="";});
+searchInput.addEventListener("input",()=>{render();});
+clearSearchBtn.addEventListener("click",()=>{clearSearch();});
 
-// Search event
-searchInput.addEventListener("input", () => { render(); });
-clearSearchBtn.addEventListener("click", () => { clearSearch(); });
+window.deleteFileFromFolder=(folderPath,fileName)=>{if(confirm(`Delete "${fileName}"?`))deleteFileFromFolder(folderPath,fileName);};
+window.renameCurrentFolder=renameCurrentFolder;
+window.deleteCurrentFolder=deleteCurrentFolder;
+window.addNewFolder=addNewFolder;
+window.addNewDepartment=addNewDepartment;
+window.goBack=goBack;
+window.triggerUpload=triggerUpload;
+window.closeViewer=closeViewer;
+window.openPDF=openPDF;
+window.clearSearch=clearSearch;
 
-// Make functions global
-window.deleteFileFromFolder = (folderPath, fileName) => { 
-    if (confirm(`Delete "${fileName}"?`)) deleteFileFromFolder(folderPath, fileName); 
-};
-window.renameCurrentFolder = renameCurrentFolder;
-window.deleteCurrentFolder = deleteCurrentFolder;
-window.addNewFolder = addNewFolder;
-window.addNewDepartment = addNewDepartment;
-window.goBack = goBack;
-window.triggerUpload = triggerUpload;
-window.closeViewer = closeViewer;
-window.openPDF = openPDF;
-window.clearSearch = clearSearch;
-
-pathContainer.addEventListener("click", () => { clearSearch(); currentPath = []; render(); });
-document.getElementById("gridViewBtn").addEventListener("click", () => setViewMode("grid"));
-document.getElementById("listViewBtn").addEventListener("click", () => setViewMode("list"));
+pathContainer.addEventListener("click",()=>{clearSearch();currentPath=[];render();});
+document.getElementById("gridViewBtn").addEventListener("click",()=>setViewMode("grid"));
+document.getElementById("listViewBtn").addEventListener("click",()=>setViewMode("list"));
 
 // Initialize
 loadFolderStructure();
 loadAllFiles();
 render();
-console.log("App initialized with zoomable PDF support");
 </script>
 </body>
 </html>
