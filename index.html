@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>Departments | Compact UI</title>
+  <title>Department Hub · Compact Manager</title>
   <style>
     * {
       margin: 0;
@@ -12,363 +12,375 @@
     }
 
     body {
-      background: #f1f5f9;
-      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      background: linear-gradient(145deg, #eef2f9 0%, #e0e8f2 100%);
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif;
       display: flex;
       justify-content: center;
       align-items: center;
       min-height: 100vh;
-      padding: 24px 16px;
+      padding: 2rem 1.5rem;
     }
 
-    /* main card container – matches the “dashboard” style from image */
-    .dashboard {
-      max-width: 680px;
+    /* MAIN CARD */
+    .hub-card {
+      max-width: 820px;
       width: 100%;
-      background: white;
-      border-radius: 32px;
-      box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.05);
+      background: #ffffff;
+      border-radius: 2rem;
+      box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.25), 0 2px 6px rgba(0, 0, 0, 0.02);
+      transition: all 0.2s;
       overflow: hidden;
-      transition: all 0.2s ease;
     }
 
-    /* subtle header like a clean bar */
-    .header-bar {
-      padding: 20px 24px 12px 24px;
-      border-bottom: 1px solid #e9edf2;
+    /* Header area: title + compact merged button */
+    .card-header {
+      padding: 1.5rem 1.75rem 0.75rem 1.75rem;
       display: flex;
-      align-items: baseline;
-      justify-content: space-between;
       flex-wrap: wrap;
-      gap: 12px;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      border-bottom: 1px solid #edf2f7;
     }
 
-    .title-section h1 {
-      font-size: 1.5rem;
-      font-weight: 600;
-      letter-spacing: -0.3px;
-      background: linear-gradient(135deg, #1e2a3a, #0f172a);
+    .title-block h1 {
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #0f172a, #1e2b3c);
       background-clip: text;
       -webkit-background-clip: text;
       color: transparent;
     }
 
-    .title-section .badge-stats {
+    .chip-group {
       display: flex;
-      gap: 12px;
-      margin-top: 6px;
-      font-size: 0.75rem;
-      color: #4b5563;
+      gap: 0.7rem;
+      margin-top: 0.4rem;
     }
 
-    .stats-chip {
-      background: #eef2ff;
-      padding: 4px 10px;
+    .chip {
+      background: #f1f5f9;
+      padding: 0.2rem 0.85rem;
       border-radius: 40px;
+      font-size: 0.7rem;
       font-weight: 500;
+      color: #1e293b;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
     }
 
-    /* 🟢 MERGED BUTTON – small, compact, replaces both "Add Department" text + button */
-    .merged-add-btn {
+    /* 🔥 MERGED BUTTON — small, compact, contains both icon + text */
+    .merged-department-btn {
       background: #0f172a;
       border: none;
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      padding: 8px 16px;
+      gap: 0.55rem;
+      padding: 0.55rem 1.2rem;
       border-radius: 60px;
       font-size: 0.85rem;
-      font-weight: 500;
+      font-weight: 600;
       color: white;
       cursor: pointer;
-      transition: all 0.2s cubic-bezier(0.2, 0.9, 0.4, 1.1);
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-      backdrop-filter: blur(0px);
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
       letter-spacing: 0.2px;
     }
 
-    .merged-add-btn svg {
+    .merged-department-btn svg {
       width: 18px;
       height: 18px;
       stroke: white;
-      stroke-width: 2;
+      stroke-width: 2.2;
       fill: none;
-      transition: transform 0.2s ease;
     }
 
-    .merged-add-btn:hover {
-      background: #2d3a5e;
-      transform: scale(0.97);
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    .merged-department-btn:hover {
+      background: #2c3e66;
+      transform: scale(0.96);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
     }
 
-    .merged-add-btn:active {
-      transform: scale(0.95);
+    .merged-department-btn:active {
+      transform: scale(0.94);
     }
 
-    /* search & files row (from original mockup) */
-    .search-area {
-      padding: 16px 24px 8px 24px;
+    /* search + file row */
+    .action-row {
+      padding: 1rem 1.75rem;
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
-      gap: 16px;
-      border-bottom: 1px solid #edf2f7;
+      gap: 1rem;
+      background: #fefefe;
+      border-bottom: 1px solid #ecf3f9;
     }
 
-    .search-wrapper {
+    .search-box {
       flex: 2;
-      min-width: 160px;
+      min-width: 180px;
       display: flex;
       align-items: center;
-      background: #f8fafc;
+      background: #f8fafd;
+      border: 1px solid #e2edf2;
       border-radius: 60px;
-      border: 1px solid #e2e8f0;
-      padding: 6px 14px;
+      padding: 0.45rem 1rem;
       transition: all 0.2s;
     }
 
-    .search-wrapper:focus-within {
-      border-color: #94a3b8;
+    .search-box:focus-within {
+      border-color: #8ba0bc;
       background: white;
-      box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.08);
+      box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.05);
     }
 
-    .search-icon {
+    .search-box svg {
       width: 16px;
       height: 16px;
-      stroke: #5b6e8c;
-      stroke-width: 2;
+      stroke: #6b7c93;
       margin-right: 8px;
     }
 
-    .search-wrapper input {
+    .search-box input {
       border: none;
       background: transparent;
-      font-size: 0.9rem;
       width: 100%;
+      font-size: 0.85rem;
       outline: none;
-      padding: 6px 0;
       font-weight: 450;
       color: #0f172a;
     }
 
-    .search-wrapper input::placeholder {
-      color: #94a3b8;
-      font-weight: 400;
+    .search-box input::placeholder {
+      color: #9aaebf;
     }
 
-    /* file select zone (like "Choose Files" area) */
-    .file-zone {
+    .file-picker {
       display: flex;
       align-items: center;
-      gap: 12px;
-      background: #f9fbfd;
-      padding: 6px 12px;
-      border-radius: 48px;
-      border: 1px solid #e2edf2;
-    }
-
-    .file-label {
-      background: white;
-      border: 1px solid #cbd5e1;
-      padding: 6px 14px;
-      border-radius: 40px;
-      font-size: 0.75rem;
-      font-weight: 500;
-      color: #1e293b;
-      cursor: pointer;
-      transition: all 0.15s;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .file-label:hover {
-      background: #f1f5f9;
-      border-color: #94a3b8;
-    }
-
-    .file-status {
-      font-size: 0.75rem;
-      color: #475569;
-      font-weight: 450;
-    }
-
-    /* stats row: Folders & Documents */
-    .stats-row {
-      display: flex;
-      gap: 24px;
-      padding: 16px 24px;
-      background: #ffffff;
-      border-bottom: 1px solid #edf2f7;
-    }
-
-    .stat-item {
-      background: #fefce8;
-      padding: 8px 16px;
+      gap: 0.7rem;
+      background: #fbfdff;
+      padding: 0.25rem 0.5rem 0.25rem 0.2rem;
       border-radius: 60px;
+      border: 1px solid #e9edf2;
+    }
+
+    .file-label-btn {
+      background: white;
+      border: 1px solid #cbdde9;
+      padding: 0.45rem 1rem;
+      border-radius: 40px;
+      font-size: 0.72rem;
       font-weight: 600;
-      font-size: 0.85rem;
+      color: #1e2f41;
+      cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 8px;
-      color: #2c3e50;
+      gap: 0.4rem;
+      transition: all 0.15s;
+    }
+
+    .file-label-btn:hover {
+      background: #f1f7fe;
+      border-color: #9bb1c7;
+    }
+
+    .file-status-text {
+      font-size: 0.7rem;
+      color: #4a627a;
+      font-weight: 450;
+      max-width: 180px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* stats row */
+    .stats-container {
+      padding: 0.8rem 1.75rem;
+      display: flex;
+      gap: 1.8rem;
+      background: #ffffff;
+      border-bottom: 1px solid #ecf3f9;
+    }
+
+    .stat-pill {
+      background: #f8fafc;
+      padding: 0.45rem 1.2rem;
+      border-radius: 60px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      border: 1px solid #eef3fc;
     }
 
     .stat-number {
       background: #0f172a;
       color: white;
-      padding: 2px 8px;
-      border-radius: 30px;
-      font-size: 0.7rem;
-      font-weight: 500;
+      padding: 0.15rem 0.65rem;
+      border-radius: 40px;
+      font-size: 0.75rem;
+      font-weight: 600;
     }
 
-    /* Department list – clean grid / flex */
-    .dept-container {
-      padding: 16px 20px 28px 20px;
+    /* departments grid */
+    .dept-panel {
+      padding: 1.5rem 1.5rem 1.8rem 1.5rem;
     }
 
-    .dept-grid {
+    .dept-badge-grid {
       display: flex;
       flex-wrap: wrap;
-      gap: 12px;
-      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
     }
 
-    /* each department pill style – matches "REMELT, CASTER, HRM..." */
-    .dept-pill {
+    .dept-item {
       background: #f1f5f9;
-      padding: 8px 18px;
+      padding: 0.55rem 1.3rem;
       border-radius: 60px;
       font-size: 0.85rem;
       font-weight: 500;
       color: #0c4a6e;
-      transition: all 0.15s ease;
       border: 1px solid #e2e8f0;
+      transition: all 0.15s;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 0.4rem;
       cursor: default;
-      letter-spacing: -0.2px;
+      backdrop-filter: blur(2px);
     }
 
-    .dept-pill:hover {
-      background: #e6edf5;
+    .dept-item:hover {
+      background: #e9f0f8;
       transform: translateY(-1px);
-      border-color: #cbd5e1;
+      border-color: #bdd3e8;
     }
 
-    /* remove default button styles and provide small interactive */
-    .empty-message {
-      color: #6c757d;
-      font-style: italic;
+    .empty-dept-message {
+      background: #fef9e3;
+      padding: 1rem 1.5rem;
+      border-radius: 40px;
+      text-align: center;
       font-size: 0.85rem;
-      padding: 12px;
+      color: #a16207;
+      width: 100%;
     }
 
-    /* interactive add department modal / inline addition simulation */
-    .inline-add-panel {
-      margin-top: 24px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
+    /* inline add panel (compact & modern) */
+    .inline-add-card {
+      margin-top: 0.5rem;
       background: #fafcff;
-      padding: 12px 16px;
       border-radius: 60px;
-      border: 1px dashed #cbd5e6;
-    }
-
-    .inline-add-panel input {
-      flex: 2;
-      min-width: 140px;
-      border: 1px solid #cbd5e1;
-      background: white;
-      padding: 8px 14px;
-      border-radius: 60px;
-      font-size: 0.85rem;
-      outline: none;
+      padding: 0.7rem 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.8rem;
+      border: 1px solid #dee9f2;
       transition: all 0.2s;
     }
 
-    .inline-add-panel input:focus {
+    .inline-add-card input {
+      flex: 2;
+      min-width: 150px;
+      padding: 0.6rem 1rem;
+      border-radius: 60px;
+      border: 1px solid #cfdfee;
+      background: white;
+      font-size: 0.85rem;
+      outline: none;
+      transition: 0.15s;
+    }
+
+    .inline-add-card input:focus {
       border-color: #0f172a;
       box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.1);
     }
 
-    .small-confirm {
+    .confirm-add {
       background: #0f172a;
       border: none;
-      padding: 7px 18px;
+      padding: 0.5rem 1.3rem;
       border-radius: 40px;
       color: white;
-      font-weight: 500;
+      font-weight: 600;
       font-size: 0.75rem;
       cursor: pointer;
-      transition: background 0.15s;
+      transition: 0.15s;
     }
 
-    .small-confirm:hover {
-      background: #2c3e66;
+    .confirm-add:hover {
+      background: #1f3a5f;
     }
 
     .cancel-add {
       background: transparent;
-      border: 1px solid #cbd5e1;
-      padding: 6px 16px;
+      border: 1px solid #b9cfec;
+      padding: 0.45rem 1.2rem;
       border-radius: 40px;
       font-size: 0.7rem;
       cursor: pointer;
+      font-weight: 500;
+      color: #3b5a7c;
     }
 
-    .notice {
-      font-size: 0.7rem;
-      color: #4a5b6e;
-      margin-top: 12px;
+    .cancel-add:hover {
+      background: #f0f4fa;
+    }
+
+    .feedback-message {
+      margin-top: 1rem;
+      font-size: 0.75rem;
       text-align: center;
+      font-weight: 500;
+      padding: 0.3rem;
+      color: #2c6e2c;
+      transition: all 0.1s;
     }
 
     hr {
-      margin: 0 24px;
-      border-color: #edf2f7;
+      margin: 0 1.5rem;
+      border-color: #edf2f9;
     }
 
-    @media (max-width: 520px) {
-      .header-bar {
+    @media (max-width: 580px) {
+      .card-header {
         flex-direction: column;
         align-items: flex-start;
       }
-      .stats-row {
+      .stats-container {
         flex-wrap: wrap;
       }
-      .dept-grid {
-        gap: 10px;
+      .file-status-text {
+        max-width: 130px;
       }
-      .merged-add-btn {
-        padding: 6px 14px;
-        font-size: 0.8rem;
+      .merged-department-btn {
+        padding: 0.45rem 1rem;
       }
     }
   </style>
 </head>
 <body>
-<div class="dashboard">
-  <!-- header area with merged button exactly where "Add Department" and button used to be -->
-  <div class="header-bar">
-    <div class="title-section">
+
+<div class="hub-card">
+  <!-- header: title + MERGED button (small, compact, no extra row) -->
+  <div class="card-header">
+    <div class="title-block">
       <h1>Department Hub</h1>
-      <div class="badge-stats">
-        <span class="stats-chip">📁 Active workspaces</span>
-        <span class="stats-chip">⚙️ Production</span>
+      <div class="chip-group">
+        <span class="chip">⚙️ Active workspaces</span>
+        <span class="chip">🏭 Production</span>
       </div>
     </div>
-    <!-- 🟢 MERGED BUTTON: replaces both "Add Department" text and the separate button.
-         It is small, compact, and contains both text "Add Department" and a plus icon.
-         No extra text beside it, no full row – just this neat button. -->
-    <button class="merged-add-btn" id="openAddPanelBtn">
+    <!-- ✅ MERGED BUTTON: text "Add Department" + plus icon, small & compact, single element -->
+    <button class="merged-department-btn" id="mergedAddDepartmentBtn">
       <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
         <path d="M12 5v14M5 12h14" />
       </svg>
@@ -376,59 +388,61 @@
     </button>
   </div>
 
-  <!-- search and file picker section (preserve original look) -->
-  <div class="search-area">
-    <div class="search-wrapper">
-      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+  <!-- search + choose files (fully interactive) -->
+  <div class="action-row">
+    <div class="search-box">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="10.5" cy="10.5" r="6.5" />
         <path d="M15 15L21 21" />
       </svg>
-      <input type="text" placeholder="Search PDFs or departments..." id="searchDeptInput">
+      <input type="text" id="searchDepartmentInput" placeholder="Search PDFs or departments...">
     </div>
-    <div class="file-zone">
-      <label for="fileInputElem" class="file-label">
+    <div class="file-picker">
+      <label for="chooseFilesInput" class="file-label-btn">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
           <polyline points="13 2 13 9 20 9" />
         </svg>
         Choose Files
       </label>
-      <input type="file" id="fileInputElem" multiple style="display: none;">
-      <span class="file-status" id="fileStatusMsg">no files selected</span>
+      <input type="file" id="chooseFilesInput" multiple style="display: none;">
+      <span class="file-status-text" id="fileStatusMsg">no files selected</span>
     </div>
   </div>
 
-  <!-- stats row: Folders & Documents (exactly as per image but interactive counts) -->
-  <div class="stats-row">
-    <div class="stat-item">
+  <!-- folders & documents stats -->
+  <div class="stats-container">
+    <div class="stat-pill">
       📂 Folders
-      <span class="stat-number" id="folderCount">90</span>
+      <span class="stat-number" id="foldersCountDisplay">90</span>
     </div>
-    <div class="stat-item">
+    <div class="stat-pill">
       📄 Documents
-      <span class="stat-number" id="documentCount">1</span>
+      <span class="stat-number" id="documentsCountDisplay">1</span>
     </div>
   </div>
 
-  <!-- department list section (dynamic) -->
-  <div class="dept-container">
-    <div class="dept-grid" id="departmentList">
-      <!-- initial departments: REMELT, CASTER, HRM, CRM, ANNEALING, TLL, SLITTER -->
+  <!-- department grid list + inline add panel -->
+  <div class="dept-panel">
+    <div class="dept-badge-grid" id="departmentGridContainer">
+      <!-- dynamic departments injected here -->
     </div>
 
-    <!-- inline panel for adding new department (hidden by default, appears when merged button clicked) -->
-    <div id="inlineAddSection" style="display: none;" class="inline-add-panel">
-      <input type="text" id="newDeptName" placeholder="Department name (e.g., FINISHING)" autocomplete="off">
-      <button id="confirmAddDeptBtn" class="small-confirm">➕ Add</button>
+    <!-- hidden inline form for adding new department (appears only when merged button clicked) -->
+    <div id="inlineDepartmentForm" style="display: none;" class="inline-add-card">
+      <input type="text" id="newDepartmentNameInput" placeholder="e.g., FINISHING, LOGISTICS" autocomplete="off">
+      <button id="confirmAddDeptBtn" class="confirm-add">✔ Add</button>
       <button id="cancelAddDeptBtn" class="cancel-add">Cancel</button>
     </div>
-    <div class="notice" id="actionFeedback"></div>
+
+    <div id="globalFeedback" class="feedback-message"></div>
   </div>
 </div>
 
 <script>
-  // ---------- INITIAL DEPARTMENTS (from the list in the image) ----------
-  let departments = [
+  // ---------- PURE JS LOGIC - FULLY FUNCTIONAL, NO DEAD UI ----------
+  // Initial departments from the reference image
+  let departmentsArray = [
     "REMELT",
     "CASTER",
     "HRM",
@@ -438,223 +452,257 @@
     "SLITTER"
   ];
 
-  // Folders / Documents counts (matching initial UI: 90 folders, 1 document)
-  let foldersCount = 90;
-  let documentsCount = 1;
+  // State for stats
+  let foldersCount = 90;      // fixed as per original image
+  let documentsCount = 1;     // starts at 1 (like original screenshot)
 
-  // DOM elements
-  const deptGrid = document.getElementById("departmentList");
-  const folderSpan = document.getElementById("folderCount");
-  const docSpan = document.getElementById("documentCount");
-  const searchInput = document.getElementById("searchDeptInput");
-  const fileInput = document.getElementById("fileInputElem");
-  const fileStatusSpan = document.getElementById("fileStatusMsg");
-  const openAddBtn = document.getElementById("openAddPanelBtn");
-  const inlineAddSection = document.getElementById("inlineAddSection");
-  const newDeptNameInput = document.getElementById("newDeptName");
+  // DOM Elements
+  const deptGridContainer = document.getElementById("departmentGridContainer");
+  const foldersSpan = document.getElementById("foldersCountDisplay");
+  const documentsSpan = document.getElementById("documentsCountDisplay");
+  const searchInputField = document.getElementById("searchDepartmentInput");
+  const mergedBtn = document.getElementById("mergedAddDepartmentBtn");
+  const inlineFormDiv = document.getElementById("inlineDepartmentForm");
+  const newDeptInput = document.getElementById("newDepartmentNameInput");
   const confirmAddBtn = document.getElementById("confirmAddDeptBtn");
   const cancelAddBtn = document.getElementById("cancelAddDeptBtn");
-  const feedbackDiv = document.getElementById("actionFeedback");
+  const feedbackSpan = document.getElementById("globalFeedback");
+  const fileInputElement = document.getElementById("chooseFilesInput");
+  const fileStatusSpan = document.getElementById("fileStatusMsg");
 
-  // Helper: update department list UI (filter based on search term)
-  function renderDepartments() {
-    const searchTerm = searchInput.value.trim().toLowerCase();
-    let filteredDepts = departments;
-    if (searchTerm !== "") {
-      filteredDepts = departments.filter(dept => dept.toLowerCase().includes(searchTerm));
-    }
-
-    if (filteredDepts.length === 0) {
-      deptGrid.innerHTML = `<div class="empty-message">✨ No matching departments. Click "Add Department" to create one.</div>`;
-      return;
-    }
-
-    deptGrid.innerHTML = filteredDepts.map(dept => `
-      <div class="dept-pill" data-dept="${dept.replace(/"/g, '&quot;')}">
-        🏭 ${escapeHtml(dept)}
-      </div>
-    `).join('');
-  }
-
-  // simple escape to avoid injection
+  // Helper: escape HTML to avoid injection
   function escapeHtml(str) {
+    if (!str) return '';
     return str.replace(/[&<>]/g, function(m) {
       if (m === '&') return '&amp;';
       if (m === '<') return '&lt;';
       if (m === '>') return '&gt;';
       return m;
-    }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
-      return c;
+    }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(ch) {
+      return ch;
     });
   }
 
-  // update folders & documents display
-  function updateStatsDisplay() {
-    folderSpan.innerText = foldersCount;
-    docSpan.innerText = documentsCount;
+  // Show temporary feedback (auto-clear)
+  let feedbackTimer = null;
+  function showFeedback(message, isError = false) {
+    if (feedbackTimer) clearTimeout(feedbackTimer);
+    feedbackSpan.innerText = message;
+    feedbackSpan.style.color = isError ? "#b91c1c" : "#166534";
+    feedbackSpan.style.fontWeight = "500";
+    feedbackTimer = setTimeout(() => {
+      feedbackSpan.innerText = "";
+      feedbackSpan.style.color = "";
+    }, 2500);
   }
 
-  // add new department (case-insensitive uniqueness, trim)
-  function addDepartment(newNameRaw) {
-    let newName = newNameRaw.trim();
-    if (newName === "") {
-      showTemporaryFeedback("❌ Department name cannot be empty.", "#b91c1c");
+  // Render department list with search filter
+  function renderDepartments() {
+    const searchTerm = searchInputField.value.trim().toLowerCase();
+    let filteredList = departmentsArray;
+    if (searchTerm !== "") {
+      filteredList = departmentsArray.filter(dept => dept.toLowerCase().includes(searchTerm));
+    }
+
+    if (filteredList.length === 0) {
+      deptGridContainer.innerHTML = `<div class="empty-dept-message">🔍 No matching departments. Click "Add Department" to create one.</div>`;
+      return;
+    }
+
+    deptGridContainer.innerHTML = filteredList.map(dept => `
+      <div class="dept-item">
+        🧩 ${escapeHtml(dept)}
+      </div>
+    `).join('');
+  }
+
+  // Update stats (folders & documents)
+  function updateStatsUI() {
+    foldersSpan.innerText = foldersCount;
+    documentsSpan.innerText = documentsCount;
+  }
+
+  // Add new department (case-insensitive duplicate check)
+  function addDepartment(newRawName) {
+    let cleanName = newRawName.trim();
+    if (cleanName === "") {
+      showFeedback("❌ Department name cannot be empty.", true);
       return false;
     }
-    // check for duplicates (case-insensitive)
-    const exists = departments.some(dept => dept.toLowerCase() === newName.toLowerCase());
-    if (exists) {
-      showTemporaryFeedback(`⚠️ "${newName}" already exists.`, "#b45309");
+    // duplicate check (case-insensitive)
+    const alreadyExists = departmentsArray.some(dept => dept.toLowerCase() === cleanName.toLowerCase());
+    if (alreadyExists) {
+      showFeedback(`⚠️ Department "${cleanName}" already exists.`, true);
       return false;
     }
-    departments.push(newName);
-    // after adding, increment documents count? just to match dynamic feel (but original document count increments slightly)
+    departmentsArray.push(cleanName);
+    // increase documents count as a natural interaction (each new department adds a related document)
     documentsCount += 1;
-    // optionally increment folders count if we want dynamic? but keep original logic: folders remain 90, but we can add small synergy
-    // but original spec: folders = 90, documents = 1 initially. Each new department increases documents by 1 (makes sense)
-    updateStatsDisplay();
+    updateStatsUI();
     renderDepartments();
-    showTemporaryFeedback(`✅ Department "${newName}" added successfully.`, "#15803d");
-    // scroll to show new entry? just smooth
+    showFeedback(`✅ Department "${cleanName}" added successfully!`, false);
     return true;
   }
 
-  // small feedback message that disappears after 2.2 sec
-  let feedbackTimeout;
-  function showTemporaryFeedback(msg, color = "#0f172a") {
-    if (feedbackTimeout) clearTimeout(feedbackTimeout);
-    feedbackDiv.innerText = msg;
-    feedbackDiv.style.color = color;
-    feedbackDiv.style.fontWeight = "500";
-    feedbackDiv.style.opacity = "1";
-    feedbackTimeout = setTimeout(() => {
-      feedbackDiv.innerText = "";
-      feedbackDiv.style.color = "";
-    }, 2200);
-  }
-
-  // handle file selection (update file status text)
-  function updateFileStatus() {
-    if (fileInput.files.length === 0) {
-      fileStatusSpan.innerText = "no files selected";
-    } else {
-      const fileNames = Array.from(fileInput.files).map(f => f.name).join(", ");
-      const shortMsg = fileNames.length > 40 ? fileNames.substring(0, 40) + "…" : fileNames;
-      fileStatusSpan.innerText = shortMsg || `${fileInput.files.length} file(s) selected`;
-      // bonus: as per mockup, when files selected, we could increment document count? but keep optional. Let's not break expectation.
-      // However, to match interactive joy: we update document count if new files added beyond initial doc count? But we just show status.
-      // For consistency we'll also set a subtle hint: not modify counts automatically, but give user friendly console.
-    }
-  }
-
-  // reset add panel and hide it
+  // Hide inline add panel and clear input
   function hideAddPanel() {
-    inlineAddSection.style.display = "none";
-    newDeptNameInput.value = "";
+    inlineFormDiv.style.display = "none";
+    newDeptInput.value = "";
   }
 
   function showAddPanel() {
-    inlineAddSection.style.display = "flex";
-    newDeptNameInput.focus();
+    inlineFormDiv.style.display = "flex";
+    newDeptInput.focus();
   }
 
-  // Event handlers for merged button: click shows inline panel (small compact)
-  openAddBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    // if panel visible already we just focus, else show
-    if (inlineAddSection.style.display === "none" || inlineAddSection.style.display === "") {
-      showAddPanel();
-    } else {
-      newDeptNameInput.focus();
-    }
-  });
-
-  // confirm add logic
-  function handleConfirmAdd() {
-    const deptName = newDeptNameInput.value;
+  // confirm add handler
+  function handleAddConfirm() {
+    const deptName = newDeptInput.value;
     const success = addDepartment(deptName);
     if (success) {
       hideAddPanel();
-      // after adding, clear search if we want to show newly added, but maintain search state? keep search as is.
-      // re-render already called inside addDepartment. Optionally clear search? Not needed.
-      // also ensure that if search filter is active but new department doesn't match, it's fine.
+      // after adding new department, clear search if needed? but better preserve search state, but we'll re-render with current search
+      // re-render already called inside addDepartment
     } else {
-      // keep panel open, just highlight error
-      newDeptNameInput.style.border = "1px solid #e11d48";
-      setTimeout(() => {
-        newDeptNameInput.style.border = "";
-      }, 800);
+      // keep panel open, highlight input briefly
+      newDeptInput.style.border = "1px solid #e11d48";
+      setTimeout(() => { newDeptInput.style.border = ""; }, 600);
     }
   }
 
-  confirmAddBtn.addEventListener("click", handleConfirmAdd);
-  cancelAddBtn.addEventListener("click", () => {
-    hideAddPanel();
-    newDeptNameInput.value = "";
-  });
-
-  // allow Enter key in input field
-  newDeptNameInput.addEventListener("keypress", (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleConfirmAdd();
-    }
-  });
-
-  // search filtering
-  searchInput.addEventListener("input", () => {
-    renderDepartments();
-  });
-
-  // File input change event
-  fileInput.addEventListener("change", () => {
-    updateFileStatus();
-    // optional but friendly: when files uploaded, we can optionally update document count?
-    // Actually the original design shows "Documents: 1", but if user selects multiple files we can increase
-    // the documents count to show dynamic feedback. Keep it intuitive: each time files selected, we increase documents count by number of newly selected files.
-    // However we avoid double counting if same file reselect, but for clean UX we'll set new document count based on total unique file count? 
-    // Since spec not rigid but I'll increment documents count by added files, but ensure it doesn't break.
-    if (fileInput.files.length > 0) {
-      const newFilesCount = fileInput.files.length;
-      // but documents represent total documents in system? I'll update to reflect total selected files for demo
-      // But preserve original folder count (90) stays. we set documentsCount = previous + new files? no, but we'll just display the count as max(previous, files length).
-      // Better: documentsCount represents the number of documents uploaded/available. Each file select adds to cumulative documents? 
-      // To keep consistent and realistic, let documentsCount be the count of files currently selected (makes sense for context)
-      documentsCount = fileInput.files.length;
-      if (documentsCount === 0) documentsCount = 1; // default if no files (like original one doc)
-      if (fileInput.files.length === 0 && documentsCount === 0) documentsCount = 1;
-      updateStatsDisplay();
-      showTemporaryFeedback(`📎 ${fileInput.files.length} file(s) attached. Document counter updated.`, "#2563eb");
+  // ----- FILE HANDLER (interactive, changes documents count & status)
+  function updateFileSelectionStatus() {
+    const files = fileInputElement.files;
+    if (files.length === 0) {
+      fileStatusSpan.innerText = "no files selected";
+      // if no files and documentsCount is 0? but we keep base 1 if nothing selected? ensure consistency
+      if (documentsCount === 0) documentsCount = 1;
+      updateStatsUI();
     } else {
-      documentsCount = 1;
-      updateStatsDisplay();
+      const fileNames = Array.from(files).map(f => f.name).join(", ");
+      const shortPreview = fileNames.length > 38 ? fileNames.substring(0, 38) + "…" : fileNames;
+      fileStatusSpan.innerText = shortPreview || `${files.length} file(s)`;
+      // update documents count based on selected files (realistic interactive)
+      documentsCount = files.length;
+      if (documentsCount === 0) documentsCount = 1;
+      updateStatsUI();
+      showFeedback(`📎 ${files.length} file(s) selected. Documents updated.`, false);
     }
-  });
+  }
 
-  // Additional: simulate the "Folders" count stays 90, but we could allow dynamic based on dept groups? But spec: keep folders count = 90. 
-  // we don't change foldersCount to keep UI consistent with initial image. However user can add departments and folders count remains 90.
-  // But the mockup had 90 folders and 1 doc. It's fine.
+  // reset file status on load
+  function initFileListener() {
+    fileInputElement.addEventListener("change", () => {
+      updateFileSelectionStatus();
+    });
+    // initial call
+    updateFileSelectionStatus();
+  }
 
-  // Bonus: initialize file status and stats
-  updateFileStatus();
-  renderDepartments();
-  updateStatsDisplay();
+  // ---- SEARCH EVENT ----
+  function initSearch() {
+    searchInputField.addEventListener("input", () => {
+      renderDepartments();
+    });
+  }
 
-  // small extra: when we click on a department pill, maybe a toast? optional but not needed, but provides nice feeling.
-  // but not required. clean.
+  // ---- MERGED BUTTON (single point to show inline panel) ----
+  function initMergedButton() {
+    mergedBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      // if panel is visible we just focus, else show it
+      if (inlineFormDiv.style.display === "none" || inlineFormDiv.style.display === "") {
+        showAddPanel();
+      } else {
+        // already visible: bring focus to input
+        newDeptInput.focus();
+      }
+    });
+  }
 
-  // handle case where hide panel if clicked outside? but not necessary, because merged button toggles? better user experience: merged button only shows panel
-  // If panel is open, clicking merged button again does not close, but we could keep as is. But clicking cancel closes. Also we can close by pressing ESC?
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && inlineAddSection.style.display === "flex") {
+  // ---- panel buttons ----
+  function initPanelControls() {
+    confirmAddBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      handleAddConfirm();
+    });
+
+    cancelAddBtn.addEventListener("click", (e) => {
+      e.preventDefault();
       hideAddPanel();
-      newDeptNameInput.value = "";
-      showTemporaryFeedback("Cancelled adding department.", "#4b5563");
-    }
-  });
+      showFeedback("➕ Department addition cancelled", false);
+    });
 
-  // small improvement: change background of merged button active ripple
-  console.log("Merged button ready — small compact button with integrated text + icon");
+    newDeptInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleAddConfirm();
+      }
+    });
+  }
+
+  // optional: escape key closes panel
+  function initGlobalEscape() {
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && inlineFormDiv.style.display === "flex") {
+        hideAddPanel();
+        showFeedback("Closed add panel", false);
+      }
+    });
+  }
+
+  // additional extra: avoid dead clicks, ensure everything reactive
+  function refreshInitialState() {
+    renderDepartments();
+    updateStatsUI();
+    // Folders count stays 90, but ensure it's displayed
+    foldersCount = 90;
+    // documentsCount initially 1, but if files selected it will be updated by file event. Perfect.
+    if (fileInputElement.files.length === 0 && documentsCount !== 1) {
+      documentsCount = 1;
+      updateStatsUI();
+    }
+    updateStatsUI();
+  }
+
+  // Bonus: when add panel is open, clicking outside could close? (optional but not required)
+  // but to keep clean we don't overcomplicate, user can press cancel or escape.
+
+  // fix: the merged button has no separate extra text; it's truly merged. all actions work.
+  // also provide a demo initial reset for document count based on files.
+
+  // Fix file status on page load: if no files selected documents = 1
+  function syncDocumentsDefault() {
+    if (fileInputElement.files.length === 0) {
+      documentsCount = 1;
+      updateStatsUI();
+    } else {
+      documentsCount = fileInputElement.files.length;
+      updateStatsUI();
+    }
+  }
+
+  // initialize everything
+  function initApp() {
+    initSearch();
+    initMergedButton();
+    initPanelControls();
+    initGlobalEscape();
+    initFileListener();
+    refreshInitialState();
+    syncDocumentsDefault();
+    // additional guard: ensure folder count is always 90 (image spec)
+    foldersCount = 90;
+    updateStatsUI();
+    // make sure dept grid updates on any change
+    window.addEventListener("load", () => {
+      renderDepartments();
+      updateStatsUI();
+    });
+  }
+
+  // run app
+  initApp();
 </script>
 </body>
 </html>
