@@ -25,7 +25,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .btn-back:hover{background:rgba(99,102,241,0.4);transform:translateX(-3px)}
 .btn-upload{background:linear-gradient(135deg,#6366f1,#ec4899);color:#fff}
 .btn-upload:hover{transform:translateY(-2px)}
-.path-container{flex:1;display:flex;align-items:center;gap:8px;padding:8px 16px;background:rgba(0,0,0,0.3);border-radius:40px;font-size:0.85rem;color:#aaa;cursor:pointer}
+.search-container{flex:1;position:relative;min-width:180px}
+.search-container i{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#888;font-size:0.85rem}
+#searchInput{width:100%;padding:10px 16px 10px 38px;border-radius:40px;border:1px solid rgba(255,255,255,0.2);background:rgba(0,0,0,0.3);color:#fff;font-size:0.85rem;outline:none}
+#searchInput:focus{border-color:#6366f1}
+#searchInput::placeholder{color:#888}
+.clear-search{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;color:#888;cursor:pointer;font-size:0.8rem}
+.clear-search:hover{color:#f87171}
+.path-container{display:flex;align-items:center;gap:8px;padding:8px 16px;background:rgba(0,0,0,0.3);border-radius:40px;font-size:0.85rem;color:#aaa;cursor:pointer}
 .path-container:hover{color:#6366f1}
 .view-toggle{display:flex;gap:5px;background:rgba(0,0,0,0.3);padding:4px;border-radius:40px}
 .toggle-btn{background:transparent;border:none;color:#888;padding:8px 16px;border-radius:30px;cursor:pointer;font-size:1rem}
@@ -70,7 +77,8 @@ iframe{width:100%;height:100%;border:none;border-radius:16px;background:#fff}
 .toast.hidden{display:none}
 .empty-state{grid-column:1/-1;text-align:center;padding:60px 20px;background:rgba(255,255,255,0.04);border-radius:24px}
 .empty-state i{font-size:48px;color:#6366f1;margin-bottom:16px}
-@media (max-width:640px){.app{padding:12px}.header{padding:14px 18px}.logo{width:42px;height:42px;font-size:1.3rem}.header-title h1{font-size:1.3rem}.btn-back span,.btn-upload span{display:none}.btn-back,.btn-upload{padding:10px 14px}.content.grid-view{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px}.action-btn span{display:none}.action-btn{padding:10px 14px}.stat-item span{font-size:1.2rem}.stat-item i{font-size:1.1rem}}
+.search-result-info{text-align:center;padding:10px;color:#aaa;font-size:0.8rem}
+@media (max-width:640px){.app{padding:12px}.header{padding:14px 18px}.logo{width:42px;height:42px;font-size:1.3rem}.header-title h1{font-size:1.3rem}.btn-back span,.btn-upload span{display:none}.btn-back,.btn-upload{padding:10px 14px}.content.grid-view{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px}.action-btn span{display:none}.action-btn{padding:10px 14px}.stat-item span{font-size:1.2rem}.stat-item i{font-size:1.1rem}.search-container{min-width:100%}}
 </style>
 </head>
 <body>
@@ -83,11 +91,20 @@ iframe{width:100%;height:100%;border:none;border-radius:16px;background:#fff}
 
   <div class="top-bar">
     <button id="backBtn" class="btn-back hidden" onclick="goBack()"><i class="fas fa-arrow-left"></i><span>Back</span></button>
+    
+    <div class="search-container">
+      <i class="fas fa-search"></i>
+      <input type="text" id="searchInput" placeholder="Search PDFs...">
+      <button id="clearSearchBtn" class="clear-search hidden"><i class="fas fa-times-circle"></i></button>
+    </div>
+    
     <div class="path-container" id="pathContainer"><i class="fas fa-home"></i><span id="path">Home</span></div>
+    
     <div class="view-toggle">
       <button id="gridViewBtn" class="toggle-btn active"><i class="fas fa-th"></i></button>
       <button id="listViewBtn" class="toggle-btn"><i class="fas fa-list"></i></button>
     </div>
+    
     <button id="uploadBtn" class="btn-upload hidden" onclick="triggerUpload()"><i class="fas fa-cloud-upload-alt"></i><span>Upload</span></button>
     <input type="file" id="fileInput" accept="application/pdf" multiple hidden>
   </div>
@@ -97,6 +114,7 @@ iframe{width:100%;height:100%;border:none;border-radius:16px;background:#fff}
     <div class="stat-item"><i class="fas fa-file-pdf"></i><span id="fileCount">0</span><label>Documents</label></div>
   </div>
 
+  <div id="searchInfo" class="search-result-info hidden"></div>
   <div id="content" class="content grid-view"></div>
 </div>
 
@@ -111,7 +129,7 @@ iframe{width:100%;height:100%;border:none;border-radius:16px;background:#fff}
 <div id="toast" class="toast hidden"><i class="fas fa-check-circle"></i><span>Upload successful!</span></div>
 
 <script>
-// ==================== OARCEL - COMPLETE WORKING APP ====================
+// ==================== OARCEL - COMPLETE WITH SEARCH ====================
 
 const content = document.getElementById("content");
 const pathText = document.getElementById("path");
@@ -124,10 +142,14 @@ const frame = document.getElementById("pdfFrame");
 const toast = document.getElementById("toast");
 const folderCountSpan = document.getElementById("folderCount");
 const fileCountSpan = document.getElementById("fileCount");
+const searchInput = document.getElementById("searchInput");
+const clearSearchBtn = document.getElementById("clearSearchBtn");
+const searchInfo = document.getElementById("searchInfo");
 
 let currentViewMode = "grid";
 let allFiles = {};
 let currentPath = [];
+let isSearchMode = false;
 
 // Folder structure
 let fileSystem = {
@@ -175,17 +197,8 @@ let fileSystem = {
 };
 
 // Storage functions
-function saveFolderStructure() { 
-    localStorage.setItem('oarcel_folders', JSON.stringify(fileSystem));
-    console.log('Folder structure saved');
-}
-function loadFolderStructure() { 
-    const saved = localStorage.getItem('oarcel_folders'); 
-    if (saved) {
-        fileSystem = JSON.parse(saved);
-        console.log('Folder structure loaded');
-    }
-}
+function saveFolderStructure() { localStorage.setItem('oarcel_folders', JSON.stringify(fileSystem)); }
+function loadFolderStructure() { const saved = localStorage.getItem('oarcel_folders'); if (saved) fileSystem = JSON.parse(saved); }
 function saveAllFiles() { 
     try { 
         const toSave = {}; 
@@ -219,6 +232,29 @@ function deleteFileFromFolder(folderPath, fileName) {
     }
 }
 
+// Get all files for search
+function getAllFiles() {
+    const results = [];
+    for (const folderPath in allFiles) {
+        allFiles[folderPath].forEach(file => {
+            results.push({
+                name: file.name,
+                dataUrl: file.dataUrl,
+                folder: folderPath
+            });
+        });
+    }
+    return results;
+}
+
+// Search function
+function searchFiles(query) {
+    if (!query.trim()) return [];
+    const all = getAllFiles();
+    const lowerQuery = query.toLowerCase();
+    return all.filter(file => file.name.toLowerCase().includes(lowerQuery));
+}
+
 // Folder management
 function renameCurrentFolder() {
     if (currentPath.length === 0) { showToast("Cannot rename root", true); return; }
@@ -247,7 +283,6 @@ function addNewFolder() {
             saveFolderStructure(); 
             render(); 
             showToast(`✅ Folder "${folderName}" created`);
-            console.log('Folder created:', folderName, currentFolder);
         } else { 
             showToast("Folder already exists!", true); 
         }
@@ -261,7 +296,6 @@ function addNewDepartment() {
             saveFolderStructure(); 
             render(); 
             showToast(`✅ Department "${deptName}" created`);
-            console.log('Department created:', deptName, fileSystem);
         } else { 
             showToast("Department already exists!", true); 
         }
@@ -350,10 +384,12 @@ function closeViewer() {
     document.body.style.overflow = "auto"; 
 }
 function goBack() { 
-    if (currentPath.length > 0) { 
+    if (currentPath.length > 0 && !isSearchMode) { 
         currentPath.pop(); 
         render(); 
-    } 
+    } else if (isSearchMode) {
+        clearSearch();
+    }
 }
 function triggerUpload() { 
     fileInput.click(); 
@@ -364,9 +400,51 @@ function setViewMode(mode) {
     document.getElementById("gridViewBtn").classList.toggle("active", mode === "grid"); 
     document.getElementById("listViewBtn").classList.toggle("active", mode === "list"); 
 }
+function clearSearch() {
+    searchInput.value = "";
+    isSearchMode = false;
+    searchInfo.classList.add("hidden");
+    clearSearchBtn.classList.add("hidden");
+    render();
+}
 
 // Main render
 function render() {
+    const searchQuery = searchInput.value.trim().toLowerCase();
+    const isSearching = searchQuery !== "";
+    
+    isSearchMode = isSearching;
+    
+    if (isSearching) {
+        clearSearchBtn.classList.remove("hidden");
+        const results = searchFiles(searchQuery);
+        searchInfo.classList.remove("hidden");
+        searchInfo.innerHTML = `<i class="fas fa-search"></i> Found ${results.length} result(s) for "${escapeHtml(searchQuery)}" <button onclick="clearSearch()" style="background:none;border:none;color:#6366f1;cursor:pointer;margin-left:10px">Clear</button>`;
+        
+        content.innerHTML = "";
+        content.className = `content ${currentViewMode === "grid" ? "grid-view" : "list-view"}`;
+        backBtn.classList.toggle("hidden", false);
+        pathText.innerText = "Search Results";
+        uploadBtn.classList.toggle("hidden", true);
+        
+        if (results.length === 0) {
+            const emptyDiv = document.createElement("div");
+            emptyDiv.className = "empty-state";
+            emptyDiv.innerHTML = '<i class="fas fa-search"></i><p>No PDFs found matching your search.</p>';
+            content.appendChild(emptyDiv);
+        } else {
+            results.forEach(file => {
+                const card = createCard(file.name, () => openPDF(file.dataUrl), false, false);
+                content.appendChild(card);
+            });
+        }
+        updateStats();
+        return;
+    }
+    
+    clearSearchBtn.classList.add("hidden");
+    searchInfo.classList.add("hidden");
+    
     content.innerHTML = "";
     const folder = getCurrentFolder();
     if (!folder) { 
@@ -380,7 +458,6 @@ function render() {
     const isLeafFolder = Object.keys(folder).length === 0;
     const isRoot = currentPath.length === 0;
     
-    // Show action buttons
     if (!isRoot) {
         const actionBar = document.createElement("div");
         actionBar.className = "action-bar";
@@ -400,12 +477,10 @@ function render() {
         content.appendChild(actionBar);
     }
     
-    // Show subfolders
     for (let key in folder) { 
         content.appendChild(createCard(key, () => { currentPath.push(key); render(); }, true)); 
     }
     
-    // Show files
     if (isLeafFolder) {
         uploadBtn.classList.toggle("hidden", false);
         const folderFiles = getFilesForCurrentFolder();
@@ -438,6 +513,10 @@ fileInput.addEventListener("change", async (e) => {
     fileInput.value = "";
 });
 
+// Search event
+searchInput.addEventListener("input", () => { render(); });
+clearSearchBtn.addEventListener("click", () => { clearSearch(); });
+
 // Make functions global
 window.deleteFileFromFolder = (folderPath, fileName) => { 
     if (confirm(`Delete "${fileName}"?`)) deleteFileFromFolder(folderPath, fileName); 
@@ -450,8 +529,9 @@ window.goBack = goBack;
 window.triggerUpload = triggerUpload;
 window.closeViewer = closeViewer;
 window.openPDF = openPDF;
+window.clearSearch = clearSearch;
 
-pathContainer.addEventListener("click", () => { currentPath = []; render(); });
+pathContainer.addEventListener("click", () => { clearSearch(); currentPath = []; render(); });
 document.getElementById("gridViewBtn").addEventListener("click", () => setViewMode("grid"));
 document.getElementById("listViewBtn").addEventListener("click", () => setViewMode("list"));
 
@@ -459,7 +539,7 @@ document.getElementById("listViewBtn").addEventListener("click", () => setViewMo
 loadFolderStructure();
 loadAllFiles();
 render();
-console.log("App initialized");
+console.log("App initialized with search");
 </script>
 </body>
 </html>
