@@ -75,31 +75,24 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .viewer-close:hover{background:#ff3b30}
 .viewer-body{flex:1;overflow:hidden;position:relative}
 
-/* Professional PDF Viewer */
+/* PDF Viewer */
 .pdf-container{width:100%;height:100%;display:flex;flex-direction:column;background:#525659}
 .pdf-canvas-wrapper{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;display:flex;justify-content:center;align-items:flex-start;background:#525659}
 #pdfCanvas{display:block;margin:0 auto;box-shadow:0 2px 8px rgba(0,0,0,0.2);background:#fff}
 
-/* Floating Action Button for Zoom */
-.fab-container{position:fixed;bottom:20px;right:20px;z-index:1002}
-.fab-main{width:50px;height:50px;background:#6366f1;border-radius:25px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.3);transition:all 0.2s;border:none;color:#fff;font-size:20px}
-.fab-main:active{transform:scale(0.94)}
-.fab-menu{position:absolute;bottom:60px;right:0;display:flex;flex-direction:column;gap:10px;opacity:0;visibility:hidden;transition:all 0.2s}
-.fab-container.open .fab-menu{opacity:1;visibility:visible}
-.fab-item{width:44px;height:44px;background:#2c2c2e;border-radius:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.3);border:none;color:#fff;font-size:16px}
-.fab-item:active{transform:scale(0.94)}
-.fab-item.reset{background:#ff3b30}
-.fab-item.zoom-in{background:#34c759}
-.fab-item.zoom-out{background:#ff9500}
+/* Zoom Controls - Simple Row at Bottom */
+.zoom-bar{display:flex;justify-content:center;gap:12px;padding:10px;background:rgba(0,0,0,0.8);border-top:1px solid rgba(255,255,255,0.1)}
+.zoom-btn{background:rgba(255,255,255,0.15);border:none;color:#fff;padding:8px 16px;border-radius:30px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px}
+.zoom-btn:active{transform:scale(0.95)}
+.zoom-level{color:#fff;font-size:13px;background:rgba(0,0,0,0.5);padding:6px 12px;border-radius:20px}
 
-/* Bottom Navigation Bar */
-.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:rgba(28,28,30,0.95);backdrop-filter:blur(20px);border-top:0.5px solid rgba(255,255,255,0.1);display:flex;justify-content:space-around;align-items:center;padding:8px 20px;z-index:1002}
-.nav-item{display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:none;color:#8e8e93;padding:8px 16px;border-radius:30px;cursor:pointer;transition:all 0.2s}
-.nav-item i{font-size:20px}
-.nav-item span{font-size:11px}
+/* Bottom Navigation */
+.bottom-nav{display:flex;justify-content:space-around;align-items:center;padding:8px 20px;background:rgba(28,28,30,0.95);border-top:0.5px solid rgba(255,255,255,0.1)}
+.nav-item{background:none;border:none;color:#8e8e93;padding:8px 16px;border-radius:30px;cursor:pointer;display:flex;align-items:center;gap:8px;font-size:14px}
 .nav-item.active{color:#6366f1;background:rgba(99,102,241,0.15)}
 .nav-item:active{transform:scale(0.95)}
-.page-info{color:#fff;font-size:13px;font-weight:500;background:rgba(0,0,0,0.5);padding:8px 16px;border-radius:30px}
+.nav-item:disabled{opacity:0.4}
+.page-info{color:#fff;font-size:14px;font-weight:500}
 
 .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#10b981,#059669);color:#fff;padding:10px 20px;border-radius:40px;display:flex;align-items:center;gap:8px;font-size:0.8rem;z-index:1100}
 .toast.hidden{display:none}
@@ -121,8 +114,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     .stat-item i{font-size:1.1rem}
     .search-container{min-width:100%}
     .nav-item span{display:none}
-    .nav-item{padding:8px 12px}
-    .page-info{font-size:11px;padding:6px 12px}
+    .zoom-btn span{display:none}
 }
 </style>
 </head>
@@ -151,7 +143,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     </div>
     
     <button id="uploadBtn" class="btn-upload" onclick="triggerUpload()"><i class="fas fa-cloud-upload-alt"></i><span>Upload</span></button>
-    <input type="file" id="fileInput" accept="application/pdf" multiple hidden>
+    <input type="file" id="fileInput" accept="application/pdf" multiple>
   </div>
 
   <div class="stats-bar">
@@ -329,16 +321,19 @@ function createCard(title,onClick,isFolder=true,showDelete=false,deletePath=null
     return card;
 }
 
-// ========== PROFESSIONAL PDF VIEWER ==========
+// ========== PDF VIEWER FUNCTIONS ==========
 async function loadPDFDocument(url){
     try{
         pdfDoc=await pdfjsLib.getDocument(url).promise;
         totalPages=pdfDoc.numPages;
         currentPageNum=1;
         currentZoom=1.2;
-        updateZoomLevel();
+        updateZoomDisplay();
         renderPDFPage();
-    }catch(error){console.error('Error loading PDF:',error);}
+    }catch(error){
+        console.error('Error loading PDF:',error);
+        showToast('Failed to load PDF',true);
+    }
 }
 
 async function renderPDFPage(){
@@ -352,16 +347,19 @@ async function renderPDFPage(){
         canvas.height=viewport.height;
         await page.render({canvasContext:canvas.getContext('2d'),viewport:viewport}).promise;
         document.getElementById('pdfPageInfo').textContent=`${currentPageNum} / ${totalPages}`;
-        document.getElementById('prevPageBtn').disabled=(currentPageNum<=1);
-        document.getElementById('nextPageBtn').disabled=(currentPageNum>=totalPages);
-        document.getElementById('pdfCanvasWrapper').scrollTop=0;
+        const prevBtn=document.getElementById('prevPageBtn');
+        const nextBtn=document.getElementById('nextPageBtn');
+        if(prevBtn)prevBtn.disabled=(currentPageNum<=1);
+        if(nextBtn)nextBtn.disabled=(currentPageNum>=totalPages);
+        const wrapper=document.getElementById('pdfCanvasWrapper');
+        if(wrapper)wrapper.scrollTop=0;
     }catch(error){console.error('Error rendering page:',error);}
 }
 
-function zoomIn(){if(currentZoom<3.0){currentZoom=Math.min(3.0,currentZoom+0.2);updateZoomLevel();renderPDFPage();}}
-function zoomOut(){if(currentZoom>0.5){currentZoom=Math.max(0.5,currentZoom-0.2);updateZoomLevel();renderPDFPage();}}
-function resetZoom(){currentZoom=1.2;updateZoomLevel();renderPDFPage();}
-function updateZoomLevel(){document.getElementById('zoomLevel').textContent=`${Math.round(currentZoom*100)}%`;}
+function zoomIn(){if(currentZoom<3.0){currentZoom=Math.min(3.0,currentZoom+0.2);updateZoomDisplay();renderPDFPage();}}
+function zoomOut(){if(currentZoom>0.5){currentZoom=Math.max(0.5,currentZoom-0.2);updateZoomDisplay();renderPDFPage();}}
+function resetZoom(){currentZoom=1.2;updateZoomDisplay();renderPDFPage();}
+function updateZoomDisplay(){document.getElementById('zoomLevel').textContent=`${Math.round(currentZoom*100)}%`;}
 function prevPage(){if(currentPageNum>1){currentPageNum--;renderPDFPage();}}
 function nextPage(){if(currentPageNum<totalPages){currentPageNum++;renderPDFPage();}}
 
@@ -374,32 +372,23 @@ function openPDF(dataUrl){
             <div class="pdf-canvas-wrapper" id="pdfCanvasWrapper">
                 <canvas id="pdfCanvas"></canvas>
             </div>
-        </div>
-        <div class="fab-container" id="fabContainer">
-            <button class="fab-main" id="fabMain"><i class="fas fa-plus"></i></button>
-            <div class="fab-menu">
-                <button class="fab-item zoom-in" id="zoomInBtn"><i class="fas fa-search-plus"></i></button>
-                <button class="fab-item zoom-out" id="zoomOutBtn"><i class="fas fa-search-minus"></i></button>
-                <button class="fab-item reset" id="resetZoomBtn"><i class="fas fa-sync-alt"></i></button>
+            <div class="zoom-bar">
+                <button class="zoom-btn" id="zoomOutBtn"><i class="fas fa-search-minus"></i><span>Out</span></button>
+                <span class="zoom-level" id="zoomLevel">120%</span>
+                <button class="zoom-btn" id="zoomInBtn"><i class="fas fa-search-plus"></i><span>In</span></button>
+                <button class="zoom-btn" id="resetZoomBtn"><i class="fas fa-sync-alt"></i><span>Reset</span></button>
             </div>
-        </div>
-        <div class="bottom-nav">
-            <button class="nav-item" id="prevPageBtn"><i class="fas fa-chevron-left"></i><span>Previous</span></button>
-            <span class="page-info" id="pdfPageInfo">1 / 1</span>
-            <button class="nav-item" id="nextPageBtn"><i class="fas fa-chevron-right"></i><span>Next</span></button>
+            <div class="bottom-nav">
+                <button class="nav-item" id="prevPageBtn"><i class="fas fa-chevron-left"></i><span>Previous</span></button>
+                <span class="page-info" id="pdfPageInfo">1 / 1</span>
+                <button class="nav-item" id="nextPageBtn"><i class="fas fa-chevron-right"></i><span>Next</span></button>
+            </div>
         </div>
     `;
     
-    // FAB toggle
-    const fabContainer=document.getElementById('fabContainer');
-    document.getElementById('fabMain').onclick=()=>fabContainer.classList.toggle('open');
-    
-    // Zoom buttons
-    document.getElementById('zoomInBtn').onclick=()=>{zoomIn();fabContainer.classList.remove('open');};
-    document.getElementById('zoomOutBtn').onclick=()=>{zoomOut();fabContainer.classList.remove('open');};
-    document.getElementById('resetZoomBtn').onclick=()=>{resetZoom();fabContainer.classList.remove('open');};
-    
-    // Page navigation
+    document.getElementById('zoomInBtn').onclick=zoomIn;
+    document.getElementById('zoomOutBtn').onclick=zoomOut;
+    document.getElementById('resetZoomBtn').onclick=resetZoom;
     document.getElementById('prevPageBtn').onclick=prevPage;
     document.getElementById('nextPageBtn').onclick=nextPage;
     
@@ -456,6 +445,13 @@ function render(){
     const isLeafFolder=Object.keys(folder).length===0;
     const isRoot=currentPath.length===0;
     
+    // Always show upload button in leaf folders
+    if(isLeafFolder){
+        uploadBtn.classList.remove("hidden");
+    }else{
+        uploadBtn.classList.add("hidden");
+    }
+    
     if(!isRoot){
         const actionBar=document.createElement("div");
         actionBar.className="action-bar";
@@ -472,7 +468,6 @@ function render(){
     for(let key in folder){contentEl.appendChild(createCard(key,()=>{currentPath.push(key);render();},true));}
     
     if(isLeafFolder){
-        uploadBtn.classList.toggle("hidden",false);
         const folderFiles=getFilesForCurrentFolder();
         const folderPath=currentPath.join("/");
         if(folderFiles.length===0&&Object.keys(folder).length===0){
@@ -483,12 +478,21 @@ function render(){
         }else{
             folderFiles.forEach((f)=>{contentEl.appendChild(createCard(f.name,()=>openPDF(f.dataUrl),false,true,folderPath,f.name));});
         }
-    }else{uploadBtn.classList.toggle("hidden",true);}
+    }
     updateStats();
 }
 
 // Event listeners
-fileInput.addEventListener("change",async(e)=>{for(let file of e.target.files){if(file.type==="application/pdf"){await addFileToCurrentFolder(file);}}showToast(`${e.target.files.length} PDF(s) saved!`);render();fileInput.value="";});
+fileInput.addEventListener("change",async(e)=>{
+    for(let file of e.target.files){
+        if(file.type==="application/pdf"){
+            await addFileToCurrentFolder(file);
+        }
+    }
+    showToast(`${e.target.files.length} PDF(s) saved!`);
+    render();
+    fileInput.value="";
+});
 searchInput.addEventListener("input",()=>{render();});
 clearSearchBtn.addEventListener("click",()=>{clearSearch();});
 
