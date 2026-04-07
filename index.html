@@ -46,33 +46,31 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .rename-btn:hover{background:#6366f1}
 .delete-folder-btn:hover{background:#ec4899}
 .add-folder-btn:hover{background:#10b981}
-.clear-recent-btn{background:rgba(239,68,68,0.2);border-color:rgba(239,68,68,0.4);color:#f87171}
-.clear-recent-btn:hover{background:#ef4444;color:#fff}
 
-/* Department Pill/Token Button Styles */
-.departments-grid{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:30px}
-.dept-card{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,rgba(99,102,241,0.2),rgba(236,72,153,0.2));border:1px solid rgba(99,102,241,0.4);border-radius:40px;padding:8px 18px;cursor:pointer;transition:all 0.2s}
-.dept-card:hover{transform:translateY(-2px);background:linear-gradient(135deg,rgba(99,102,241,0.4),rgba(236,72,153,0.4))}
-.dept-card i{font-size:0.85rem;background:linear-gradient(135deg,#6366f1,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.dept-card span{font-size:0.85rem;font-weight:500}
-.dept-card small{font-size:0.65rem;color:var(--text-secondary)}
+/* Department Cards - BIGGER SIZE */
+.departments-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px;margin-bottom:30px}
+.dept-card{background:linear-gradient(135deg,rgba(99,102,241,0.2),rgba(236,72,153,0.2));border:1px solid rgba(99,102,241,0.4);border-radius:20px;padding:20px 12px;text-align:center;cursor:pointer;transition:all 0.2s}
+.dept-card:hover{transform:translateY(-4px);background:linear-gradient(135deg,rgba(99,102,241,0.35),rgba(236,72,153,0.35));border-color:#6366f1}
+.dept-card i{font-size:2rem;margin-bottom:12px;display:block;background:linear-gradient(135deg,#6366f1,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.dept-card span{font-size:1rem;font-weight:600;display:block}
+.dept-card small{font-size:0.7rem;color:var(--text-secondary);display:block;margin-top:6px}
 
-/* EXTRA SMALL SUBFOLDER CARDS */
+/* EXTRA SMALL SQUARE SUBFOLDER CARDS - TINY SQUARES FOR A,B,C etc */
 .content{display:grid;gap:8px}
-.content.grid-view{grid-template-columns:repeat(auto-fill,minmax(70px,1fr))}
+.content.grid-view{grid-template-columns:repeat(auto-fill,minmax(55px,1fr));gap:6px}
 .content.list-view{display:flex;flex-direction:column;gap:6px}
 
-.grid-view .card{background:var(--bg-card);padding:8px 4px;border-radius:12px;text-align:center;cursor:pointer;border:1px solid var(--border-color);position:relative}
-.grid-view .card i:first-child{font-size:1.2rem;margin-bottom:4px;display:block}
-.grid-view .card span{font-size:0.65rem;font-weight:500}
+.grid-view .card{background:var(--bg-card);padding:10px 0;border-radius:12px;text-align:center;cursor:pointer;border:1px solid var(--border-color);position:relative;aspect-ratio:1/0.9;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.grid-view .card i:first-child{font-size:1.1rem;margin-bottom:4px;display:block}
+.grid-view .card span{font-size:0.6rem;font-weight:500;word-break:break-word;max-width:100%;padding:0 2px}
 
 .list-view .card{background:var(--bg-card);padding:6px 12px;border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:8px;border:1px solid var(--border-color)}
 .list-view .card i:first-child{font-size:0.9rem;width:20px}
 .list-view .card span{font-size:0.7rem;flex:1}
 
-/* Smaller delete/rename buttons */
-.grid-view .delete-btn-small{position:absolute;top:3px;right:3px;width:18px;height:18px;border-radius:6px;background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.4);color:#f87171;cursor:pointer;font-size:0.6rem;display:flex;align-items:center;justify-content:center}
-.grid-view .rename-file-btn-small{position:absolute;top:3px;right:24px;width:18px;height:18px;border-radius:6px;background:rgba(99,102,241,0.2);border:1px solid rgba(99,102,241,0.4);color:#6366f1;cursor:pointer;font-size:0.6rem;display:flex;align-items:center;justify-content:center}
+/* Tiny delete/rename buttons for square cards */
+.grid-view .delete-btn-small{position:absolute;top:2px;right:2px;width:16px;height:16px;border-radius:4px;background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.4);color:#f87171;cursor:pointer;font-size:0.5rem;display:flex;align-items:center;justify-content:center}
+.grid-view .rename-file-btn-small{position:absolute;top:2px;right:20px;width:16px;height:16px;border-radius:4px;background:rgba(99,102,241,0.2);border:1px solid rgba(99,102,241,0.4);color:#6366f1;cursor:pointer;font-size:0.5rem;display:flex;align-items:center;justify-content:center}
 .list-view .delete-btn{background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.4);color:#f87171;cursor:pointer;padding:4px 8px;border-radius:6px;font-size:0.7rem}
 .list-view .rename-file-btn{background:rgba(99,102,241,0.2);border:1px solid rgba(99,102,241,0.4);color:#6366f1;cursor:pointer;padding:4px 8px;border-radius:6px;font-size:0.7rem;margin-right:6px}
 
@@ -104,13 +102,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .clear-recent:hover{background:#ef4444;color:#fff}
 .recent-list{display:flex;gap:8px;flex-wrap:wrap}
 .recent-item{background:rgba(99,102,241,0.15);padding:4px 10px;border-radius:16px;font-size:0.7rem;cursor:pointer}
-.section-title{font-size:0.9rem;font-weight:600;margin:0 0 12px 0}
+.section-title{font-size:1rem;font-weight:600;margin:0 0 15px 0}
 #fileInput{display:none}
 @media (max-width:640px){
     .app{padding:12px}
     .btn-back span,.btn-upload span,.theme-toggle span{display:none}
-    .dept-card small{display:none}
-    .content.grid-view{grid-template-columns:repeat(auto-fill,minmax(60px,1fr))}
+    .departments-grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px}
+    .dept-card{padding:15px 8px}
+    .dept-card i{font-size:1.5rem}
+    .dept-card span{font-size:0.85rem}
+    .content.grid-view{grid-template-columns:repeat(auto-fill,minmax(50px,1fr));gap:4px}
+    .grid-view .card{padding:8px 0}
+    .grid-view .card i:first-child{font-size:0.9rem}
+    .grid-view .card span{font-size:0.55rem}
 }
 </style>
 </head>
@@ -405,7 +409,7 @@ function renderDepartmentButtons(){
         for(let dept in fileSystem){
             const subCount=Object.keys(fileSystem[dept]).length;
             const icon=departmentIcons[dept]||"fas fa-folder";
-            departmentsSection.innerHTML+=`<div class="dept-card" onclick="selectDepartment('${dept}')"><i class="${icon}"></i><span>${dept}</span><small>(${subCount})</small></div>`;
+            departmentsSection.innerHTML+=`<div class="dept-card" onclick="selectDepartment('${dept}')"><i class="${icon}"></i><span>${dept}</span><small>${subCount} folders</small></div>`;
         }
         departmentsSection.innerHTML+='</div>';
     }else{departmentsSection.innerHTML='';}
@@ -420,7 +424,7 @@ function createCard(title,onClick,isFolder=true,showDelete=false,deletePath=null
     if(currentViewMode==="list"){
         card.innerHTML=`<i class="fas ${iconClass}"></i><span style="flex:1;font-size:0.75rem">${escapeHtml(title)}</span>${showRename?`<button class="rename-file-btn" onclick="event.stopPropagation(); window.renameFile('${deletePath}','${escapeHtml(deleteName)}')"><i class="fas fa-edit"></i></button>`:''}${showDelete?`<button class="delete-btn" onclick="event.stopPropagation(); window.deleteFile('${deletePath}','${escapeHtml(deleteName)}')"><i class="fas fa-trash"></i></button>`:''}`;
     }else{
-        card.innerHTML=`<i class="fas ${iconClass}" style="font-size:1.2rem;margin-bottom:4px;display:block"></i><span style="font-size:0.65rem">${escapeHtml(title)}</span>${showRename?`<button class="rename-file-btn-small" onclick="event.stopPropagation(); window.renameFile('${deletePath}','${escapeHtml(deleteName)}')"><i class="fas fa-edit"></i></button>`:''}${showDelete?`<button class="delete-btn-small" onclick="event.stopPropagation(); window.deleteFile('${deletePath}','${escapeHtml(deleteName)}')"><i class="fas fa-trash"></i></button>`:''}`;
+        card.innerHTML=`<i class="fas ${iconClass}" style="font-size:1.1rem;margin-bottom:4px;display:block"></i><span style="font-size:0.6rem">${escapeHtml(title)}</span>${showRename?`<button class="rename-file-btn-small" onclick="event.stopPropagation(); window.renameFile('${deletePath}','${escapeHtml(deleteName)}')"><i class="fas fa-edit"></i></button>`:''}${showDelete?`<button class="delete-btn-small" onclick="event.stopPropagation(); window.deleteFile('${deletePath}','${escapeHtml(deleteName)}')"><i class="fas fa-trash"></i></button>`:''}`;
     }
     card.onclick=onClick;
     return card;
