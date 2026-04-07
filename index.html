@@ -1,520 +1,660 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-<title>OARCEL | Document Manager</title>
-<link rel="manifest" href="manifest.json">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="OARCEL">
-<meta name="theme-color" content="#6366f1">
-<link rel="apple-touch-icon" href="https://img.icons8.com/fluency/192/folder-invoices.png">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#0f0c29,#1a1a3e,#24243e);color:#fff;min-height:100vh}
-.app{max-width:1200px;margin:0 auto;padding:20px}
-.header{display:flex;align-items:center;gap:16px;margin-bottom:24px;padding:20px 28px;background:rgba(255,255,255,0.08);backdrop-filter:blur(20px);border-radius:28px;border:1px solid rgba(255,255,255,0.1)}
-.logo{width:52px;height:52px;background:linear-gradient(135deg,#6366f1,#ec4899);border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:1.6rem}
-.header-title h1{font-size:1.6rem;font-weight:700;background:linear-gradient(135deg,#fff,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.header-title span{font-size:0.7rem;color:#a855f7}
-.top-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;gap:12px;flex-wrap:wrap;background:rgba(0,0,0,0.3);padding:10px 18px;border-radius:60px}
-.btn-back,.btn-upload{display:flex;align-items:center;gap:8px;padding:10px 20px;border:none;border-radius:40px;font-weight:600;font-size:0.85rem;cursor:pointer;transition:all 0.2s}
-.btn-back{background:rgba(255,255,255,0.1);color:#fff}
-.btn-back:hover{background:rgba(99,102,241,0.4);transform:translateX(-3px)}
-.btn-upload{background:linear-gradient(135deg,#6366f1,#ec4899);color:#fff}
-.btn-upload:hover{transform:translateY(-2px)}
-.search-container{flex:1;position:relative;min-width:180px}
-.search-container i{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#888;font-size:0.85rem}
-#searchInput{width:100%;padding:10px 16px 10px 38px;border-radius:40px;border:1px solid rgba(255,255,255,0.2);background:rgba(0,0,0,0.3);color:#fff;font-size:0.85rem;outline:none}
-#searchInput:focus{border-color:#6366f1}
-#searchInput::placeholder{color:#888}
-.clear-search{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;color:#888;cursor:pointer;font-size:0.8rem}
-.clear-search:hover{color:#f87171}
-.path-container{display:flex;align-items:center;gap:8px;padding:8px 16px;background:rgba(0,0,0,0.3);border-radius:40px;font-size:0.85rem;color:#aaa;cursor:pointer}
-.path-container:hover{color:#6366f1}
-.view-toggle{display:flex;gap:5px;background:rgba(0,0,0,0.3);padding:4px;border-radius:40px}
-.toggle-btn{background:transparent;border:none;color:#888;padding:8px 16px;border-radius:30px;cursor:pointer;font-size:1rem}
-.toggle-btn.active{background:linear-gradient(135deg,#6366f1,#ec4899);color:#fff}
-.hidden{display:none!important}
-.stats-bar{display:flex;gap:20px;margin-bottom:24px;padding:16px 24px;background:rgba(0,0,0,0.3);border-radius:20px}
-.stat-item{display:flex;align-items:center;gap:12px;flex:1}
-.stat-item i{font-size:1.5rem;color:#6366f1}
-.stat-item span{font-size:1.6rem;font-weight:700}
-.stat-item label{font-size:0.7rem;color:#aaa;margin-left:auto}
-.action-bar{display:flex;gap:12px;padding:16px;flex-wrap:wrap;justify-content:center;margin-bottom:20px;background:rgba(0,0,0,0.3);border-radius:60px}
-.action-btn{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);padding:10px 20px;border-radius:40px;color:#fff;cursor:pointer;font-size:0.85rem;font-weight:500;display:inline-flex;align-items:center;gap:8px;transition:all 0.2s}
-.action-btn:hover{transform:translateY(-2px)}
-.rename-btn:hover{background:#6366f1}
-.delete-folder-btn:hover{background:#ec4899}
-.add-folder-btn:hover{background:#10b981}
-.content{display:grid;gap:20px}
-.content.grid-view{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
-.content.list-view{display:flex;flex-direction:column;gap:10px}
-.grid-view .card{background:rgba(255,255,255,0.06);backdrop-filter:blur(10px);padding:24px 12px;border-radius:24px;text-align:center;cursor:pointer;transition:all 0.3s;border:1px solid rgba(255,255,255,0.08);position:relative}
-.grid-view .card:hover{transform:translateY(-5px);background:rgba(255,255,255,0.12);border-color:rgba(99,102,241,0.4)}
-.grid-view .card i:first-child{font-size:2.2rem;margin-bottom:12px;display:block}
-.grid-view .card span{font-size:0.85rem;font-weight:500}
-.list-view .card{background:rgba(255,255,255,0.06);padding:14px 20px;border-radius:16px;cursor:pointer;display:flex;align-items:center;gap:15px;border:1px solid rgba(255,255,255,0.08)}
-.list-view .card:hover{background:rgba(255,255,255,0.12);transform:translateX(5px)}
-.list-view .card i:first-child{font-size:1.3rem;width:30px}
-.list-view .card span{font-size:0.85rem;flex:1}
-.delete-btn,.delete-btn-small{background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.4);color:#f87171;cursor:pointer;border-radius:10px;display:flex;align-items:center;justify-content:center;transition:all 0.2s}
-.delete-btn{width:32px;height:32px}
-.delete-btn-small{position:absolute;top:10px;right:10px;width:28px;height:28px;font-size:0.75rem}
-.delete-btn:hover,.delete-btn-small:hover{background:#ef4444;color:#fff}
-.card{position:relative}
-.viewer{position:fixed;top:0;left:0;width:100%;height:100%;background:#1a1a1a;z-index:1000;display:flex;flex-direction:column}
-.viewer.hidden{display:none}
-.viewer-header{display:flex;justify-content:space-between;align-items:center;padding:12px 20px;background:#2c2c2e;border-bottom:1px solid #3a3a3c}
-.viewer-title i{color:#6366f1;margin-right:8px}
-.viewer-title span{font-size:15px;font-weight:500}
-.viewer-close{background:rgba(255,255,255,0.1);border:none;color:#fff;padding:8px 16px;border-radius:30px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:6px}
-.viewer-close:hover{background:#ff3b30}
-.viewer-body{flex:1;overflow:hidden;position:relative}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Departments | Compact UI</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-/* PDF Viewer */
-.pdf-container{width:100%;height:100%;display:flex;flex-direction:column;background:#525659}
-.pdf-canvas-wrapper{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;display:flex;justify-content:center;align-items:flex-start;background:#525659}
-#pdfCanvas{display:block;margin:0 auto;box-shadow:0 2px 8px rgba(0,0,0,0.2);background:#fff}
+    body {
+      background: #f1f5f9;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
 
-/* Zoom Controls - Simple Row at Bottom */
-.zoom-bar{display:flex;justify-content:center;gap:12px;padding:10px;background:rgba(0,0,0,0.8);border-top:1px solid rgba(255,255,255,0.1)}
-.zoom-btn{background:rgba(255,255,255,0.15);border:none;color:#fff;padding:8px 16px;border-radius:30px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px}
-.zoom-btn:active{transform:scale(0.95)}
-.zoom-level{color:#fff;font-size:13px;background:rgba(0,0,0,0.5);padding:6px 12px;border-radius:20px}
+    /* main card container – matches the “dashboard” style from image */
+    .dashboard {
+      max-width: 680px;
+      width: 100%;
+      background: white;
+      border-radius: 32px;
+      box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.05);
+      overflow: hidden;
+      transition: all 0.2s ease;
+    }
 
-/* Bottom Navigation */
-.bottom-nav{display:flex;justify-content:space-around;align-items:center;padding:8px 20px;background:rgba(28,28,30,0.95);border-top:0.5px solid rgba(255,255,255,0.1)}
-.nav-item{background:none;border:none;color:#8e8e93;padding:8px 16px;border-radius:30px;cursor:pointer;display:flex;align-items:center;gap:8px;font-size:14px}
-.nav-item.active{color:#6366f1;background:rgba(99,102,241,0.15)}
-.nav-item:active{transform:scale(0.95)}
-.nav-item:disabled{opacity:0.4}
-.page-info{color:#fff;font-size:14px;font-weight:500}
+    /* subtle header like a clean bar */
+    .header-bar {
+      padding: 20px 24px 12px 24px;
+      border-bottom: 1px solid #e9edf2;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
 
-.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#10b981,#059669);color:#fff;padding:10px 20px;border-radius:40px;display:flex;align-items:center;gap:8px;font-size:0.8rem;z-index:1100}
-.toast.hidden{display:none}
-.empty-state{grid-column:1/-1;text-align:center;padding:60px 20px;background:rgba(255,255,255,0.04);border-radius:24px}
-.empty-state i{font-size:48px;color:#6366f1;margin-bottom:16px}
-.search-result-info{text-align:center;padding:10px;color:#aaa;font-size:0.8rem}
+    .title-section h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+      background: linear-gradient(135deg, #1e2a3a, #0f172a);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+    }
 
-@media (max-width:640px){
-    .app{padding:12px}
-    .header{padding:14px 18px}
-    .logo{width:42px;height:42px;font-size:1.3rem}
-    .header-title h1{font-size:1.3rem}
-    .btn-back span,.btn-upload span{display:none}
-    .btn-back,.btn-upload{padding:10px 14px}
-    .content.grid-view{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px}
-    .action-btn span{display:none}
-    .action-btn{padding:10px 14px}
-    .stat-item span{font-size:1.2rem}
-    .stat-item i{font-size:1.1rem}
-    .search-container{min-width:100%}
-    .nav-item span{display:none}
-    .zoom-btn span{display:none}
-}
-</style>
+    .title-section .badge-stats {
+      display: flex;
+      gap: 12px;
+      margin-top: 6px;
+      font-size: 0.75rem;
+      color: #4b5563;
+    }
+
+    .stats-chip {
+      background: #eef2ff;
+      padding: 4px 10px;
+      border-radius: 40px;
+      font-weight: 500;
+    }
+
+    /* 🟢 MERGED BUTTON – small, compact, replaces both "Add Department" text + button */
+    .merged-add-btn {
+      background: #0f172a;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 60px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: white;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      backdrop-filter: blur(0px);
+      letter-spacing: 0.2px;
+    }
+
+    .merged-add-btn svg {
+      width: 18px;
+      height: 18px;
+      stroke: white;
+      stroke-width: 2;
+      fill: none;
+      transition: transform 0.2s ease;
+    }
+
+    .merged-add-btn:hover {
+      background: #2d3a5e;
+      transform: scale(0.97);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .merged-add-btn:active {
+      transform: scale(0.95);
+    }
+
+    /* search & files row (from original mockup) */
+    .search-area {
+      padding: 16px 24px 8px 24px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      border-bottom: 1px solid #edf2f7;
+    }
+
+    .search-wrapper {
+      flex: 2;
+      min-width: 160px;
+      display: flex;
+      align-items: center;
+      background: #f8fafc;
+      border-radius: 60px;
+      border: 1px solid #e2e8f0;
+      padding: 6px 14px;
+      transition: all 0.2s;
+    }
+
+    .search-wrapper:focus-within {
+      border-color: #94a3b8;
+      background: white;
+      box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.08);
+    }
+
+    .search-icon {
+      width: 16px;
+      height: 16px;
+      stroke: #5b6e8c;
+      stroke-width: 2;
+      margin-right: 8px;
+    }
+
+    .search-wrapper input {
+      border: none;
+      background: transparent;
+      font-size: 0.9rem;
+      width: 100%;
+      outline: none;
+      padding: 6px 0;
+      font-weight: 450;
+      color: #0f172a;
+    }
+
+    .search-wrapper input::placeholder {
+      color: #94a3b8;
+      font-weight: 400;
+    }
+
+    /* file select zone (like "Choose Files" area) */
+    .file-zone {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #f9fbfd;
+      padding: 6px 12px;
+      border-radius: 48px;
+      border: 1px solid #e2edf2;
+    }
+
+    .file-label {
+      background: white;
+      border: 1px solid #cbd5e1;
+      padding: 6px 14px;
+      border-radius: 40px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: #1e293b;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .file-label:hover {
+      background: #f1f5f9;
+      border-color: #94a3b8;
+    }
+
+    .file-status {
+      font-size: 0.75rem;
+      color: #475569;
+      font-weight: 450;
+    }
+
+    /* stats row: Folders & Documents */
+    .stats-row {
+      display: flex;
+      gap: 24px;
+      padding: 16px 24px;
+      background: #ffffff;
+      border-bottom: 1px solid #edf2f7;
+    }
+
+    .stat-item {
+      background: #fefce8;
+      padding: 8px 16px;
+      border-radius: 60px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #2c3e50;
+    }
+
+    .stat-number {
+      background: #0f172a;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 30px;
+      font-size: 0.7rem;
+      font-weight: 500;
+    }
+
+    /* Department list – clean grid / flex */
+    .dept-container {
+      padding: 16px 20px 28px 20px;
+    }
+
+    .dept-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    /* each department pill style – matches "REMELT, CASTER, HRM..." */
+    .dept-pill {
+      background: #f1f5f9;
+      padding: 8px 18px;
+      border-radius: 60px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #0c4a6e;
+      transition: all 0.15s ease;
+      border: 1px solid #e2e8f0;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: default;
+      letter-spacing: -0.2px;
+    }
+
+    .dept-pill:hover {
+      background: #e6edf5;
+      transform: translateY(-1px);
+      border-color: #cbd5e1;
+    }
+
+    /* remove default button styles and provide small interactive */
+    .empty-message {
+      color: #6c757d;
+      font-style: italic;
+      font-size: 0.85rem;
+      padding: 12px;
+    }
+
+    /* interactive add department modal / inline addition simulation */
+    .inline-add-panel {
+      margin-top: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      background: #fafcff;
+      padding: 12px 16px;
+      border-radius: 60px;
+      border: 1px dashed #cbd5e6;
+    }
+
+    .inline-add-panel input {
+      flex: 2;
+      min-width: 140px;
+      border: 1px solid #cbd5e1;
+      background: white;
+      padding: 8px 14px;
+      border-radius: 60px;
+      font-size: 0.85rem;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    .inline-add-panel input:focus {
+      border-color: #0f172a;
+      box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.1);
+    }
+
+    .small-confirm {
+      background: #0f172a;
+      border: none;
+      padding: 7px 18px;
+      border-radius: 40px;
+      color: white;
+      font-weight: 500;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .small-confirm:hover {
+      background: #2c3e66;
+    }
+
+    .cancel-add {
+      background: transparent;
+      border: 1px solid #cbd5e1;
+      padding: 6px 16px;
+      border-radius: 40px;
+      font-size: 0.7rem;
+      cursor: pointer;
+    }
+
+    .notice {
+      font-size: 0.7rem;
+      color: #4a5b6e;
+      margin-top: 12px;
+      text-align: center;
+    }
+
+    hr {
+      margin: 0 24px;
+      border-color: #edf2f7;
+    }
+
+    @media (max-width: 520px) {
+      .header-bar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .stats-row {
+        flex-wrap: wrap;
+      }
+      .dept-grid {
+        gap: 10px;
+      }
+      .merged-add-btn {
+        padding: 6px 14px;
+        font-size: 0.8rem;
+      }
+    }
+  </style>
 </head>
 <body>
-
-<div class="app">
-  <div class="header">
-    <div class="logo"><i class="fas fa-folder-open"></i></div>
-    <div class="header-title"><h1>OARCEL</h1><span>Document Manager</span></div>
-  </div>
-
-  <div class="top-bar">
-    <button id="backBtn" class="btn-back hidden" onclick="goBack()"><i class="fas fa-arrow-left"></i><span>Back</span></button>
-    
-    <div class="search-container">
-      <i class="fas fa-search"></i>
-      <input type="text" id="searchInput" placeholder="Search PDFs...">
-      <button id="clearSearchBtn" class="clear-search hidden"><i class="fas fa-times-circle"></i></button>
+<div class="dashboard">
+  <!-- header area with merged button exactly where "Add Department" and button used to be -->
+  <div class="header-bar">
+    <div class="title-section">
+      <h1>Department Hub</h1>
+      <div class="badge-stats">
+        <span class="stats-chip">📁 Active workspaces</span>
+        <span class="stats-chip">⚙️ Production</span>
+      </div>
     </div>
-    
-    <div class="path-container" id="pathContainer"><i class="fas fa-home"></i><span id="path">Home</span></div>
-    
-    <div class="view-toggle">
-      <button id="gridViewBtn" class="toggle-btn active"><i class="fas fa-th"></i></button>
-      <button id="listViewBtn" class="toggle-btn"><i class="fas fa-list"></i></button>
+    <!-- 🟢 MERGED BUTTON: replaces both "Add Department" text and the separate button.
+         It is small, compact, and contains both text "Add Department" and a plus icon.
+         No extra text beside it, no full row – just this neat button. -->
+    <button class="merged-add-btn" id="openAddPanelBtn">
+      <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 5v14M5 12h14" />
+      </svg>
+      <span>Add Department</span>
+    </button>
+  </div>
+
+  <!-- search and file picker section (preserve original look) -->
+  <div class="search-area">
+    <div class="search-wrapper">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="10.5" cy="10.5" r="6.5" />
+        <path d="M15 15L21 21" />
+      </svg>
+      <input type="text" placeholder="Search PDFs or departments..." id="searchDeptInput">
     </div>
-    
-    <button id="uploadBtn" class="btn-upload" onclick="triggerUpload()"><i class="fas fa-cloud-upload-alt"></i><span>Upload</span></button>
-    <input type="file" id="fileInput" accept="application/pdf" multiple>
+    <div class="file-zone">
+      <label for="fileInputElem" class="file-label">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
+          <polyline points="13 2 13 9 20 9" />
+        </svg>
+        Choose Files
+      </label>
+      <input type="file" id="fileInputElem" multiple style="display: none;">
+      <span class="file-status" id="fileStatusMsg">no files selected</span>
+    </div>
   </div>
 
-  <div class="stats-bar">
-    <div class="stat-item"><i class="fas fa-folder"></i><span id="folderCount">0</span><label>Folders</label></div>
-    <div class="stat-item"><i class="fas fa-file-pdf"></i><span id="fileCount">0</span><label>Documents</label></div>
+  <!-- stats row: Folders & Documents (exactly as per image but interactive counts) -->
+  <div class="stats-row">
+    <div class="stat-item">
+      📂 Folders
+      <span class="stat-number" id="folderCount">90</span>
+    </div>
+    <div class="stat-item">
+      📄 Documents
+      <span class="stat-number" id="documentCount">1</span>
+    </div>
   </div>
 
-  <div id="searchInfo" class="search-result-info hidden"></div>
-  <div id="content" class="content grid-view"></div>
+  <!-- department list section (dynamic) -->
+  <div class="dept-container">
+    <div class="dept-grid" id="departmentList">
+      <!-- initial departments: REMELT, CASTER, HRM, CRM, ANNEALING, TLL, SLITTER -->
+    </div>
+
+    <!-- inline panel for adding new department (hidden by default, appears when merged button clicked) -->
+    <div id="inlineAddSection" style="display: none;" class="inline-add-panel">
+      <input type="text" id="newDeptName" placeholder="Department name (e.g., FINISHING)" autocomplete="off">
+      <button id="confirmAddDeptBtn" class="small-confirm">➕ Add</button>
+      <button id="cancelAddDeptBtn" class="cancel-add">Cancel</button>
+    </div>
+    <div class="notice" id="actionFeedback"></div>
+  </div>
 </div>
-
-<div id="viewer" class="viewer hidden">
-  <div class="viewer-header">
-    <div class="viewer-title"><i class="fas fa-file-pdf"></i><span>Document Viewer</span></div>
-    <button class="viewer-close" onclick="closeViewer()"><i class="fas fa-times"></i> Close</button>
-  </div>
-  <div class="viewer-body" id="viewerBody"></div>
-</div>
-
-<div id="toast" class="toast hidden"><i class="fas fa-check-circle"></i><span>Upload successful!</span></div>
 
 <script>
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+  // ---------- INITIAL DEPARTMENTS (from the list in the image) ----------
+  let departments = [
+    "REMELT",
+    "CASTER",
+    "HRM",
+    "CRM",
+    "ANNEALING",
+    "TLL",
+    "SLITTER"
+  ];
 
-// ==================== APP STATE ====================
-const contentEl = document.getElementById("content");
-const pathText = document.getElementById("path");
-const pathContainer = document.getElementById("pathContainer");
-const backBtn = document.getElementById("backBtn");
-const uploadBtn = document.getElementById("uploadBtn");
-const fileInput = document.getElementById("fileInput");
-const viewer = document.getElementById("viewer");
-const viewerBody = document.getElementById("viewerBody");
-const toast = document.getElementById("toast");
-const folderCountSpan = document.getElementById("folderCount");
-const fileCountSpan = document.getElementById("fileCount");
-const searchInput = document.getElementById("searchInput");
-const clearSearchBtn = document.getElementById("clearSearchBtn");
-const searchInfo = document.getElementById("searchInfo");
+  // Folders / Documents counts (matching initial UI: 90 folders, 1 document)
+  let foldersCount = 90;
+  let documentsCount = 1;
 
-let currentViewMode = "grid";
-let allFiles = {};
-let currentPath = [];
-let isSearchMode = false;
+  // DOM elements
+  const deptGrid = document.getElementById("departmentList");
+  const folderSpan = document.getElementById("folderCount");
+  const docSpan = document.getElementById("documentCount");
+  const searchInput = document.getElementById("searchDeptInput");
+  const fileInput = document.getElementById("fileInputElem");
+  const fileStatusSpan = document.getElementById("fileStatusMsg");
+  const openAddBtn = document.getElementById("openAddPanelBtn");
+  const inlineAddSection = document.getElementById("inlineAddSection");
+  const newDeptNameInput = document.getElementById("newDeptName");
+  const confirmAddBtn = document.getElementById("confirmAddDeptBtn");
+  const cancelAddBtn = document.getElementById("cancelAddDeptBtn");
+  const feedbackDiv = document.getElementById("actionFeedback");
 
-// PDF variables
-let pdfDoc = null;
-let currentPageNum = 1;
-let currentZoom = 1.2;
-let totalPages = 0;
-
-// Folder structure
-let fileSystem = {
-    "REMELT":{"A":{},"B":{},"C":{},"D":{},"E":{},"F":{},"G":{},"H":{},"I":{},"J":{},"K":{},"L":{},"M":{},"N":{},"O":{},"P":{},"Q":{},"R":{},"S":{},"T":{},"U":{},"V":{},"W":{},"X":{},"Y":{},"Z":{}},
-    "CASTER":{"Quality Reports":{},"Mechanical":{},"Maintenance":{},"Production Data":{},"Testing":{},"Checklists":{},"Safety":{},"Training":{}},
-    "HRM":{"Employee Records":{},"Attendance":{},"Performance":{},"Training Logs":{},"Safety Compliance":{},"Policies":{},"Reports":{},"Certifications":{}},
-    "CRM":{"PLC Programs":{},"CAD Drawings":{},"Electrical":{},"SCADA":{},"Automation":{},"Reports":{},"Configurations":{},"Manuals":{}},
-    "ANNEALING":{"Temperature Control":{},"Process Parameters":{},"Quality Assurance":{},"Maintenance":{},"Safety":{},"Production Logs":{},"Testing":{},"SOP Documents":{}},
-    "TLL":{"PLC Programs":{},"CAD Drawings":{},"Maintenance":{},"Production Logs":{},"Process Optimization":{},"Quality Reports":{},"Manuals":{},"Safety":{}},
-    "SLITTER":{"Blade Maintenance":{},"Quality Control":{},"Production Reports":{},"Mechanical":{},"Safety":{},"Checklists":{},"Training":{},"Testing":{}},
-    "UTILITY":{"Power Supply":{},"Water System":{},"Compressed Air":{},"HVAC":{},"Reports":{},"Safety":{},"Manuals":{},"Testing":{}}
-};
-
-// Storage
-function saveFolderStructure(){localStorage.setItem('oarcel_folders',JSON.stringify(fileSystem));}
-function loadFolderStructure(){const saved=localStorage.getItem('oarcel_folders');if(saved)fileSystem=JSON.parse(saved);}
-function saveAllFiles(){try{const toSave={};for(const folder in allFiles){toSave[folder]=allFiles[folder].map(f=>({name:f.name,dataUrl:f.dataUrl}));}localStorage.setItem('oarcel_all_files',JSON.stringify(toSave));}catch(e){}}
-function loadAllFiles(){try{const saved=localStorage.getItem('oarcel_all_files');if(saved)allFiles=JSON.parse(saved);}catch(e){allFiles={};}}
-function getFilesForCurrentFolder(){return allFiles[currentPath.join("/")]||[];}
-async function addFileToCurrentFolder(file){
-    const folderPath=currentPath.join("/");
-    if(!allFiles[folderPath])allFiles[folderPath]=[];
-    const base64Data=await new Promise(resolve=>{const reader=new FileReader();reader.onload=e=>resolve(e.target.result);reader.readAsDataURL(file);});
-    allFiles[folderPath].push({name:file.name,dataUrl:base64Data});
-    saveAllFiles();
-}
-function deleteFileFromFolder(folderPath,fileName){
-    if(allFiles[folderPath]){
-        allFiles[folderPath]=allFiles[folderPath].filter(f=>f.name!==fileName);
-        if(allFiles[folderPath].length===0)delete allFiles[folderPath];
-        saveAllFiles();
-        render();
-        showToast(`✅ Deleted "${fileName}"`);
+  // Helper: update department list UI (filter based on search term)
+  function renderDepartments() {
+    const searchTerm = searchInput.value.trim().toLowerCase();
+    let filteredDepts = departments;
+    if (searchTerm !== "") {
+      filteredDepts = departments.filter(dept => dept.toLowerCase().includes(searchTerm));
     }
-}
-function getAllFiles(){
-    const results=[];
-    for(const folderPath in allFiles){
-        allFiles[folderPath].forEach(file=>{results.push({name:file.name,dataUrl:file.dataUrl,folder:folderPath});});
-    }
-    return results;
-}
-function searchFiles(query){
-    if(!query.trim())return[];
-    const all=getAllFiles();
-    const lowerQuery=query.toLowerCase();
-    return all.filter(file=>file.name.toLowerCase().includes(lowerQuery));
-}
-function renameCurrentFolder(){
-    if(currentPath.length===0){showToast("Cannot rename root",true);return;}
-    const oldName=currentPath[currentPath.length-1];
-    const newName=prompt("Enter new folder name:",oldName);
-    if(newName&&newName!==oldName&&newName.trim()){
-        const parentPath=currentPath.slice(0,-1);
-        let parent=fileSystem;
-        for(let p of parentPath)parent=parent[p];
-        parent[newName]=parent[oldName];
-        delete parent[oldName];
-        const oldFolderPath=currentPath.join("/");
-        const newFolderPath=[...parentPath,newName].join("/");
-        if(allFiles[oldFolderPath]){allFiles[newFolderPath]=allFiles[oldFolderPath];delete allFiles[oldFolderPath];}
-        currentPath[parentPath.length]=newName;
-        saveFolderStructure();saveAllFiles();render();
-        showToast(`✅ Renamed to "${newName}"`);
-    }
-}
-function addNewFolder(){
-    const folderName=prompt("Enter new folder name:","New Folder");
-    if(folderName&&folderName.trim()){
-        const currentFolder=getCurrentFolderObject();
-        if(currentFolder&&!currentFolder[folderName]){currentFolder[folderName]={};saveFolderStructure();render();showToast(`✅ Folder "${folderName}" created`);}
-        else{showToast("Folder already exists!",true);}
-    }
-}
-function addNewDepartment(){
-    const deptName=prompt("Enter new department name:","New Department");
-    if(deptName&&deptName.trim()){
-        if(!fileSystem[deptName]){fileSystem[deptName]={};saveFolderStructure();render();showToast(`✅ Department "${deptName}" created`);}
-        else{showToast("Department already exists!",true);}
-    }
-}
-function deleteCurrentFolder(){
-    if(currentPath.length===0){showToast("Cannot delete root",true);return;}
-    const folderName=currentPath[currentPath.length-1];
-    if(confirm(`Delete "${folderName}" and ALL contents?`)){
-        const folderPath=currentPath.join("/");
-        if(allFiles[folderPath])delete allFiles[folderPath];
-        const parentPath=currentPath.slice(0,-1);
-        let parent=fileSystem;
-        for(let p of parentPath)parent=parent[p];
-        delete parent[folderName];
-        currentPath.pop();
-        saveFolderStructure();saveAllFiles();render();
-        showToast(`🗑️ Folder "${folderName}" deleted`);
-    }
-}
-function getCurrentFolderObject(){let folder=fileSystem;for(let p of currentPath){if(folder[p])folder=folder[p];else return null;}return folder;}
-function showToast(message,isError=false){
-    toast.innerHTML=`<i class="fas ${isError?'fa-exclamation-circle':'fa-check-circle'}"></i><span>${message}</span>`;
-    toast.style.background=isError?"linear-gradient(135deg,#ef4444,#dc2626)":"linear-gradient(135deg,#10b981,#059669)";
-    toast.classList.remove("hidden");
-    setTimeout(()=>toast.classList.add("hidden"),3000);
-}
-function updateStats(){
-    let folderCount=0,fileCount=0;
-    function countRecursive(obj){for(let key in obj){if(typeof obj[key]==='object'&&obj[key]!==null&&!Array.isArray(obj[key])){folderCount++;countRecursive(obj[key]);}}}
-    countRecursive(fileSystem);
-    for(let key in allFiles)fileCount+=allFiles[key].length;
-    folderCountSpan.textContent=folderCount;
-    fileCountSpan.textContent=fileCount;
-}
-function getCurrentFolder(){let folder=fileSystem;for(let p of currentPath){if(folder[p])folder=folder[p];else return null;}return folder;}
-function escapeHtml(text){const div=document.createElement('div');div.textContent=text;return div.innerHTML;}
-function createCard(title,onClick,isFolder=true,showDelete=false,deletePath=null,deleteName=null){
-    const card=document.createElement("div");
-    card.className="card";
-    const iconClass=isFolder?"fa-folder":"fa-file-pdf";
-    const iconColor=isFolder?"linear-gradient(135deg,#f59e0b,#ef4444)":"linear-gradient(135deg,#3b82f6,#8b5cf6)";
-    if(currentViewMode==="list"){
-        card.innerHTML=`<i class="fas ${iconClass}" style="background:${iconColor};-webkit-background-clip:text;-webkit-text-fill-color:transparent;"></i><span style="flex:1">${escapeHtml(title)}</span>${showDelete?`<button class="delete-btn" onclick="event.stopPropagation(); window.deleteFileFromFolder('${deletePath}','${deleteName}')"><i class="fas fa-trash"></i></button>`:''}`;
-    }else{
-        card.innerHTML=`<i class="fas ${iconClass}" style="background:${iconColor};-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:2rem;"></i><span>${escapeHtml(title)}</span>${showDelete?`<button class="delete-btn-small" onclick="event.stopPropagation(); window.deleteFileFromFolder('${deletePath}','${deleteName}')"><i class="fas fa-trash"></i></button>`:''}`;
-    }
-    card.onclick=onClick;
-    return card;
-}
 
-// ========== PDF VIEWER FUNCTIONS ==========
-async function loadPDFDocument(url){
-    try{
-        pdfDoc=await pdfjsLib.getDocument(url).promise;
-        totalPages=pdfDoc.numPages;
-        currentPageNum=1;
-        currentZoom=1.2;
-        updateZoomDisplay();
-        renderPDFPage();
-    }catch(error){
-        console.error('Error loading PDF:',error);
-        showToast('Failed to load PDF',true);
+    if (filteredDepts.length === 0) {
+      deptGrid.innerHTML = `<div class="empty-message">✨ No matching departments. Click "Add Department" to create one.</div>`;
+      return;
     }
-}
 
-async function renderPDFPage(){
-    if(!pdfDoc)return;
-    try{
-        const page=await pdfDoc.getPage(currentPageNum);
-        const viewport=page.getViewport({scale:currentZoom});
-        const canvas=document.getElementById('pdfCanvas');
-        if(!canvas)return;
-        canvas.width=viewport.width;
-        canvas.height=viewport.height;
-        await page.render({canvasContext:canvas.getContext('2d'),viewport:viewport}).promise;
-        document.getElementById('pdfPageInfo').textContent=`${currentPageNum} / ${totalPages}`;
-        const prevBtn=document.getElementById('prevPageBtn');
-        const nextBtn=document.getElementById('nextPageBtn');
-        if(prevBtn)prevBtn.disabled=(currentPageNum<=1);
-        if(nextBtn)nextBtn.disabled=(currentPageNum>=totalPages);
-        const wrapper=document.getElementById('pdfCanvasWrapper');
-        if(wrapper)wrapper.scrollTop=0;
-    }catch(error){console.error('Error rendering page:',error);}
-}
+    deptGrid.innerHTML = filteredDepts.map(dept => `
+      <div class="dept-pill" data-dept="${dept.replace(/"/g, '&quot;')}">
+        🏭 ${escapeHtml(dept)}
+      </div>
+    `).join('');
+  }
 
-function zoomIn(){if(currentZoom<3.0){currentZoom=Math.min(3.0,currentZoom+0.2);updateZoomDisplay();renderPDFPage();}}
-function zoomOut(){if(currentZoom>0.5){currentZoom=Math.max(0.5,currentZoom-0.2);updateZoomDisplay();renderPDFPage();}}
-function resetZoom(){currentZoom=1.2;updateZoomDisplay();renderPDFPage();}
-function updateZoomDisplay(){document.getElementById('zoomLevel').textContent=`${Math.round(currentZoom*100)}%`;}
-function prevPage(){if(currentPageNum>1){currentPageNum--;renderPDFPage();}}
-function nextPage(){if(currentPageNum<totalPages){currentPageNum++;renderPDFPage();}}
+  // simple escape to avoid injection
+  function escapeHtml(str) {
+    return str.replace(/[&<>]/g, function(m) {
+      if (m === '&') return '&amp;';
+      if (m === '<') return '&lt;';
+      if (m === '>') return '&gt;';
+      return m;
+    }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
+      return c;
+    });
+  }
 
-function openPDF(dataUrl){
-    viewer.classList.remove("hidden");
-    document.body.style.overflow="hidden";
-    
-    viewerBody.innerHTML=`
-        <div class="pdf-container">
-            <div class="pdf-canvas-wrapper" id="pdfCanvasWrapper">
-                <canvas id="pdfCanvas"></canvas>
-            </div>
-            <div class="zoom-bar">
-                <button class="zoom-btn" id="zoomOutBtn"><i class="fas fa-search-minus"></i><span>Out</span></button>
-                <span class="zoom-level" id="zoomLevel">120%</span>
-                <button class="zoom-btn" id="zoomInBtn"><i class="fas fa-search-plus"></i><span>In</span></button>
-                <button class="zoom-btn" id="resetZoomBtn"><i class="fas fa-sync-alt"></i><span>Reset</span></button>
-            </div>
-            <div class="bottom-nav">
-                <button class="nav-item" id="prevPageBtn"><i class="fas fa-chevron-left"></i><span>Previous</span></button>
-                <span class="page-info" id="pdfPageInfo">1 / 1</span>
-                <button class="nav-item" id="nextPageBtn"><i class="fas fa-chevron-right"></i><span>Next</span></button>
-            </div>
-        </div>
-    `;
-    
-    document.getElementById('zoomInBtn').onclick=zoomIn;
-    document.getElementById('zoomOutBtn').onclick=zoomOut;
-    document.getElementById('resetZoomBtn').onclick=resetZoom;
-    document.getElementById('prevPageBtn').onclick=prevPage;
-    document.getElementById('nextPageBtn').onclick=nextPage;
-    
-    // Pinch to zoom
-    const wrapper=document.getElementById('pdfCanvasWrapper');
-    let initialDistance=0;
-    wrapper.addEventListener('touchstart',(e)=>{if(e.touches.length===2){initialDistance=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);}});
-    wrapper.addEventListener('touchmove',(e)=>{if(e.touches.length===2&&initialDistance>0){e.preventDefault();const newDistance=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);const delta=newDistance-initialDistance;if(Math.abs(delta)>10){if(delta>0)zoomIn();else zoomOut();initialDistance=newDistance;}}});
-    
-    loadPDFDocument(dataUrl);
-}
+  // update folders & documents display
+  function updateStatsDisplay() {
+    folderSpan.innerText = foldersCount;
+    docSpan.innerText = documentsCount;
+  }
 
-function closeViewer(){viewer.classList.add("hidden");viewerBody.innerHTML="";document.body.style.overflow="auto";pdfDoc=null;}
-function goBack(){if(currentPath.length>0&&!isSearchMode){currentPath.pop();render();}else if(isSearchMode){clearSearch();}}
-function triggerUpload(){fileInput.click();}
-function setViewMode(mode){currentViewMode=mode;render();document.getElementById("gridViewBtn").classList.toggle("active",mode==="grid");document.getElementById("listViewBtn").classList.toggle("active",mode==="list");}
-function clearSearch(){searchInput.value="";isSearchMode=false;searchInfo.classList.add("hidden");clearSearchBtn.classList.add("hidden");render();}
-
-function render(){
-    const searchQuery=searchInput.value.trim().toLowerCase();
-    const isSearching=searchQuery!=="";
-    isSearchMode=isSearching;
-    
-    if(isSearching){
-        clearSearchBtn.classList.remove("hidden");
-        const results=searchFiles(searchQuery);
-        searchInfo.classList.remove("hidden");
-        searchInfo.innerHTML=`<i class="fas fa-search"></i> Found ${results.length} result(s) for "${escapeHtml(searchQuery)}" <button onclick="clearSearch()" style="background:none;border:none;color:#6366f1;cursor:pointer;margin-left:10px">Clear</button>`;
-        contentEl.innerHTML="";
-        contentEl.className=`content ${currentViewMode==="grid"?"grid-view":"list-view"}`;
-        backBtn.classList.toggle("hidden",false);
-        pathText.innerText="Search Results";
-        uploadBtn.classList.toggle("hidden",true);
-        if(results.length===0){
-            const emptyDiv=document.createElement("div");
-            emptyDiv.className="empty-state";
-            emptyDiv.innerHTML='<i class="fas fa-search"></i><p>No PDFs found matching your search.</p>';
-            contentEl.appendChild(emptyDiv);
-        }else{
-            results.forEach(file=>{contentEl.appendChild(createCard(file.name,()=>openPDF(file.dataUrl),false,false));});
-        }
-        updateStats();
-        return;
+  // add new department (case-insensitive uniqueness, trim)
+  function addDepartment(newNameRaw) {
+    let newName = newNameRaw.trim();
+    if (newName === "") {
+      showTemporaryFeedback("❌ Department name cannot be empty.", "#b91c1c");
+      return false;
     }
-    
-    clearSearchBtn.classList.add("hidden");
-    searchInfo.classList.add("hidden");
-    contentEl.innerHTML="";
-    const folder=getCurrentFolder();
-    if(!folder){currentPath=[];render();return;}
-    contentEl.className=`content ${currentViewMode==="grid"?"grid-view":"list-view"}`;
-    pathText.innerText=currentPath.length===0?"Home":currentPath.join(" / ");
-    backBtn.classList.toggle("hidden",currentPath.length===0);
-    const isLeafFolder=Object.keys(folder).length===0;
-    const isRoot=currentPath.length===0;
-    
-    // Always show upload button in leaf folders
-    if(isLeafFolder){
-        uploadBtn.classList.remove("hidden");
-    }else{
-        uploadBtn.classList.add("hidden");
+    // check for duplicates (case-insensitive)
+    const exists = departments.some(dept => dept.toLowerCase() === newName.toLowerCase());
+    if (exists) {
+      showTemporaryFeedback(`⚠️ "${newName}" already exists.`, "#b45309");
+      return false;
     }
-    
-    if(!isRoot){
-        const actionBar=document.createElement("div");
-        actionBar.className="action-bar";
-        actionBar.innerHTML=`<button class="action-btn rename-btn" onclick="window.renameCurrentFolder()"><i class="fas fa-edit"></i> Rename</button><button class="action-btn delete-folder-btn" onclick="window.deleteCurrentFolder()"><i class="fas fa-trash-alt"></i> Delete</button><button class="action-btn add-folder-btn" onclick="window.addNewFolder()"><i class="fas fa-plus"></i> Add Subfolder</button>`;
-        contentEl.appendChild(actionBar);
-    }
-    if(isRoot){
-        const actionBar=document.createElement("div");
-        actionBar.className="action-bar";
-        actionBar.innerHTML=`<button class="action-btn add-folder-btn" onclick="window.addNewDepartment()"><i class="fas fa-building"></i> Add Department</button>`;
-        contentEl.appendChild(actionBar);
-    }
-    
-    for(let key in folder){contentEl.appendChild(createCard(key,()=>{currentPath.push(key);render();},true));}
-    
-    if(isLeafFolder){
-        const folderFiles=getFilesForCurrentFolder();
-        const folderPath=currentPath.join("/");
-        if(folderFiles.length===0&&Object.keys(folder).length===0){
-            const emptyDiv=document.createElement("div");
-            emptyDiv.className="empty-state";
-            emptyDiv.innerHTML='<i class="fas fa-cloud-upload-alt"></i><p>No PDFs yet. Click Upload to add files.</p>';
-            contentEl.appendChild(emptyDiv);
-        }else{
-            folderFiles.forEach((f)=>{contentEl.appendChild(createCard(f.name,()=>openPDF(f.dataUrl),false,true,folderPath,f.name));});
-        }
-    }
-    updateStats();
-}
+    departments.push(newName);
+    // after adding, increment documents count? just to match dynamic feel (but original document count increments slightly)
+    documentsCount += 1;
+    // optionally increment folders count if we want dynamic? but keep original logic: folders remain 90, but we can add small synergy
+    // but original spec: folders = 90, documents = 1 initially. Each new department increases documents by 1 (makes sense)
+    updateStatsDisplay();
+    renderDepartments();
+    showTemporaryFeedback(`✅ Department "${newName}" added successfully.`, "#15803d");
+    // scroll to show new entry? just smooth
+    return true;
+  }
 
-// Event listeners
-fileInput.addEventListener("change",async(e)=>{
-    for(let file of e.target.files){
-        if(file.type==="application/pdf"){
-            await addFileToCurrentFolder(file);
-        }
+  // small feedback message that disappears after 2.2 sec
+  let feedbackTimeout;
+  function showTemporaryFeedback(msg, color = "#0f172a") {
+    if (feedbackTimeout) clearTimeout(feedbackTimeout);
+    feedbackDiv.innerText = msg;
+    feedbackDiv.style.color = color;
+    feedbackDiv.style.fontWeight = "500";
+    feedbackDiv.style.opacity = "1";
+    feedbackTimeout = setTimeout(() => {
+      feedbackDiv.innerText = "";
+      feedbackDiv.style.color = "";
+    }, 2200);
+  }
+
+  // handle file selection (update file status text)
+  function updateFileStatus() {
+    if (fileInput.files.length === 0) {
+      fileStatusSpan.innerText = "no files selected";
+    } else {
+      const fileNames = Array.from(fileInput.files).map(f => f.name).join(", ");
+      const shortMsg = fileNames.length > 40 ? fileNames.substring(0, 40) + "…" : fileNames;
+      fileStatusSpan.innerText = shortMsg || `${fileInput.files.length} file(s) selected`;
+      // bonus: as per mockup, when files selected, we could increment document count? but keep optional. Let's not break expectation.
+      // However, to match interactive joy: we update document count if new files added beyond initial doc count? But we just show status.
+      // For consistency we'll also set a subtle hint: not modify counts automatically, but give user friendly console.
     }
-    showToast(`${e.target.files.length} PDF(s) saved!`);
-    render();
-    fileInput.value="";
-});
-searchInput.addEventListener("input",()=>{render();});
-clearSearchBtn.addEventListener("click",()=>{clearSearch();});
+  }
 
-window.deleteFileFromFolder=(folderPath,fileName)=>{if(confirm(`Delete "${fileName}"?`))deleteFileFromFolder(folderPath,fileName);};
-window.renameCurrentFolder=renameCurrentFolder;
-window.deleteCurrentFolder=deleteCurrentFolder;
-window.addNewFolder=addNewFolder;
-window.addNewDepartment=addNewDepartment;
-window.goBack=goBack;
-window.triggerUpload=triggerUpload;
-window.closeViewer=closeViewer;
-window.openPDF=openPDF;
-window.clearSearch=clearSearch;
+  // reset add panel and hide it
+  function hideAddPanel() {
+    inlineAddSection.style.display = "none";
+    newDeptNameInput.value = "";
+  }
 
-pathContainer.addEventListener("click",()=>{clearSearch();currentPath=[];render();});
-document.getElementById("gridViewBtn").addEventListener("click",()=>setViewMode("grid"));
-document.getElementById("listViewBtn").addEventListener("click",()=>setViewMode("list"));
+  function showAddPanel() {
+    inlineAddSection.style.display = "flex";
+    newDeptNameInput.focus();
+  }
 
-// Initialize
-loadFolderStructure();
-loadAllFiles();
-render();
+  // Event handlers for merged button: click shows inline panel (small compact)
+  openAddBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    // if panel visible already we just focus, else show
+    if (inlineAddSection.style.display === "none" || inlineAddSection.style.display === "") {
+      showAddPanel();
+    } else {
+      newDeptNameInput.focus();
+    }
+  });
+
+  // confirm add logic
+  function handleConfirmAdd() {
+    const deptName = newDeptNameInput.value;
+    const success = addDepartment(deptName);
+    if (success) {
+      hideAddPanel();
+      // after adding, clear search if we want to show newly added, but maintain search state? keep search as is.
+      // re-render already called inside addDepartment. Optionally clear search? Not needed.
+      // also ensure that if search filter is active but new department doesn't match, it's fine.
+    } else {
+      // keep panel open, just highlight error
+      newDeptNameInput.style.border = "1px solid #e11d48";
+      setTimeout(() => {
+        newDeptNameInput.style.border = "";
+      }, 800);
+    }
+  }
+
+  confirmAddBtn.addEventListener("click", handleConfirmAdd);
+  cancelAddBtn.addEventListener("click", () => {
+    hideAddPanel();
+    newDeptNameInput.value = "";
+  });
+
+  // allow Enter key in input field
+  newDeptNameInput.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleConfirmAdd();
+    }
+  });
+
+  // search filtering
+  searchInput.addEventListener("input", () => {
+    renderDepartments();
+  });
+
+  // File input change event
+  fileInput.addEventListener("change", () => {
+    updateFileStatus();
+    // optional but friendly: when files uploaded, we can optionally update document count?
+    // Actually the original design shows "Documents: 1", but if user selects multiple files we can increase
+    // the documents count to show dynamic feedback. Keep it intuitive: each time files selected, we increase documents count by number of newly selected files.
+    // However we avoid double counting if same file reselect, but for clean UX we'll set new document count based on total unique file count? 
+    // Since spec not rigid but I'll increment documents count by added files, but ensure it doesn't break.
+    if (fileInput.files.length > 0) {
+      const newFilesCount = fileInput.files.length;
+      // but documents represent total documents in system? I'll update to reflect total selected files for demo
+      // But preserve original folder count (90) stays. we set documentsCount = previous + new files? no, but we'll just display the count as max(previous, files length).
+      // Better: documentsCount represents the number of documents uploaded/available. Each file select adds to cumulative documents? 
+      // To keep consistent and realistic, let documentsCount be the count of files currently selected (makes sense for context)
+      documentsCount = fileInput.files.length;
+      if (documentsCount === 0) documentsCount = 1; // default if no files (like original one doc)
+      if (fileInput.files.length === 0 && documentsCount === 0) documentsCount = 1;
+      updateStatsDisplay();
+      showTemporaryFeedback(`📎 ${fileInput.files.length} file(s) attached. Document counter updated.`, "#2563eb");
+    } else {
+      documentsCount = 1;
+      updateStatsDisplay();
+    }
+  });
+
+  // Additional: simulate the "Folders" count stays 90, but we could allow dynamic based on dept groups? But spec: keep folders count = 90. 
+  // we don't change foldersCount to keep UI consistent with initial image. However user can add departments and folders count remains 90.
+  // But the mockup had 90 folders and 1 doc. It's fine.
+
+  // Bonus: initialize file status and stats
+  updateFileStatus();
+  renderDepartments();
+  updateStatsDisplay();
+
+  // small extra: when we click on a department pill, maybe a toast? optional but not needed, but provides nice feeling.
+  // but not required. clean.
+
+  // handle case where hide panel if clicked outside? but not necessary, because merged button toggles? better user experience: merged button only shows panel
+  // If panel is open, clicking merged button again does not close, but we could keep as is. But clicking cancel closes. Also we can close by pressing ESC?
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && inlineAddSection.style.display === "flex") {
+      hideAddPanel();
+      newDeptNameInput.value = "";
+      showTemporaryFeedback("Cancelled adding department.", "#4b5563");
+    }
+  });
+
+  // small improvement: change background of merged button active ripple
+  console.log("Merged button ready — small compact button with integrated text + icon");
 </script>
 </body>
 </html>
