@@ -31,9 +31,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .search-container i{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#888}
 #searchInput{width:100%;padding:10px 16px 10px 38px;border-radius:40px;border:1px solid var(--border-color);background:rgba(0,0,0,0.3);color:var(--text-primary);outline:none}
 .clear-search{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;color:#888;cursor:pointer}
-.view-toggle{display:flex;gap:5px;background:rgba(0,0,0,0.3);padding:4px;border-radius:40px}
-.toggle-btn{background:transparent;border:none;color:#888;padding:8px 16px;border-radius:30px;cursor:pointer}
-.toggle-btn.active{background:linear-gradient(135deg,#6366f1,#ec4899);color:#fff}
 .hidden{display:none!important}
 .stats-bar{display:flex;gap:20px;margin-bottom:24px;padding:16px 24px;background:var(--bg-card);border-radius:20px;border:1px solid var(--border-color)}
 .stat-item{display:flex;align-items:center;gap:12px;flex:1}
@@ -47,7 +44,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .delete-folder-btn:hover{background:#ec4899}
 .add-folder-btn:hover{background:#10b981}
 
-/* Department Cards - BIGGER SIZE */
+/* Department Cards */
 .departments-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px;margin-bottom:30px}
 .dept-card{background:linear-gradient(135deg,rgba(99,102,241,0.2),rgba(236,72,153,0.2));border:1px solid rgba(99,102,241,0.4);border-radius:20px;padding:20px 12px;text-align:center;cursor:pointer;transition:all 0.2s}
 .dept-card:hover{transform:translateY(-4px);background:linear-gradient(135deg,rgba(99,102,241,0.35),rgba(236,72,153,0.35));border-color:#6366f1}
@@ -55,24 +52,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .dept-card span{font-size:1rem;font-weight:600;display:block}
 .dept-card small{font-size:0.7rem;color:var(--text-secondary);display:block;margin-top:6px}
 
-/* EXTRA SMALL SQUARE SUBFOLDER CARDS - TINY SQUARES FOR A,B,C etc */
-.content{display:grid;gap:8px}
-.content.grid-view{grid-template-columns:repeat(auto-fill,minmax(55px,1fr));gap:6px}
-.content.list-view{display:flex;flex-direction:column;gap:6px}
-
-.grid-view .card{background:var(--bg-card);padding:10px 0;border-radius:12px;text-align:center;cursor:pointer;border:1px solid var(--border-color);position:relative;aspect-ratio:1/0.9;display:flex;flex-direction:column;align-items:center;justify-content:center}
-.grid-view .card i:first-child{font-size:1.1rem;margin-bottom:4px;display:block}
-.grid-view .card span{font-size:0.6rem;font-weight:500;word-break:break-word;max-width:100%;padding:0 2px}
-
-.list-view .card{background:var(--bg-card);padding:6px 12px;border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:8px;border:1px solid var(--border-color)}
-.list-view .card i:first-child{font-size:0.9rem;width:20px}
-.list-view .card span{font-size:0.7rem;flex:1}
-
-/* Tiny delete/rename buttons for square cards */
-.grid-view .delete-btn-small{position:absolute;top:2px;right:2px;width:16px;height:16px;border-radius:4px;background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.4);color:#f87171;cursor:pointer;font-size:0.5rem;display:flex;align-items:center;justify-content:center}
-.grid-view .rename-file-btn-small{position:absolute;top:2px;right:20px;width:16px;height:16px;border-radius:4px;background:rgba(99,102,241,0.2);border:1px solid rgba(99,102,241,0.4);color:#6366f1;cursor:pointer;font-size:0.5rem;display:flex;align-items:center;justify-content:center}
-.list-view .delete-btn{background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.4);color:#f87171;cursor:pointer;padding:4px 8px;border-radius:6px;font-size:0.7rem}
-.list-view .rename-file-btn{background:rgba(99,102,241,0.2);border:1px solid rgba(99,102,241,0.4);color:#6366f1;cursor:pointer;padding:4px 8px;border-radius:6px;font-size:0.7rem;margin-right:6px}
+/* LIST VIEW ONLY - All items as list */
+.content{display:flex;flex-direction:column;gap:8px}
+.card{background:var(--bg-card);padding:12px 16px;border-radius:12px;cursor:pointer;display:flex;align-items:center;gap:12px;border:1px solid var(--border-color);position:relative}
+.card i:first-child{font-size:1.1rem;width:28px}
+.card span{font-size:0.85rem;flex:1}
+.delete-btn{background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.4);color:#f87171;cursor:pointer;padding:6px 12px;border-radius:8px;font-size:0.7rem;display:inline-flex;align-items:center;gap:4px}
+.rename-file-btn{background:rgba(99,102,241,0.2);border:1px solid rgba(99,102,241,0.4);color:#6366f1;cursor:pointer;padding:6px 12px;border-radius:8px;font-size:0.7rem;display:inline-flex;align-items:center;gap:4px;margin-right:8px}
 
 .viewer{position:fixed;top:0;left:0;width:100%;height:100%;background:#1a1a1a;z-index:1000;display:flex;flex-direction:column}
 .viewer.hidden{display:none}
@@ -111,10 +97,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     .dept-card{padding:15px 8px}
     .dept-card i{font-size:1.5rem}
     .dept-card span{font-size:0.85rem}
-    .content.grid-view{grid-template-columns:repeat(auto-fill,minmax(50px,1fr));gap:4px}
-    .grid-view .card{padding:8px 0}
-    .grid-view .card i:first-child{font-size:0.9rem}
-    .grid-view .card span{font-size:0.55rem}
+    .card{padding:10px 12px}
+    .card i:first-child{font-size:0.9rem;width:24px}
+    .card span{font-size:0.75rem}
 }
 </style>
 </head>
@@ -134,10 +119,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
       <button id="clearSearchBtn" class="clear-search hidden"><i class="fas fa-times-circle"></i></button>
     </div>
     <button id="themeToggle" class="theme-toggle"><i class="fas fa-moon"></i><span>Theme</span></button>
-    <div class="view-toggle">
-      <button id="gridViewBtn" class="toggle-btn active"><i class="fas fa-th"></i></button>
-      <button id="listViewBtn" class="toggle-btn"><i class="fas fa-list"></i></button>
-    </div>
     <button id="uploadBtn" class="btn-upload hidden" onclick="triggerUpload()"><i class="fas fa-cloud-upload-alt"></i><span>Upload</span></button>
     <input type="file" id="fileInput" accept="application/pdf" multiple>
   </div>
@@ -158,7 +139,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <div id="recentList" class="recent-list"></div>
   </div>
   <div id="searchInfo" class="search-result-info hidden"></div>
-  <div id="content" class="content grid-view"></div>
+  <div id="content" class="content"></div>
 </div>
 
 <div id="viewer" class="viewer hidden">
@@ -195,7 +176,6 @@ const themeToggle = document.getElementById("themeToggle");
 const departmentsSection = document.getElementById("departmentsSection");
 
 // State
-let currentViewMode = "grid";
 let allFiles = {};
 let currentPath = [];
 let isSearchMode = false;
@@ -421,11 +401,15 @@ function createCard(title,onClick,isFolder=true,showDelete=false,deletePath=null
     const card=document.createElement("div");
     card.className="card";
     const iconClass=isFolder?"fa-folder":"fa-file-pdf";
-    if(currentViewMode==="list"){
-        card.innerHTML=`<i class="fas ${iconClass}"></i><span style="flex:1;font-size:0.75rem">${escapeHtml(title)}</span>${showRename?`<button class="rename-file-btn" onclick="event.stopPropagation(); window.renameFile('${deletePath}','${escapeHtml(deleteName)}')"><i class="fas fa-edit"></i></button>`:''}${showDelete?`<button class="delete-btn" onclick="event.stopPropagation(); window.deleteFile('${deletePath}','${escapeHtml(deleteName)}')"><i class="fas fa-trash"></i></button>`:''}`;
-    }else{
-        card.innerHTML=`<i class="fas ${iconClass}" style="font-size:1.1rem;margin-bottom:4px;display:block"></i><span style="font-size:0.6rem">${escapeHtml(title)}</span>${showRename?`<button class="rename-file-btn-small" onclick="event.stopPropagation(); window.renameFile('${deletePath}','${escapeHtml(deleteName)}')"><i class="fas fa-edit"></i></button>`:''}${showDelete?`<button class="delete-btn-small" onclick="event.stopPropagation(); window.deleteFile('${deletePath}','${escapeHtml(deleteName)}')"><i class="fas fa-trash"></i></button>`:''}`;
-    }
+    const iconColor=isFolder?"#f59e0b":"#3b82f6";
+    card.innerHTML=`
+        <i class="fas ${iconClass}" style="color:${iconColor}"></i>
+        <span>${escapeHtml(title)}</span>
+        <div style="display:flex;gap:6px">
+            ${showRename?`<button class="rename-file-btn" onclick="event.stopPropagation(); window.renameFile('${deletePath}','${escapeHtml(deleteName)}')"><i class="fas fa-edit"></i> Rename</button>`:''}
+            ${showDelete?`<button class="delete-btn" onclick="event.stopPropagation(); window.deleteFile('${deletePath}','${escapeHtml(deleteName)}')"><i class="fas fa-trash"></i> Delete</button>`:''}
+        </div>
+    `;
     card.onclick=onClick;
     return card;
 }
@@ -491,7 +475,6 @@ function openPDF(dataUrl,fileName,folderPath){
 function closeViewer(){viewer.classList.add("hidden");viewerBody.innerHTML="";document.body.style.overflow="auto";pdfDoc=null;}
 function goBack(){if(currentPath.length>0&&!isSearchMode){currentPath.pop();render();}else if(isSearchMode){clearSearch();}}
 function triggerUpload(){fileInput.click();}
-function setViewMode(mode){currentViewMode=mode;render();document.getElementById("gridViewBtn").classList.toggle("active",mode==="grid");document.getElementById("listViewBtn").classList.toggle("active",mode==="list");}
 function clearSearch(){searchInput.value="";isSearchMode=false;searchInfo.classList.add("hidden");clearSearchBtn.classList.add("hidden");render();}
 
 window.deleteFile=function(folderPath,fileName){if(confirm(`Delete "${fileName}"?`))deleteFileFromFolder(folderPath,fileName);};
@@ -509,7 +492,6 @@ function render(){
         searchInfo.classList.remove("hidden");
         searchInfo.innerHTML=`<i class="fas fa-search"></i> Found ${results.length} result(s) for "${escapeHtml(searchQuery)}" <button onclick="clearSearch()" style="background:none;border:none;color:#6366f1;cursor:pointer;margin-left:10px">Clear</button>`;
         contentEl.innerHTML="";
-        contentEl.className=`content ${currentViewMode==="grid"?"grid-view":"list-view"}`;
         backBtn.classList.toggle("hidden",false);
         uploadBtn.classList.add("hidden");
         departmentsSection.innerHTML='';
@@ -531,7 +513,6 @@ function render(){
     contentEl.innerHTML="";
     const folder=getCurrentFolder();
     if(!folder){currentPath=[];render();return;}
-    contentEl.className=`content ${currentViewMode==="grid"?"grid-view":"list-view"}`;
     backBtn.classList.toggle("hidden",currentPath.length===0);
     updateBreadcrumb();
     renderDepartmentButtons();
@@ -600,9 +581,6 @@ window.renameFile=window.renameFile;
 window.deleteFile=window.deleteFile;
 window.selectDepartment=selectDepartment;
 window.clearAllRecent=clearAllRecent;
-
-document.getElementById("gridViewBtn").addEventListener("click",()=>setViewMode("grid"));
-document.getElementById("listViewBtn").addEventListener("click",()=>setViewMode("list"));
 
 // Initialize
 loadFolderStructure();
