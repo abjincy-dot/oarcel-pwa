@@ -450,9 +450,6 @@ let recentFiles = [];
 let currentPath = [];
 let isSearchMode = false;
 
-// Detect Capacitor environment
-const isCapacitor = window.Capacitor !== undefined || (window.android && window.android.openPDF);
-
 // Initialize IndexedDB
 function initDB() {
     return new Promise((resolve, reject) => {
@@ -471,55 +468,7 @@ function initDB() {
     });
 }
 
-// Capacitor PDF opener - works in Android app
-function openPDFInCapacitor(dataUrl, fileName) {
-    try {
-        // Extract base64 data (remove data:application/pdf;base64, prefix)
-        let base64Data = dataUrl;
-        if (dataUrl.includes(',')) {
-            base64Data = dataUrl.split(',')[1];
-        }
-        
-        // Check if Android Capacitor bridge is available
-        if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem) {
-            // Use Capacitor Filesystem to save and open
-            const { Filesystem, Directory } = window.Capacitor.Plugins;
-            const cleanFileName = fileName.replace(/[^a-zA-Z0-9.]/g, '_');
-            
-            Filesystem.writeFile({
-                path: cleanFileName,
-                data: base64Data,
-                directory: Directory.Cache
-            }).then(result => {
-                // Open with system viewer using Browser plugin
-                if (window.Capacitor.Plugins.Browser) {
-                    window.Capacitor.Plugins.Browser.open({ url: result.uri });
-                } else {
-                    // Fallback to Android intent
-                    if (window.android && window.android.openPDF) {
-                        window.android.openPDF(result.uri);
-                    } else {
-                        window.open(result.uri, '_system');
-                    }
-                }
-            }).catch(err => console.error('Filesystem error:', err));
-        } else {
-            // Fallback for web or simple WebView
-            const blob = dataURLToBlob(dataUrl);
-            const blobUrl = URL.createObjectURL(blob);
-            window.open(blobUrl, '_blank');
-            setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
-        }
-    } catch (err) {
-        console.error('Capacitor PDF open error:', err);
-        // Final fallback
-        const blob = dataURLToBlob(dataUrl);
-        const blobUrl = URL.createObjectURL(blob);
-        window.open(blobUrl, '_blank');
-        showToast('Opening PDF...');
-    }
-}
-
+// Convert dataURL to Blob
 function dataURLToBlob(dataUrl) {
     const arr = dataUrl.split(',');
     const mime = arr[0].match(/:(.*?);/)[1];
@@ -530,22 +479,112 @@ function dataURLToBlob(dataUrl) {
     return new Blob([u8arr], { type: mime });
 }
 
-// Main PDF opener - detects environment
+// ANDROID PDF OPENER - Using download + system viewer
+function openPDFOnAndroid(dataUrl, fileName) {
+    try {
+        // Create a download link - this works in Capacitor WebView
+        const blob = dataURLToBlob(dataUrl);
+        const blobUrl = URL.createObjectURL(blob);
+        
+        // Create a temporary anchor element
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = fileName;
+        document.body.appendChild(link);
+        
+        // Trigger download
+        link.click();
+        document.body.removeChild(link);
+        
+        // Show instructions
+        showToast(`📄 "${fileName}" saved to Downloads folder. Open from there.`);
+        
+        // Clean up
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+    } catch (err) {
+        console.error('Android PDF open error:', err);
+        showToast('Failed to save PDF', true);
+    }
+}
+
+// Try to open using intent if available
+function openPDFWithIntent(dataUrl, fileName) {
+    try {
+        // Check if we can use Android intent
+        const base64Data = dataUrl.split(',')[1];
+        
+        // Method 1: Use custom Android interface if set up
+        if (window.AndroidBridge && window.AndroidBridge.openPDF) {
+            window.AndroidBridge.openPDF(base64Data, fileName);
+            showToast(`Opening ${fileName}...`);
+            return true;
+        }
+        
+        // Method 2: Use download method (always works)
+        openPDFOnAndroid(dataUrl, fileName);
+        return true;
+    } catch (err) {
+        openPDFOnAndroid(dataUrl, fileName);
+        return false;
+    }
+}
+
+// Main PDF opener - detects environment and uses appropriate method
 function openPDF(dataUrl, fileName) {
-    // Add to recent
+    // Add to recent files
     const folderPath = currentPath.join('/');
     addToRecent(fileName, folderPath, dataUrl);
     
-    if (isCapacitor) {
-        openPDFInCapacitor(dataUrl, fileName);
+    // Check if running on Android
+    const isAndroid = /android/i.test(navigator.userAgent);
+    
+    if (isAndroid) {
+        // Android app mode - use download method
+        openPDFWithIntent(dataUrl, fileName);
     } else {
-        // Web mode
-        const blob = dataURLToBlob(dataUrl);
-        const blobUrl = URL.createObjectURL(blob);
-        window.open(blobUrl, '_blank');
-        setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+        // Web browser mode - open in new tab
+        try {
+            const blob = dataURLToBlob(dataUrl);
+            const blobUrl = URL.createObjectURL(blob);
+            window.open(blobUrl, '_blank');
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+            showToast(`Opening ${fileName}...`);
+        } catch (err) {
+            showToast('Failed to open PDF', true);
+        }
     }
-    showToast(`Opening ${fileName}...`);
+}
+
+// Alternative: Save and open via creating a file entry
+function saveAndOpenPDF(dataUrl, fileName) {
+    // Create a blob and save using File System API (for modern browsers)
+    const blob = dataURLToBlob(dataUrl);
+    
+    // Create a file handle if supported
+    if ('showSaveFilePicker' in window) {
+        try {
+            const opts = {
+                suggestedName: fileName,
+                types: [{
+                    description: 'PDF Files',
+                    accept: { 'application/pdf': ['.pdf'] }
+                }]
+            };
+            window.showSaveFilePicker(opts).then(fileHandle => {
+                fileHandle.createWritable().then(writable => {
+                    writable.write(blob);
+                    writable.close();
+                    showToast(`Saved: ${fileName}`);
+                });
+            }).catch(() => {
+                openPDFOnAndroid(dataUrl, fileName);
+            });
+        } catch(e) {
+            openPDFOnAndroid(dataUrl, fileName);
+        }
+    } else {
+        openPDFOnAndroid(dataUrl, fileName);
+    }
 }
 
 async function loadFromIndexedDB() {
@@ -606,7 +645,7 @@ function showToast(msg, isErr = false) {
     toastEl.querySelector('span').textContent = msg;
     toastEl.style.background = isErr ? "linear-gradient(135deg,#ef4444,#dc2626)" : "linear-gradient(135deg,#10b981,#059669)";
     toastEl.classList.remove('hidden');
-    setTimeout(() => toastEl.classList.add('hidden'), 2500);
+    setTimeout(() => toastEl.classList.add('hidden'), 3000);
 }
 
 function escapeHtml(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
