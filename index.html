@@ -44,7 +44,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .delete-folder-btn:hover{background:#ec4899}
 .add-folder-btn:hover{background:#10b981}
 
-/* Department styles */
 .departments-grid{display:flex;flex-direction:column;gap:12px;margin-bottom:25px}
 .dept-card{display:flex;align-items:center;gap:16px;cursor:pointer;transition:all 0.25s ease;padding:4px 0}
 .dept-card:hover{transform:translateX(6px)}
@@ -63,7 +62,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .dept-card[data-dept="SLITTER"] .dept-oval{background:linear-gradient(145deg,#74B9FF,#0984E3);}
 .dept-card[data-dept="UTILITY"] .dept-oval{background:linear-gradient(145deg,#FF7675,#D63031);}
 
-/* Content list */
 .content{display:flex;flex-direction:column;gap:8px}
 .card{background:var(--bg-card);padding:12px 16px;border-radius:12px;cursor:pointer;display:flex;align-items:center;gap:12px;border:1px solid var(--border-color);position:relative}
 .card i:first-child{font-size:1.1rem;width:28px}
@@ -71,18 +69,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .delete-btn{background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.4);color:#f87171;cursor:pointer;padding:6px 12px;border-radius:8px;font-size:0.7rem;display:inline-flex;align-items:center;gap:4px}
 .rename-file-btn{background:rgba(99,102,241,0.2);border:1px solid rgba(99,102,241,0.4);color:#6366f1;cursor:pointer;padding:6px 12px;border-radius:8px;font-size:0.7rem;display:inline-flex;align-items:center;gap:4px;margin-right:8px}
 
-/* IMPROVED PDF VIEWER - Mobile friendly */
+/* IMPROVED PDF VIEWER */
 .viewer{position:fixed;top:0;left:0;width:100%;height:100%;background:#1a1a1a;z-index:1000;display:flex;flex-direction:column}
 .viewer.hidden{display:none}
 .viewer-header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#2c2c2e;border-bottom:1px solid #3a3a3c;flex-shrink:0}
 .viewer-title{display:flex;align-items:center;gap:8px;font-size:14px;color:#fff;flex:1;overflow:hidden}
 .viewer-title span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .viewer-close{background:linear-gradient(135deg,#ef4444,#dc2626);border:none;color:#fff;padding:10px 20px;border-radius:30px;cursor:pointer;font-weight:600;font-size:14px;display:flex;align-items:center;gap:8px}
-.viewer-close i{font-size:14px}
-.viewer-body{flex:1;overflow:hidden}
+.viewer-close:active{transform:scale(0.97)}
+.viewer-body{flex:1;overflow:hidden;background:#525659}
 .pdf-container{width:100%;height:100%;display:flex;flex-direction:column;background:#525659}
-.pdf-canvas-wrapper{flex:1;overflow:auto;display:flex;justify-content:center;background:#525659; -webkit-overflow-scrolling: touch}
-#pdfCanvas{display:block;margin:0 auto;box-shadow:0 2px 8px rgba(0,0,0,0.2);background:#fff;max-width:100%;height:auto}
+.pdf-canvas-wrapper{flex:1;overflow:auto;display:flex;justify-content:center;align-items:flex-start;background:#525659; -webkit-overflow-scrolling: touch}
+#pdfCanvas{display:block;margin:20px auto;box-shadow:0 2px 8px rgba(0,0,0,0.2);background:#fff}
 .zoom-bar{display:flex;justify-content:center;gap:8px;padding:10px;background:rgba(0,0,0,0.8);flex-wrap:wrap;flex-shrink:0}
 .zoom-btn{background:rgba(255,255,255,0.15);border:none;color:#fff;padding:10px 16px;border-radius:30px;cursor:pointer;font-size:14px;min-width:60px}
 .zoom-btn:active{background:rgba(255,255,255,0.3)}
@@ -93,7 +91,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .nav-item:disabled{opacity:0.4;background:rgba(255,255,255,0.1)}
 .page-info{color:#fff;font-size:14px;font-weight:500}
 
-/* FLOATING CLOSE BUTTON for mobile - always accessible */
 .floating-close-btn{
     position:fixed;
     bottom:20px;
@@ -132,6 +129,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .recent-item{background:rgba(99,102,241,0.15);padding:4px 10px;border-radius:16px;font-size:0.7rem;cursor:pointer}
 .section-title{font-size:0.9rem;font-weight:600;margin:0 0 12px 0;display:flex;align-items:center;gap:8px}
 #fileInput{display:none}
+.loading-indicator{text-align:center;color:#fff;padding:40px;font-size:16px}
 
 @media (max-width:640px){
     .app{padding:12px}
@@ -195,7 +193,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <button class="viewer-close" onclick="closeViewer()"><i class="fas fa-times"></i> Close</button>
   </div>
   <div class="viewer-body" id="viewerBody"></div>
-  <!-- FLOATING CLOSE BUTTON - always accessible on mobile -->
   <button id="floatingCloseBtn" class="floating-close-btn" onclick="closeViewer()"><i class="fas fa-times"></i></button>
 </div>
 
@@ -224,7 +221,6 @@ const recentList = document.getElementById("recentList");
 const themeToggle = document.getElementById("themeToggle");
 const departmentsSection = document.getElementById("departmentsSection");
 const pdfTitleSpan = document.getElementById("pdfTitle");
-const floatingCloseBtn = document.getElementById("floatingCloseBtn");
 
 // State
 let allFiles = {};
@@ -235,7 +231,7 @@ let pdfDoc = null;
 let currentPageNum = 1;
 let currentZoom = 1.2;
 let totalPages = 0;
-let currentFileName = "";
+let currentBlobUrl = null;
 
 // File System
 let fileSystem = {
@@ -478,28 +474,62 @@ function createCard(title,onClick,isFolder=true,showDelete=false,deletePath=null
     return card;
 }
 
+// Convert dataURL to Blob URL for reliable PDF loading
+function dataURLToBlobUrl(dataUrl) {
+    const arr = dataUrl.split(',');
+    const mime = arr[0].match(/:(.*?);/)[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+    }
+    const blob = new Blob([u8arr], { type: mime });
+    return URL.createObjectURL(blob);
+}
+
 // PDF Functions
 async function loadPDFDocument(url){
-    try{pdfDoc=await pdfjsLib.getDocument(url).promise;totalPages=pdfDoc.numPages;currentPageNum=1;currentZoom=1.2;updateZoomDisplay();renderPDFPage();}
-    catch(error){showToast('Failed to load PDF',true);}
+    try{
+        const loadingDiv = document.getElementById('pdfCanvasWrapper');
+        if(loadingDiv) {
+            loadingDiv.innerHTML = '<div class="loading-indicator"><i class="fas fa-spinner fa-pulse"></i> Loading PDF...</div>';
+        }
+        pdfDoc = await pdfjsLib.getDocument(url).promise;
+        totalPages = pdfDoc.numPages;
+        currentPageNum = 1;
+        currentZoom = 1.2;
+        updateZoomDisplay();
+        await renderPDFPage();
+    } catch(error){
+        console.error('PDF load error:', error);
+        showToast('Failed to load PDF: ' + error.message, true);
+        const loadingDiv = document.getElementById('pdfCanvasWrapper');
+        if(loadingDiv) {
+            loadingDiv.innerHTML = '<div class="loading-indicator" style="color:#ef4444;"><i class="fas fa-exclamation-triangle"></i> Failed to load PDF. Please try again.</div>';
+        }
+    }
 }
 
 async function renderPDFPage(){
-    if(!pdfDoc)return;
+    if(!pdfDoc) return;
     try{
-        const page=await pdfDoc.getPage(currentPageNum);
-        const viewport=page.getViewport({scale:currentZoom});
-        const canvas=document.getElementById('pdfCanvas');
-        if(!canvas)return;
-        canvas.width=viewport.width;
-        canvas.height=viewport.height;
-        await page.render({canvasContext:canvas.getContext('2d'),viewport:viewport}).promise;
-        document.getElementById('pdfPageInfo').textContent=`${currentPageNum} / ${totalPages}`;
-        const prevBtn=document.getElementById('prevPageBtn');
-        const nextBtn=document.getElementById('nextPageBtn');
-        if(prevBtn)prevBtn.disabled=(currentPageNum<=1);
-        if(nextBtn)nextBtn.disabled=(currentPageNum>=totalPages);
-    }catch(error){}
+        const page = await pdfDoc.getPage(currentPageNum);
+        const viewport = page.getViewport({ scale: currentZoom });
+        const canvas = document.getElementById('pdfCanvas');
+        if(!canvas) return;
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        const context = canvas.getContext('2d');
+        await page.render({ canvasContext: context, viewport: viewport }).promise;
+        document.getElementById('pdfPageInfo').textContent = `${currentPageNum} / ${totalPages}`;
+        const prevBtn = document.getElementById('prevPageBtn');
+        const nextBtn = document.getElementById('nextPageBtn');
+        if(prevBtn) prevBtn.disabled = (currentPageNum <= 1);
+        if(nextBtn) nextBtn.disabled = (currentPageNum >= totalPages);
+    } catch(error){
+        console.error('Render error:', error);
+    }
 }
 
 function zoomIn(){if(currentZoom<3.0){currentZoom=Math.min(3.0,currentZoom+0.2);updateZoomDisplay();renderPDFPage();}}
@@ -509,13 +539,24 @@ function updateZoomDisplay(){const el=document.getElementById('zoomLevel');if(el
 function prevPage(){if(currentPageNum>1){currentPageNum--;renderPDFPage();}}
 function nextPage(){if(currentPageNum<totalPages){currentPageNum++;renderPDFPage();}}
 
-function openPDF(dataUrl,fileName,folderPath){
+function openPDF(dataUrl, fileName, folderPath){
+    // Clean up previous blob URL
+    if(currentBlobUrl) {
+        URL.revokeObjectURL(currentBlobUrl);
+        currentBlobUrl = null;
+    }
+    
     currentFileName = fileName;
     pdfTitleSpan.textContent = fileName.length > 40 ? fileName.substring(0,40)+'...' : fileName;
     viewer.classList.remove("hidden");
-    document.body.style.overflow="hidden";
-    addToRecent(fileName,folderPath,dataUrl);
-    viewerBody.innerHTML=`
+    document.body.style.overflow = "hidden";
+    addToRecent(fileName, folderPath, dataUrl);
+    
+    // Convert data URL to blob URL for reliable loading
+    const blobUrl = dataURLToBlobUrl(dataUrl);
+    currentBlobUrl = blobUrl;
+    
+    viewerBody.innerHTML = `
         <div class="pdf-container">
             <div class="pdf-canvas-wrapper" id="pdfCanvasWrapper"><canvas id="pdfCanvas"></canvas></div>
             <div class="zoom-bar">
@@ -530,21 +571,31 @@ function openPDF(dataUrl,fileName,folderPath){
                 <button class="nav-item" id="nextPageBtn"><i class="fas fa-chevron-right"></i> Next</button>
             </div>
         </div>`;
-    document.getElementById('zoomInBtn').onclick=zoomIn;
-    document.getElementById('zoomOutBtn').onclick=zoomOut;
-    document.getElementById('resetZoomBtn').onclick=resetZoom;
-    document.getElementById('prevPageBtn').onclick=prevPage;
-    document.getElementById('nextPageBtn').onclick=nextPage;
-    loadPDFDocument(dataUrl);
+    
+    document.getElementById('zoomInBtn').onclick = zoomIn;
+    document.getElementById('zoomOutBtn').onclick = zoomOut;
+    document.getElementById('resetZoomBtn').onclick = resetZoom;
+    document.getElementById('prevPageBtn').onclick = prevPage;
+    document.getElementById('nextPageBtn').onclick = nextPage;
+    
+    loadPDFDocument(blobUrl);
 }
 
 function closeViewer(){
     viewer.classList.add("hidden");
-    viewerBody.innerHTML="";
-    document.body.style.overflow="auto";
-    pdfDoc=null;
+    viewerBody.innerHTML = "";
+    document.body.style.overflow = "auto";
+    if(pdfDoc) {
+        pdfDoc.destroy();
+        pdfDoc = null;
+    }
+    if(currentBlobUrl) {
+        URL.revokeObjectURL(currentBlobUrl);
+        currentBlobUrl = null;
+    }
     currentFileName = "";
 }
+
 function goBack(){if(currentPath.length>0&&!isSearchMode){currentPath.pop();render();}else if(isSearchMode){clearSearch();}}
 function triggerUpload(){fileInput.click();}
 function clearSearch(){searchInput.value="";isSearchMode=false;searchInfo.classList.add("hidden");clearSearchBtn.classList.add("hidden");render();}
