@@ -1,422 +1,675 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Department Dashboard - Large Cards</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+<title>OARCEL | Document Manager</title>
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="OARCEL">
+<meta name="theme-color" content="#0a1f2e">
+<link rel="apple-touch-icon" href="https://img.icons8.com/fluency/192/folder-invoices.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg-primary:linear-gradient(135deg,#0f0c29,#1a1a3e,#24243e);--bg-card:rgba(255,255,255,0.06);--text-primary:#fff;--text-secondary:#aaa;--border-color:rgba(255,255,255,0.1)}
+body.light-mode{--bg-primary:#f5f5f5;--bg-card:#ffffff;--text-primary:#1a1a1a;--text-secondary:#666;--border-color:#e0e0e0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg-primary);color:var(--text-primary);min-height:100vh}
+.app{max-width:1200px;margin:0 auto;padding:20px}
+.header{display:flex;align-items:center;gap:16px;margin-bottom:24px;padding:20px 28px;background:var(--bg-card);backdrop-filter:blur(20px);border-radius:28px;border:1px solid var(--border-color)}
+.logo{width:52px;height:52px;background:linear-gradient(135deg,#6366f1,#ec4899);border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:1.6rem}
+.header-title h1{font-size:1.6rem;font-weight:700;background:linear-gradient(135deg,#fff,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.header-title span{font-size:0.7rem;color:#a855f7}
+.top-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;gap:12px;flex-wrap:wrap;background:rgba(0,0,0,0.3);padding:10px 18px;border-radius:60px}
+.btn-back,.btn-upload,.theme-toggle{display:flex;align-items:center;gap:8px;padding:10px 20px;border:none;border-radius:40px;font-weight:600;font-size:0.85rem;cursor:pointer}
+.btn-back{background:rgba(255,255,255,0.1);color:var(--text-primary)}
+.btn-upload{background:linear-gradient(135deg,#6366f1,#ec4899);color:#fff}
+.theme-toggle{background:rgba(255,255,255,0.1);color:var(--text-primary)}
+.search-container{flex:1;position:relative;min-width:180px}
+.search-container i{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#888}
+#searchInput{width:100%;padding:10px 16px 10px 38px;border-radius:40px;border:1px solid var(--border-color);background:rgba(0,0,0,0.3);color:var(--text-primary);outline:none}
+.clear-search{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;color:#888;cursor:pointer}
+.hidden{display:none!important}
+.stats-bar{display:flex;gap:20px;margin-bottom:24px;padding:16px 24px;background:var(--bg-card);border-radius:20px;border:1px solid var(--border-color)}
+.stat-item{display:flex;align-items:center;gap:12px;flex:1}
+.stat-item i{font-size:1.5rem;color:#6366f1}
+.stat-item span{font-size:1.6rem;font-weight:700}
+.stat-item label{font-size:0.7rem;color:var(--text-secondary);margin-left:auto}
+.action-bar{display:flex;gap:12px;padding:16px;flex-wrap:wrap;justify-content:center;margin-bottom:20px;background:rgba(0,0,0,0.3);border-radius:60px}
+.action-btn{background:rgba(255,255,255,0.1);border:1px solid var(--border-color);padding:10px 20px;border-radius:40px;color:var(--text-primary);cursor:pointer;display:inline-flex;align-items:center;gap:8px;font-size:0.8rem}
+.action-btn:hover{transform:translateY(-2px)}
+.rename-btn:hover{background:#6366f1}
+.delete-folder-btn:hover{background:#ec4899}
+.add-folder-btn:hover{background:#10b981}
 
-        body {
-            background: #f1f5f9;
-            padding: 20px;
-            min-height: 100vh;
-        }
+/* ========== NEW OVAL ICON DESIGN - Full department names inside long ovals ========== */
+.departments-grid{display:flex;flex-direction:column;gap:12px;margin-bottom:25px}
 
-        /* Main container */
-        .dashboard {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
+/* Department card - clean, no extra background */
+.dept-card{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    cursor:pointer;
+    transition:all 0.25s ease;
+    padding:4px 0;
+}
 
-        /* Header area with time/battery (matching your screenshot) */
-        .status-bar {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0 20px 0;
-            font-size: 16px;
-            font-weight: 600;
-            color: #1e293b;
-            background: #f1f5f9;
-        }
+.dept-card:hover{
+    transform:translateX(6px);
+}
 
-        /* Search bar placeholder (optional, matching "Search PDFs...") */
-        .search-section {
-            margin-bottom: 24px;
-        }
-        .search-box {
-            background: white;
-            border-radius: 30px;
-            padding: 14px 20px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            color: #94a3b8;
-            font-size: 16px;
-            border: 1px solid #e2e8f0;
-        }
+/* LONG OVAL ICON - contains FULL department name inside */
+.dept-oval{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:12px 28px;
+    border-radius:60px;
+    background:linear-gradient(145deg,#FF6B6B,#EE5A24);
+    box-shadow:0 6px 14px -4px rgba(0,0,0,0.3);
+    transition:all 0.2s ease;
+    cursor:pointer;
+}
 
-        /* Stats row: "90 Folders / 0 Documents" */
-        .stats-row {
-            display: flex;
-            gap: 24px;
-            margin-bottom: 28px;
-            font-weight: 600;
-            color: #0f172a;
-            background: white;
-            padding: 12px 20px;
-            border-radius: 24px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-            border: 1px solid #e2e8f0;
-        }
-        .stat-number {
-            font-size: 28px;
-            font-weight: 800;
-            color: #3b82f6;
-        }
-        .stat-label {
-            font-size: 14px;
-            color: #475569;
-            margin-left: 6px;
-        }
+.dept-card:hover .dept-oval{
+    transform:scale(1.02);
+    box-shadow:0 8px 20px -6px rgba(0,0,0,0.4);
+}
 
-        /* Department grid — LARGER CARDS */
-        .dept-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-            gap: 24px;
-            margin: 28px 0;
-        }
+/* FULL DEPARTMENT NAME inside the oval */
+.dept-oval span{
+    font-size:14px;
+    font-weight:600;
+    color:white;
+    text-shadow:0 1px 2px rgba(0,0,0,0.2);
+    letter-spacing:0.3px;
+    white-space:nowrap;
+}
 
-        /* INDIVIDUAL DEPARTMENT CARD — increased size */
-        .dept-card {
-            background: white;
-            border-radius: 28px;
-            padding: 28px 16px 24px 16px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-            border: 1px solid #eef2ff;
-            min-height: 180px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
+/* Right arrow after oval */
+.dept-arrow{
+    color:rgba(99,102,241,0.6);
+    font-size:16px;
+    transition:transform 0.2s;
+}
 
-        /* Even larger on tablet/desktop */
-        @media (min-width: 640px) {
-            .dept-grid {
-                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-                gap: 28px;
-            }
-            .dept-card {
-                padding: 36px 20px 32px 20px;
-                min-height: 210px;
-            }
-        }
+.dept-card:hover .dept-arrow{
+    transform:translateX(4px);
+    color:#ec4899;
+}
 
-        .dept-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 25px -12px rgba(0, 0, 0, 0.15);
-            border-color: #cbd5e1;
-        }
+/* Department info badge (folder count) */
+.dept-info{
+    margin-left:auto;
+    font-size:12px;
+    color:var(--text-secondary);
+    background:rgba(0,0,0,0.2);
+    padding:4px 12px;
+    border-radius:30px;
+}
 
-        /* Folder icon (bigger and clear) */
-        .folder-icon {
-            font-size: 58px;
-            margin-bottom: 18px;
-        }
+/* COLORFUL GRADIENTS for each department */
+.dept-card[data-dept="REMELT"] .dept-oval{background:linear-gradient(145deg,#FF6B6B,#EE5A24);}
+.dept-card[data-dept="CASTER"] .dept-oval{background:linear-gradient(145deg,#4ECDC4,#44B39D);}
+.dept-card[data-dept="HRM"] .dept-oval{background:linear-gradient(145deg,#A29BFE,#6C5CE7);}
+.dept-card[data-dept="CRM"] .dept-oval{background:linear-gradient(145deg,#FDCB6E,#F39C12);}
+.dept-card[data-dept="ANNEALING"] .dept-oval{background:linear-gradient(145deg,#FD79A8,#E84393);}
+.dept-card[data-dept="TLL"] .dept-oval{background:linear-gradient(145deg,#00CEC9,#00B894);}
+.dept-card[data-dept="SLITTER"] .dept-oval{background:linear-gradient(145deg,#74B9FF,#0984E3);}
+.dept-card[data-dept="UTILITY"] .dept-oval{background:linear-gradient(145deg,#FF7675,#D63031);}
 
-        /* Department name — larger and bold */
-        .dept-name {
-            font-size: 20px;
-            font-weight: 700;
-            color: #0f172a;
-            letter-spacing: -0.3px;
-            word-break: break-word;
-        }
+/* LIST VIEW - All items as list (subfolders) */
+.content{display:flex;flex-direction:column;gap:8px}
+.card{background:var(--bg-card);padding:12px 16px;border-radius:12px;cursor:pointer;display:flex;align-items:center;gap:12px;border:1px solid var(--border-color);position:relative}
+.card i:first-child{font-size:1.1rem;width:28px}
+.card span{font-size:0.85rem;flex:1}
+.delete-btn{background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.4);color:#f87171;cursor:pointer;padding:6px 12px;border-radius:8px;font-size:0.7rem;display:inline-flex;align-items:center;gap:4px}
+.rename-file-btn{background:rgba(99,102,241,0.2);border:1px solid rgba(99,102,241,0.4);color:#6366f1;cursor:pointer;padding:6px 12px;border-radius:8px;font-size:0.7rem;display:inline-flex;align-items:center;gap:4px;margin-right:8px}
 
-        /* Optional meta like item count (can add later) */
-        .dept-meta {
-            font-size: 13px;
-            color: #64748b;
-            margin-top: 10px;
-        }
-
-        /* ADD DEPARTMENT BUTTON - matching card size */
-        .add-card {
-            background: #f8fafc;
-            border: 2px dashed #cbd5e1;
-            box-shadow: none;
-            transition: background 0.2s;
-        }
-        .add-card:hover {
-            background: #f1f5f9;
-            border-color: #3b82f6;
-            transform: translateY(-2px);
-        }
-        .plus-icon {
-            font-size: 48px;
-            font-weight: 300;
-            color: #3b82f6;
-            margin-bottom: 12px;
-        }
-        .add-text {
-            font-size: 18px;
-            font-weight: 600;
-            color: #2563eb;
-        }
-
-        /* Bottom tab bar (Home / Departments active) as seen in screenshot */
-        .bottom-tab-bar {
-            background: white;
-            border-radius: 32px;
-            display: flex;
-            justify-content: space-around;
-            padding: 12px 20px;
-            margin-top: 40px;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
-        }
-        .tab-item {
-            text-align: center;
-            font-weight: 500;
-            color: #94a3b8;
-            padding: 6px 12px;
-            border-radius: 40px;
-            font-size: 15px;
-        }
-        .tab-item.active {
-            color: #3b82f6;
-            background: #eff6ff;
-        }
-
-        /* Modal for adding new department */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-        .modal-content {
-            background: white;
-            padding: 32px 24px;
-            border-radius: 48px;
-            width: 85%;
-            max-width: 340px;
-            text-align: center;
-        }
-        .modal-content input {
-            width: 100%;
-            padding: 16px;
-            font-size: 18px;
-            margin: 20px 0;
-            border-radius: 60px;
-            border: 1px solid #cbd5e1;
-            text-align: center;
-            font-weight: 500;
-        }
-        .modal-buttons {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-        }
-        .modal-buttons button {
-            padding: 12px 20px;
-            border-radius: 40px;
-            border: none;
-            font-weight: 600;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        .confirm-btn {
-            background: #3b82f6;
-            color: white;
-        }
-        .cancel-btn {
-            background: #e2e8f0;
-            color: #1e293b;
-        }
-
-        /* responsiveness */
-        @media (max-width: 500px) {
-            body {
-                padding: 12px;
-            }
-            .dept-name {
-                font-size: 18px;
-            }
-            .folder-icon {
-                font-size: 48px;
-            }
-        }
-    </style>
+.viewer{position:fixed;top:0;left:0;width:100%;height:100%;background:#1a1a1a;z-index:1000;display:flex;flex-direction:column}
+.viewer.hidden{display:none}
+.viewer-header{display:flex;justify-content:space-between;align-items:center;padding:12px 20px;background:#2c2c2e;border-bottom:1px solid #3a3a3c}
+.viewer-close{background:rgba(255,255,255,0.1);border:none;color:#fff;padding:8px 16px;border-radius:30px;cursor:pointer}
+.viewer-body{flex:1;overflow:hidden}
+.pdf-container{width:100%;height:100%;display:flex;flex-direction:column;background:#525659}
+.pdf-canvas-wrapper{flex:1;overflow:auto;display:flex;justify-content:center;background:#525659}
+#pdfCanvas{display:block;margin:0 auto;box-shadow:0 2px 8px rgba(0,0,0,0.2);background:#fff}
+.zoom-bar{display:flex;justify-content:center;gap:12px;padding:10px;background:rgba(0,0,0,0.8)}
+.zoom-btn{background:rgba(255,255,255,0.15);border:none;color:#fff;padding:8px 16px;border-radius:30px;cursor:pointer}
+.bottom-nav{display:flex;justify-content:space-around;align-items:center;padding:8px 20px;background:rgba(28,28,30,0.95)}
+.nav-item{background:none;border:none;color:#8e8e93;padding:8px 16px;border-radius:30px;cursor:pointer}
+.nav-item:disabled{opacity:0.4}
+.page-info{color:#fff;font-size:14px}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#10b981;color:#fff;padding:10px 20px;border-radius:40px;z-index:1100}
+.toast.hidden{display:none}
+.empty-state{text-align:center;padding:40px 20px;background:var(--bg-card);border-radius:20px}
+.empty-state i{font-size:36px;margin-bottom:12px}
+.breadcrumb{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:15px;padding:8px 12px;background:rgba(0,0,0,0.2);border-radius:30px}
+.breadcrumb-item{color:var(--text-secondary);cursor:pointer;font-size:0.75rem}
+.breadcrumb-item:hover{color:#6366f1}
+.recent-section{margin-bottom:20px;padding:10px;background:rgba(0,0,0,0.2);border-radius:16px}
+.recent-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.recent-title{font-size:0.75rem;display:flex;align-items:center;gap:6px}
+.clear-recent{background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.4);color:#f87171;padding:4px 10px;border-radius:20px;font-size:0.65rem;cursor:pointer}
+.clear-recent:hover{background:#ef4444;color:#fff}
+.recent-list{display:flex;gap:8px;flex-wrap:wrap}
+.recent-item{background:rgba(99,102,241,0.15);padding:4px 10px;border-radius:16px;font-size:0.7rem;cursor:pointer}
+.section-title{font-size:0.9rem;font-weight:600;margin:0 0 12px 0;display:flex;align-items:center;gap:8px}
+#fileInput{display:none}
+@media (max-width:640px){
+    .app{padding:12px}
+    .btn-back span,.btn-upload span,.theme-toggle span{display:none}
+    .dept-oval{padding:8px 18px}
+    .dept-oval span{font-size:12px}
+    .dept-info{font-size:10px;padding:3px 8px}
+    .card{padding:10px 12px}
+    .card i:first-child{font-size:0.9rem;width:24px}
+    .card span{font-size:0.75rem}
+    .delete-btn,.rename-file-btn{padding:4px 8px;font-size:0.65rem}
+}
+</style>
 </head>
 <body>
 
-<div class="dashboard">
-    <!-- Top status bar: time & signal (7:56 / 5G 4G) -->
-    <div class="status-bar">
-        <span>7:56</span>
-        <span>📶 5G 4G</span>
-    </div>
+<div class="app">
+  <div class="header">
+    <div class="logo"><i class="fas fa-folder-open"></i></div>
+    <div class="header-title"><h1>OARCEL</h1><span>Document Manager</span></div>
+  </div>
 
-    <!-- Search bar matching "Search PDFs..." -->
-    <div class="search-section">
-        <div class="search-box">🔍 Search PDFs...</div>
+  <div class="top-bar">
+    <button id="backBtn" class="btn-back hidden" onclick="goBack()"><i class="fas fa-arrow-left"></i><span>Back</span></button>
+    <div class="search-container">
+      <i class="fas fa-search"></i>
+      <input type="text" id="searchInput" placeholder="Search PDFs...">
+      <button id="clearSearchBtn" class="clear-search hidden"><i class="fas fa-times-circle"></i></button>
     </div>
+    <button id="themeToggle" class="theme-toggle"><i class="fas fa-moon"></i><span>Theme</span></button>
+    <button id="uploadBtn" class="btn-upload hidden" onclick="triggerUpload()"><i class="fas fa-cloud-upload-alt"></i><span>Upload</span></button>
+    <input type="file" id="fileInput" accept="application/pdf" multiple>
+  </div>
 
-    <!-- Stats: 90 Folders / 0 Documents -->
-    <div class="stats-row">
-        <div><span class="stat-number">90</span><span class="stat-label">Folders</span></div>
-        <div><span class="stat-number">0</span><span class="stat-label">Documents</span></div>
-    </div>
+  <div class="stats-bar">
+    <div class="stat-item"><i class="fas fa-folder"></i><span id="folderCount">0</span><label>Folders</label></div>
+    <div class="stat-item"><i class="fas fa-file-pdf"></i><span id="fileCount">0</span><label>Documents</label></div>
+    <div class="stat-item"><i class="fas fa-history"></i><span id="recentCount">0</span><label>Recent</label></div>
+  </div>
 
-    <!-- Department grid (LARGER cards) -->
-    <div class="dept-grid" id="deptGrid">
-        <!-- departments will be injected here via JS -->
+  <div id="breadcrumb" class="breadcrumb"></div>
+  <div id="departmentsSection"></div>
+  <div id="recentSection" class="recent-section hidden">
+    <div class="recent-header">
+      <div class="recent-title"><i class="fas fa-history"></i> Recently Viewed</div>
+      <button class="clear-recent" onclick="clearAllRecent()"><i class="fas fa-trash-alt"></i> Clear</button>
     </div>
-
-    <!-- Bottom navigation (Home / Departments) exactly like reference -->
-    <div class="bottom-tab-bar">
-        <div class="tab-item">🏠 Home</div>
-        <div class="tab-item active">📁 Departments</div>
-        <div class="tab-item">⚙️</div>
-    </div>
+    <div id="recentList" class="recent-list"></div>
+  </div>
+  <div id="searchInfo" class="search-result-info hidden"></div>
+  <div id="content" class="content"></div>
 </div>
 
-<!-- Modal for Add Department -->
-<div id="deptModal" class="modal">
-    <div class="modal-content">
-        <h3 style="margin-bottom: 8px;">➕ New Department</h3>
-        <input type="text" id="newDeptName" placeholder="e.g., MAINTENANCE" autocomplete="off" maxlength="20">
-        <div class="modal-buttons">
-            <button class="cancel-btn" id="cancelModalBtn">Cancel</button>
-            <button class="confirm-btn" id="confirmAddBtn">Add</button>
-        </div>
-    </div>
+<div id="viewer" class="viewer hidden">
+  <div class="viewer-header">
+    <div class="viewer-title"><i class="fas fa-file-pdf"></i><span>Document Viewer</span></div>
+    <button class="viewer-close" onclick="closeViewer()"><i class="fas fa-times"></i> Close</button>
+  </div>
+  <div class="viewer-body" id="viewerBody"></div>
 </div>
+
+<div id="toast" class="toast hidden"><i class="fas fa-check-circle"></i><span></span></div>
 
 <script>
-    // Initial departments (matching your screenshot)
-    let departments = [
-        "REMELT", "CASTER", "HRM", "CRM", 
-        "ANNEALING", "TLL", "SLITTER", "UTILITY"
-    ];
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-    // Helper: render department cards (larger size ensured by CSS)
-    function renderDepartments() {
-        const grid = document.getElementById('deptGrid');
-        if (!grid) return;
+// DOM Elements
+const contentEl = document.getElementById("content");
+const backBtn = document.getElementById("backBtn");
+const uploadBtn = document.getElementById("uploadBtn");
+const fileInput = document.getElementById("fileInput");
+const viewer = document.getElementById("viewer");
+const viewerBody = document.getElementById("viewerBody");
+const toast = document.getElementById("toast");
+const folderCountSpan = document.getElementById("folderCount");
+const fileCountSpan = document.getElementById("fileCount");
+const recentCountSpan = document.getElementById("recentCount");
+const searchInput = document.getElementById("searchInput");
+const clearSearchBtn = document.getElementById("clearSearchBtn");
+const searchInfo = document.getElementById("searchInfo");
+const breadcrumbDiv = document.getElementById("breadcrumb");
+const recentSection = document.getElementById("recentSection");
+const recentList = document.getElementById("recentList");
+const themeToggle = document.getElementById("themeToggle");
+const departmentsSection = document.getElementById("departmentsSection");
 
-        // Clear grid but keep the "Add Department" card logic separate? 
-        // We'll rebuild everything including the add card.
-        grid.innerHTML = '';
+// State
+let allFiles = {};
+let currentPath = [];
+let isSearchMode = false;
+let recentFiles = [];
+let pdfDoc = null;
+let currentPageNum = 1;
+let currentZoom = 1.2;
+let totalPages = 0;
 
-        // Render each department as a LARGE CARD
-        departments.forEach(dept => {
-            const card = document.createElement('div');
-            card.className = 'dept-card';
-            // optional click action (you can navigate or alert)
-            card.addEventListener('click', () => {
-                alert(`Opening ${dept} department 📁`);
-                // you can replace with actual navigation later
-            });
-            card.innerHTML = `
-                <div class="folder-icon">📁</div>
-                <div class="dept-name">${escapeHtml(dept)}</div>
-                <div class="dept-meta">folder</div>
+// File System
+let fileSystem = {
+    "REMELT":{"A":{},"B":{},"C":{},"D":{},"E":{},"F":{},"G":{},"H":{},"I":{},"J":{},"K":{},"L":{},"M":{},"N":{},"O":{},"P":{},"Q":{},"R":{},"S":{},"T":{},"U":{},"V":{},"W":{},"X":{},"Y":{},"Z":{}},
+    "CASTER":{"Quality Reports":{},"Mechanical":{},"Maintenance":{},"Production Data":{},"Testing":{},"Checklists":{},"Safety":{},"Training":{}},
+    "HRM":{"Employee Records":{},"Attendance":{},"Performance":{},"Training Logs":{},"Safety Compliance":{},"Policies":{},"Reports":{},"Certifications":{}},
+    "CRM":{"PLC Programs":{},"CAD Drawings":{},"Electrical":{},"SCADA":{},"Automation":{},"Reports":{},"Configurations":{},"Manuals":{}},
+    "ANNEALING":{"Temperature Control":{},"Process Parameters":{},"Quality Assurance":{},"Maintenance":{},"Safety":{},"Production Logs":{},"Testing":{},"SOP Documents":{}},
+    "TLL":{"PLC Programs":{},"CAD Drawings":{},"Maintenance":{},"Production Logs":{},"Process Optimization":{},"Quality Reports":{},"Manuals":{},"Safety":{}},
+    "SLITTER":{"Blade Maintenance":{},"Quality Control":{},"Production Reports":{},"Mechanical":{},"Safety":{},"Checklists":{},"Training":{},"Testing":{}},
+    "UTILITY":{"Power Supply":{},"Water System":{},"Compressed Air":{},"HVAC":{},"Reports":{},"Safety":{},"Manuals":{},"Testing":{}}
+};
+
+// Storage Functions
+function saveFolderStructure(){localStorage.setItem('oarcel_folders',JSON.stringify(fileSystem));}
+function loadFolderStructure(){const saved=localStorage.getItem('oarcel_folders');if(saved)fileSystem=JSON.parse(saved);}
+function saveAllFiles(){try{const toSave={};for(const folder in allFiles){toSave[folder]=allFiles[folder].map(f=>({name:f.name,dataUrl:f.dataUrl}));}localStorage.setItem('oarcel_all_files',JSON.stringify(toSave));}catch(e){}}
+function loadAllFiles(){try{const saved=localStorage.getItem('oarcel_all_files');if(saved)allFiles=JSON.parse(saved);}catch(e){allFiles={};}}
+function saveRecentFiles(){localStorage.setItem('oarcel_recent',JSON.stringify(recentFiles));}
+function loadRecentFiles(){const saved=localStorage.getItem('oarcel_recent');if(saved)recentFiles=JSON.parse(saved);updateRecentUI();}
+function loadTheme(){const saved=localStorage.getItem('oarcel_theme');if(saved){document.body.className=saved;updateThemeIcon();}}
+function saveTheme(theme){localStorage.setItem('oarcel_theme',theme);}
+
+// Helper Functions
+function updateThemeIcon(){const isDark=!document.body.classList.contains('light-mode');themeToggle.innerHTML=isDark?'<i class="fas fa-sun"></i><span>Light</span>':'<i class="fas fa-moon"></i><span>Dark</span>';}
+function toggleTheme(){if(document.body.classList.contains('light-mode')){document.body.classList.remove('light-mode');saveTheme('');}else{document.body.classList.add('light-mode');saveTheme('light-mode');}updateThemeIcon();}
+themeToggle.onclick=toggleTheme;
+
+function showToast(message,isError=false){
+    toast.querySelector('span').textContent=message;
+    toast.style.background=isError?"linear-gradient(135deg,#ef4444,#dc2626)":"linear-gradient(135deg,#10b981,#059669)";
+    toast.classList.remove("hidden");
+    setTimeout(()=>toast.classList.add("hidden"),3000);
+}
+
+function escapeHtml(text){const div=document.createElement('div');div.textContent=text;return div.innerHTML;}
+
+function updateStats(){
+    let folderCount=0,fileCount=0;
+    function countRecursive(obj){for(let key in obj){if(typeof obj[key]==='object'&&obj[key]!==null&&!Array.isArray(obj[key])){folderCount++;countRecursive(obj[key]);}}}
+    countRecursive(fileSystem);
+    for(let key in allFiles)fileCount+=allFiles[key].length;
+    folderCountSpan.textContent=folderCount;
+    fileCountSpan.textContent=fileCount;
+}
+
+function getCurrentFolder(){let folder=fileSystem;for(let p of currentPath){if(folder[p])folder=folder[p];else return null;}return folder;}
+function getFilesForCurrentFolder(){return allFiles[currentPath.join("/")]||[];}
+function getCurrentFolderObject(){let folder=fileSystem;for(let p of currentPath){if(folder[p])folder=folder[p];else return null;}return folder;}
+
+async function addFileToCurrentFolder(file){
+    const folderPath=currentPath.join("/");
+    if(!allFiles[folderPath])allFiles[folderPath]=[];
+    const base64Data=await new Promise(resolve=>{const reader=new FileReader();reader.onload=e=>resolve(e.target.result);reader.readAsDataURL(file);});
+    allFiles[folderPath].push({name:file.name,dataUrl:base64Data});
+    saveAllFiles();
+}
+
+function deleteFileFromFolder(folderPath,fileName){
+    if(allFiles[folderPath]){
+        allFiles[folderPath]=allFiles[folderPath].filter(f=>f.name!==fileName);
+        if(allFiles[folderPath].length===0)delete allFiles[folderPath];
+        saveAllFiles();
+        recentFiles=recentFiles.filter(f=>!(f.name===fileName && f.path===folderPath));
+        saveRecentFiles();
+        updateRecentUI();
+        render();
+        showToast(`✅ Deleted "${fileName}"`);
+    }
+}
+
+function renameFileInFolder(folderPath,oldName,newName){
+    if(allFiles[folderPath]){
+        const fileIndex=allFiles[folderPath].findIndex(f=>f.name===oldName);
+        if(fileIndex!==-1){
+            if(!newName.toLowerCase().endsWith('.pdf'))newName+='.pdf';
+            allFiles[folderPath][fileIndex].name=newName;
+            saveAllFiles();
+            recentFiles=recentFiles.map(f=>f.name===oldName && f.path===folderPath?{...f,name:newName}:f);
+            saveRecentFiles();
+            updateRecentUI();
+            render();
+            showToast(`✅ Renamed to "${newName}"`);
+        }
+    }
+}
+
+function addToRecent(fileName,filePath,dataUrl){
+    recentFiles=recentFiles.filter(f=>f.name!==fileName || f.path!==filePath);
+    recentFiles.unshift({name:fileName,path:filePath,dataUrl:dataUrl,timestamp:Date.now()});
+    if(recentFiles.length>10)recentFiles.pop();
+    saveRecentFiles();
+    updateRecentUI();
+}
+
+function updateRecentUI(){
+    if(recentFiles.length>0){
+        recentSection.classList.remove("hidden");
+        recentCountSpan.textContent=recentFiles.length;
+        recentList.innerHTML=recentFiles.map(f=>`<div class="recent-item" onclick="openRecentFile('${escapeHtml(f.path)}','${escapeHtml(f.name)}')"><i class="fas fa-file-pdf"></i> ${escapeHtml(f.name.length>25?f.name.substring(0,25)+'...':f.name)}</div>`).join('');
+    }else{recentSection.classList.add("hidden");recentCountSpan.textContent="0";}
+}
+
+function clearAllRecent(){
+    if(confirm("Clear all recently viewed files?")){
+        recentFiles=[];
+        saveRecentFiles();
+        updateRecentUI();
+        showToast("🗑️ Recent history cleared");
+    }
+}
+
+function openRecentFile(folderPath,fileName){
+    const file=allFiles[folderPath]?.find(f=>f.name===fileName);
+    if(file){currentPath=folderPath.split('/');render();setTimeout(()=>openPDF(file.dataUrl,fileName,folderPath),100);}
+    else{showToast("File not found",true);}
+}
+
+function getAllFiles(){
+    const results=[];
+    for(const folderPath in allFiles){
+        allFiles[folderPath].forEach(file=>{results.push({name:file.name,dataUrl:file.dataUrl,folder:folderPath});});
+    }
+    return results;
+}
+
+function searchFiles(query){
+    if(!query.trim())return[];
+    const all=getAllFiles();
+    const lowerQuery=query.toLowerCase();
+    return all.filter(file=>file.name.toLowerCase().includes(lowerQuery));
+}
+
+function renameCurrentFolder(){
+    if(currentPath.length===0){showToast("Cannot rename root",true);return;}
+    const oldName=currentPath[currentPath.length-1];
+    const newName=prompt("Enter new folder name:",oldName);
+    if(newName&&newName!==oldName&&newName.trim()){
+        const parentPath=currentPath.slice(0,-1);
+        let parent=fileSystem;
+        for(let p of parentPath)parent=parent[p];
+        parent[newName]=parent[oldName];
+        delete parent[oldName];
+        const oldFolderPath=currentPath.join("/");
+        const newFolderPath=[...parentPath,newName].join("/");
+        if(allFiles[oldFolderPath]){allFiles[newFolderPath]=allFiles[oldFolderPath];delete allFiles[oldFolderPath];}
+        currentPath[parentPath.length]=newName;
+        saveFolderStructure();saveAllFiles();render();
+        showToast(`✅ Renamed to "${newName}"`);
+    }
+}
+
+function addNewFolder(){
+    const folderName=prompt("Enter new folder name:","New Folder");
+    if(folderName&&folderName.trim()){
+        const currentFolder=getCurrentFolderObject();
+        if(currentFolder&&!currentFolder[folderName]){currentFolder[folderName]={};saveFolderStructure();render();showToast(`✅ Folder "${folderName}" created`);}
+        else{showToast("Folder already exists!",true);}
+    }
+}
+
+function addNewDepartment(){
+    const deptName=prompt("Enter new department name:","New Department");
+    if(deptName&&deptName.trim()){
+        if(!fileSystem[deptName]){fileSystem[deptName]={};saveFolderStructure();render();showToast(`✅ Department "${deptName}" created`);}
+        else{showToast("Department already exists!",true);}
+    }
+}
+
+function deleteCurrentFolder(){
+    if(currentPath.length===0){showToast("Cannot delete root",true);return;}
+    const folderName=currentPath[currentPath.length-1];
+    if(confirm(`Delete "${folderName}" and ALL contents?`)){
+        const folderPath=currentPath.join("/");
+        if(allFiles[folderPath])delete allFiles[folderPath];
+        const parentPath=currentPath.slice(0,-1);
+        let parent=fileSystem;
+        for(let p of parentPath)parent=parent[p];
+        delete parent[folderName];
+        currentPath.pop();
+        saveFolderStructure();saveAllFiles();render();
+        showToast(`🗑️ Folder "${folderName}" deleted`);
+    }
+}
+
+function updateBreadcrumb(){
+    breadcrumbDiv.innerHTML='<div class="breadcrumb-item" onclick="navigateToBreadcrumb(-1)"><i class="fas fa-home"></i> Home</div>';
+    currentPath.forEach((folder,idx)=>{breadcrumbDiv.innerHTML+=`<span class="breadcrumb-separator">/</span><div class="breadcrumb-item" onclick="navigateToBreadcrumb(${idx})">${escapeHtml(folder)}</div>`;});
+}
+
+function navigateToBreadcrumb(idx){if(idx===-1){currentPath=[];}else{currentPath=currentPath.slice(0,idx+1);}render();}
+
+// NEW: Render department buttons with LONG OVAL icons (full name inside)
+function renderDepartmentButtons(){
+    if(currentPath.length===0){
+        departmentsSection.innerHTML='<div class="section-title"><i class="fas fa-building"></i> Departments</div><div class="departments-grid">';
+        for(let dept in fileSystem){
+            const subCount=Object.keys(fileSystem[dept]).length;
+            const fileCountInDept = allFiles[dept] ? allFiles[dept].length : 0;
+            const totalItems = subCount + fileCountInDept;
+            
+            departmentsSection.innerHTML+=`
+                <div class="dept-card" data-dept="${dept}" onclick="selectDepartment('${dept}')">
+                    <div class="dept-oval">
+                        <span>${dept}</span>
+                    </div>
+                    <div class="dept-arrow">
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                    <div class="dept-info">
+                        ${totalItems} items
+                    </div>
+                </div>
             `;
-            grid.appendChild(card);
-        });
+        }
+        departmentsSection.innerHTML+='</div>';
+    }else{
+        departmentsSection.innerHTML='';
+    }
+}
 
-        // ADD DEPARTMENT CARD (also large, same dimensions)
-        const addCard = document.createElement('div');
-        addCard.className = 'dept-card add-card';
-        addCard.addEventListener('click', () => {
-            openModal();
-        });
-        addCard.innerHTML = `
-            <div class="plus-icon">+</div>
-            <div class="add-text">Add Department</div>
-            <div class="dept-meta" style="opacity:0.6;">new folder</div>
-        `;
-        grid.appendChild(addCard);
-    }
+function selectDepartment(deptName){
+    currentPath=[deptName];
+    render();
+}
 
-    // simple escape to avoid XSS
-    function escapeHtml(str) {
-        return str.replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-        });
-    }
+function createCard(title,onClick,isFolder=true,showDelete=false,deletePath=null,deleteName=null,showRename=false){
+    const card=document.createElement("div");
+    card.className="card";
+    const iconClass=isFolder?"fa-folder":"fa-file-pdf";
+    const iconColor=isFolder?"#f59e0b":"#3b82f6";
+    card.innerHTML=`
+        <i class="fas ${iconClass}" style="color:${iconColor}"></i>
+        <span>${escapeHtml(title)}</span>
+        <div style="display:flex;gap:6px">
+            ${showRename?`<button class="rename-file-btn" onclick="event.stopPropagation(); window.renameFile('${deletePath}','${escapeHtml(deleteName)}')"><i class="fas fa-edit"></i> Rename</button>`:''}
+            ${showDelete?`<button class="delete-btn" onclick="event.stopPropagation(); window.deleteFile('${deletePath}','${escapeHtml(deleteName)}')"><i class="fas fa-trash"></i> Delete</button>`:''}
+        </div>
+    `;
+    card.onclick=onClick;
+    return card;
+}
 
-    // Modal logic
-    const modal = document.getElementById('deptModal');
-    const newDeptInput = document.getElementById('newDeptName');
+// PDF Functions
+async function loadPDFDocument(url){
+    try{pdfDoc=await pdfjsLib.getDocument(url).promise;totalPages=pdfDoc.numPages;currentPageNum=1;currentZoom=1.2;updateZoomDisplay();renderPDFPage();}
+    catch(error){showToast('Failed to load PDF',true);}
+}
+
+async function renderPDFPage(){
+    if(!pdfDoc)return;
+    try{
+        const page=await pdfDoc.getPage(currentPageNum);
+        const viewport=page.getViewport({scale:currentZoom});
+        const canvas=document.getElementById('pdfCanvas');
+        if(!canvas)return;
+        canvas.width=viewport.width;
+        canvas.height=viewport.height;
+        await page.render({canvasContext:canvas.getContext('2d'),viewport:viewport}).promise;
+        document.getElementById('pdfPageInfo').textContent=`${currentPageNum} / ${totalPages}`;
+        const prevBtn=document.getElementById('prevPageBtn');
+        const nextBtn=document.getElementById('nextPageBtn');
+        if(prevBtn)prevBtn.disabled=(currentPageNum<=1);
+        if(nextBtn)nextBtn.disabled=(currentPageNum>=totalPages);
+    }catch(error){}
+}
+
+function zoomIn(){if(currentZoom<3.0){currentZoom=Math.min(3.0,currentZoom+0.2);updateZoomDisplay();renderPDFPage();}}
+function zoomOut(){if(currentZoom>0.5){currentZoom=Math.max(0.5,currentZoom-0.2);updateZoomDisplay();renderPDFPage();}}
+function resetZoom(){currentZoom=1.2;updateZoomDisplay();renderPDFPage();}
+function updateZoomDisplay(){const el=document.getElementById('zoomLevel');if(el)el.textContent=`${Math.round(currentZoom*100)}%`;}
+function prevPage(){if(currentPageNum>1){currentPageNum--;renderPDFPage();}}
+function nextPage(){if(currentPageNum<totalPages){currentPageNum++;renderPDFPage();}}
+
+function openPDF(dataUrl,fileName,folderPath){
+    viewer.classList.remove("hidden");
+    document.body.style.overflow="hidden";
+    addToRecent(fileName,folderPath,dataUrl);
+    viewerBody.innerHTML=`
+        <div class="pdf-container">
+            <div class="pdf-canvas-wrapper" id="pdfCanvasWrapper"><canvas id="pdfCanvas"></canvas></div>
+            <div class="zoom-bar">
+                <button class="zoom-btn" id="zoomOutBtn"><i class="fas fa-search-minus"></i> Out</button>
+                <span class="zoom-level" id="zoomLevel">120%</span>
+                <button class="zoom-btn" id="zoomInBtn"><i class="fas fa-search-plus"></i> In</button>
+                <button class="zoom-btn" id="resetZoomBtn"><i class="fas fa-sync-alt"></i> Reset</button>
+            </div>
+            <div class="bottom-nav">
+                <button class="nav-item" id="prevPageBtn"><i class="fas fa-chevron-left"></i> Previous</button>
+                <span class="page-info" id="pdfPageInfo">1 / 1</span>
+                <button class="nav-item" id="nextPageBtn"><i class="fas fa-chevron-right"></i> Next</button>
+            </div>
+        </div>`;
+    document.getElementById('zoomInBtn').onclick=zoomIn;
+    document.getElementById('zoomOutBtn').onclick=zoomOut;
+    document.getElementById('resetZoomBtn').onclick=resetZoom;
+    document.getElementById('prevPageBtn').onclick=prevPage;
+    document.getElementById('nextPageBtn').onclick=nextPage;
+    loadPDFDocument(dataUrl);
+}
+
+function closeViewer(){viewer.classList.add("hidden");viewerBody.innerHTML="";document.body.style.overflow="auto";pdfDoc=null;}
+function goBack(){if(currentPath.length>0&&!isSearchMode){currentPath.pop();render();}else if(isSearchMode){clearSearch();}}
+function triggerUpload(){fileInput.click();}
+function clearSearch(){searchInput.value="";isSearchMode=false;searchInfo.classList.add("hidden");clearSearchBtn.classList.add("hidden");render();}
+
+window.deleteFile=function(folderPath,fileName){if(confirm(`Delete "${fileName}"?`))deleteFileFromFolder(folderPath,fileName);};
+window.renameFile=function(folderPath,oldName){const newName=prompt("Enter new name:",oldName.replace('.pdf',''));if(newName&&newName.trim())renameFileInFolder(folderPath,oldName,newName.trim());};
+window.clearAllRecent=clearAllRecent;
+
+function render(){
+    const searchQuery=searchInput.value.trim().toLowerCase();
+    const isSearching=searchQuery!=="";
+    isSearchMode=isSearching;
     
-    function openModal() {
-        if (modal) {
-            modal.style.display = 'flex';
-            newDeptInput.value = '';
-            newDeptInput.focus();
+    if(isSearching){
+        clearSearchBtn.classList.remove("hidden");
+        const results=searchFiles(searchQuery);
+        searchInfo.classList.remove("hidden");
+        searchInfo.innerHTML=`<i class="fas fa-search"></i> Found ${results.length} result(s) for "${escapeHtml(searchQuery)}" <button onclick="clearSearch()" style="background:none;border:none;color:#6366f1;cursor:pointer;margin-left:10px">Clear</button>`;
+        contentEl.innerHTML="";
+        backBtn.classList.toggle("hidden",false);
+        uploadBtn.classList.add("hidden");
+        departmentsSection.innerHTML='';
+        breadcrumbDiv.innerHTML='';
+        if(results.length===0){
+            const emptyDiv=document.createElement("div");
+            emptyDiv.className="empty-state";
+            emptyDiv.innerHTML='<i class="fas fa-search"></i><p>No PDFs found matching your search.</p>';
+            contentEl.appendChild(emptyDiv);
+        }else{
+            results.forEach(file=>{contentEl.appendChild(createCard(file.name,()=>openPDF(file.dataUrl,file.name,file.folder),false,false));});
+        }
+        updateStats();
+        return;
+    }
+    
+    clearSearchBtn.classList.add("hidden");
+    searchInfo.classList.add("hidden");
+    contentEl.innerHTML="";
+    const folder=getCurrentFolder();
+    if(!folder){currentPath=[];render();return;}
+    backBtn.classList.toggle("hidden",currentPath.length===0);
+    updateBreadcrumb();
+    renderDepartmentButtons();
+    const isLeafFolder=Object.keys(folder).length===0;
+    const isRoot=currentPath.length===0;
+    
+    if(isLeafFolder && !isRoot){uploadBtn.classList.remove("hidden");}else{uploadBtn.classList.add("hidden");}
+    
+    if(!isRoot){
+        const actionBar=document.createElement("div");
+        actionBar.className="action-bar";
+        actionBar.innerHTML=`<button class="action-btn rename-btn" onclick="window.renameCurrentFolder()"><i class="fas fa-edit"></i> Rename</button><button class="action-btn delete-folder-btn" onclick="window.deleteCurrentFolder()"><i class="fas fa-trash-alt"></i> Delete</button><button class="action-btn add-folder-btn" onclick="window.addNewFolder()"><i class="fas fa-plus"></i> Add Subfolder</button>`;
+        contentEl.appendChild(actionBar);
+    }
+    if(isRoot){
+        const actionBar=document.createElement("div");
+        actionBar.className="action-bar";
+        actionBar.innerHTML=`<button class="action-btn add-folder-btn" onclick="window.addNewDepartment()"><i class="fas fa-building"></i> Add Department</button>`;
+        contentEl.appendChild(actionBar);
+    }
+    
+    if(!isRoot && !isLeafFolder){
+        for(let key in folder){contentEl.appendChild(createCard(key,()=>{currentPath.push(key);render();},true));}
+    }
+    
+    if(isLeafFolder && !isRoot){
+        const folderFiles=getFilesForCurrentFolder();
+        const folderPath=currentPath.join("/");
+        if(folderFiles.length===0){
+            const emptyDiv=document.createElement("div");
+            emptyDiv.className="empty-state";
+            emptyDiv.innerHTML='<i class="fas fa-cloud-upload-alt"></i><p>No PDFs yet. Click Upload to add files.</p>';
+            contentEl.appendChild(emptyDiv);
+        }else{
+            folderFiles.forEach((f)=>{contentEl.appendChild(createCard(f.name,()=>openPDF(f.dataUrl,f.name,folderPath),false,true,folderPath,f.name,true));});
         }
     }
-    
-    function closeModal() {
-        if (modal) modal.style.display = 'none';
-    }
-    
-    function addNewDepartment() {
-        let newName = newDeptInput.value.trim().toUpperCase();
-        if (newName === "") {
-            alert("Please enter a department name");
-            return;
-        }
-        // avoid duplicate simple check
-        if (departments.includes(newName)) {
-            alert("Department already exists!");
-            return;
-        }
-        departments.push(newName);
-        renderDepartments();   // re-render with larger cards
-        closeModal();
-        
-        // Optional: update folder count (90 -> 91) in stats row
-        updateFolderCount();
-    }
-    
-    function updateFolderCount() {
-        const statNumberSpan = document.querySelector('.stat-number');
-        if (statNumberSpan) {
-            // current folders count = departments length (each dept is a folder)
-            const folderCount = departments.length;
-            statNumberSpan.innerText = folderCount;
-        }
-    }
-    
-    // Event listeners for modal
-    if (modal) {
-        document.getElementById('confirmAddBtn')?.addEventListener('click', addNewDepartment);
-        document.getElementById('cancelModalBtn')?.addEventListener('click', closeModal);
-        // Close when clicking outside modal content
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) closeModal();
-        });
-    }
-    
-    // Initial render
-    renderDepartments();
-    updateFolderCount();  // sets to 8 folders initially
-    
-    // optional: handle enter key in input field
-    if (newDeptInput) {
-        newDeptInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') addNewDepartment();
-        });
-    }
+    updateStats();
+}
+
+// Event Listeners
+fileInput.addEventListener("change",async(e)=>{
+    const files=Array.from(e.target.files);
+    for(let file of files){if(file.type==="application/pdf"){await addFileToCurrentFolder(file);}}
+    showToast(`${files.length} PDF(s) saved!`);
+    render();
+    fileInput.value="";
+});
+
+searchInput.addEventListener("input",()=>{render();});
+clearSearchBtn.addEventListener("click",()=>{clearSearch();});
+
+// Make functions global
+window.renameCurrentFolder=renameCurrentFolder;
+window.deleteCurrentFolder=deleteCurrentFolder;
+window.addNewFolder=addNewFolder;
+window.addNewDepartment=addNewDepartment;
+window.goBack=goBack;
+window.triggerUpload=triggerUpload;
+window.closeViewer=closeViewer;
+window.openPDF=openPDF;
+window.clearSearch=clearSearch;
+window.navigateToBreadcrumb=navigateToBreadcrumb;
+window.openRecentFile=openRecentFile;
+window.renameFile=window.renameFile;
+window.deleteFile=window.deleteFile;
+window.selectDepartment=selectDepartment;
+window.clearAllRecent=clearAllRecent;
+
+// Initialize
+loadFolderStructure();
+loadAllFiles();
+loadRecentFiles();
+loadTheme();
+render();
 </script>
 </body>
 </html>
