@@ -68,18 +68,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .delete-btn{background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.4);color:#f87171;cursor:pointer;padding:6px 12px;border-radius:8px;font-size:0.7rem;display:inline-flex;align-items:center;gap:4px}
 .rename-file-btn{background:rgba(99,102,241,0.2);border:1px solid rgba(99,102,241,0.4);color:#6366f1;cursor:pointer;padding:6px 12px;border-radius:8px;font-size:0.7rem;display:inline-flex;align-items:center;gap:4px;margin-right:8px}
 
-/* SIMPLE IFRAME PDF VIEWER - Most reliable */
-.viewer{position:fixed;top:0;left:0;width:100%;height:100%;background:#1a1a1a;z-index:1000;display:flex;flex-direction:column}
-.viewer.hidden{display:none}
-.viewer-header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#2c2c2e;border-bottom:1px solid #3a3a3c;flex-shrink:0}
-.viewer-title{display:flex;align-items:center;gap:8px;font-size:14px;color:#fff;flex:1;overflow:hidden}
-.viewer-title span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.viewer-close{background:linear-gradient(135deg,#ef4444,#dc2626);border:none;color:#fff;padding:10px 20px;border-radius:30px;cursor:pointer;font-weight:600;font-size:14px}
-.viewer-body{flex:1;background:#525659;position:relative}
-.pdf-iframe{width:100%;height:100%;border:none;background:#fff}
-.floating-close-btn{position:fixed;bottom:20px;right:20px;width:56px;height:56px;border-radius:28px;background:linear-gradient(135deg,#ef4444,#dc2626);border:none;color:white;font-size:24px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.3);z-index:1001;display:flex;align-items:center;justify-content:center}
-.floating-close-btn:active{transform:scale(0.95)}
-
 .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#10b981;color:#fff;padding:10px 20px;border-radius:40px;z-index:1100}
 .toast.hidden{display:none}
 .empty-state{text-align:center;padding:40px 20px;background:var(--bg-card);border-radius:20px}
@@ -100,7 +88,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     .dept-oval{padding:8px 18px}
     .dept-oval span{font-size:12px}
     .dept-info{font-size:10px;padding:3px 8px}
-    .floating-close-btn{width:48px;height:48px;font-size:20px}
 }
 </style>
 </head>
@@ -143,15 +130,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   <div id="content" class="content"></div>
 </div>
 
-<div id="viewer" class="viewer hidden">
-  <div class="viewer-header">
-    <div class="viewer-title"><i class="fas fa-file-pdf"></i><span id="pdfTitle">Document Viewer</span></div>
-    <button class="viewer-close" onclick="closeViewer()"><i class="fas fa-times"></i> Close</button>
-  </div>
-  <div class="viewer-body" id="viewerBody"></div>
-  <button id="floatingCloseBtn" class="floating-close-btn" onclick="closeViewer()"><i class="fas fa-times"></i></button>
-</div>
-
 <div id="toast" class="toast hidden"><i class="fas fa-check-circle"></i><span></span></div>
 
 <script>
@@ -160,8 +138,6 @@ const contentEl = document.getElementById("content");
 const backBtn = document.getElementById("backBtn");
 const uploadBtn = document.getElementById("uploadBtn");
 const fileInput = document.getElementById("fileInput");
-const viewer = document.getElementById("viewer");
-const viewerBody = document.getElementById("viewerBody");
 const toast = document.getElementById("toast");
 const folderCountSpan = document.getElementById("folderCount");
 const fileCountSpan = document.getElementById("fileCount");
@@ -174,14 +150,12 @@ const recentSection = document.getElementById("recentSection");
 const recentList = document.getElementById("recentList");
 const themeToggle = document.getElementById("themeToggle");
 const departmentsSection = document.getElementById("departmentsSection");
-const pdfTitleSpan = document.getElementById("pdfTitle");
 
 // State
 let allFiles = {};
 let currentPath = [];
 let isSearchMode = false;
 let recentFiles = [];
-let currentBlobUrl = null;
 
 // File System
 let fileSystem = {
@@ -295,7 +269,7 @@ function clearAllRecent(){
 
 function openRecentFile(folderPath,fileName){
     const file=allFiles[folderPath]?.find(f=>f.name===fileName);
-    if(file){currentPath=folderPath.split('/');render();setTimeout(()=>openPDF(file.dataUrl,fileName,folderPath),100);}
+    if(file){currentPath=folderPath.split('/');render();setTimeout(()=>openPDF(file.dataUrl,fileName),100);}
     else{showToast("File not found",true);}
 }
 
@@ -410,45 +384,39 @@ function createCard(title,onClick,isFolder=true,showDelete=false,deletePath=null
     return card;
 }
 
-// Convert dataURL to Blob URL
-function dataURLToBlobUrl(dataUrl) {
+// Convert dataURL to Blob URL and open in new tab
+function dataURLToBlob(dataUrl) {
     const arr = dataUrl.split(',');
     const mime = arr[0].match(/:(.*?);/)[1];
     const bstr = atob(arr[1]);
     let n = bstr.length;
     const u8arr = new Uint8Array(n);
     while (n--) { u8arr[n] = bstr.charCodeAt(n); }
-    const blob = new Blob([u8arr], { type: mime });
-    return URL.createObjectURL(blob);
+    return new Blob([u8arr], { type: mime });
 }
 
-// SIMPLE IFRAME PDF VIEWER - Most reliable!
-function openPDF(dataUrl, fileName, folderPath) {
-    if (currentBlobUrl) {
-        URL.revokeObjectURL(currentBlobUrl);
-        currentBlobUrl = null;
-    }
-    
-    pdfTitleSpan.textContent = fileName.length > 40 ? fileName.substring(0,40)+'...' : fileName;
-    addToRecent(fileName, folderPath, dataUrl);
-    
-    const blobUrl = dataURLToBlobUrl(dataUrl);
-    currentBlobUrl = blobUrl;
-    
-    // Use iframe for native browser PDF viewing
-    viewerBody.innerHTML = `<iframe class="pdf-iframe" src="${blobUrl}" frameborder="0"></iframe>`;
-    
-    viewer.classList.remove("hidden");
-    document.body.style.overflow = "hidden";
-}
-
-function closeViewer() {
-    viewer.classList.add("hidden");
-    viewerBody.innerHTML = "";
-    document.body.style.overflow = "auto";
-    if (currentBlobUrl) {
-        URL.revokeObjectURL(currentBlobUrl);
-        currentBlobUrl = null;
+// OPEN PDF IN NEW TAB - Most reliable method!
+function openPDF(dataUrl, fileName) {
+    try {
+        const blob = dataURLToBlob(dataUrl);
+        const blobUrl = URL.createObjectURL(blob);
+        
+        // Add to recent files
+        const folderPath = currentPath.join("/");
+        addToRecent(fileName, folderPath, dataUrl);
+        
+        // Open in new tab
+        window.open(blobUrl, '_blank');
+        
+        // Clean up after a delay (don't revoke immediately or the new tab might fail)
+        setTimeout(() => {
+            URL.revokeObjectURL(blobUrl);
+        }, 60000);
+        
+        showToast(`Opening ${fileName}...`);
+    } catch (err) {
+        console.error('Error opening PDF:', err);
+        showToast('Failed to open PDF', true);
     }
 }
 
@@ -481,7 +449,7 @@ function render(){
             emptyDiv.innerHTML='<i class="fas fa-search"></i><p>No PDFs found matching your search.</p>';
             contentEl.appendChild(emptyDiv);
         }else{
-            results.forEach(file=>{contentEl.appendChild(createCard(file.name,()=>openPDF(file.dataUrl,file.name,file.folder),false,false));});
+            results.forEach(file=>{contentEl.appendChild(createCard(file.name,()=>openPDF(file.dataUrl,file.name),false,false));});
         }
         updateStats();
         return;
@@ -526,7 +494,7 @@ function render(){
             emptyDiv.innerHTML='<i class="fas fa-cloud-upload-alt"></i><p>No PDFs yet. Click Upload to add files.</p>';
             contentEl.appendChild(emptyDiv);
         }else{
-            folderFiles.forEach((f)=>{contentEl.appendChild(createCard(f.name,()=>openPDF(f.dataUrl,f.name,folderPath),false,true,folderPath,f.name,true));});
+            folderFiles.forEach((f)=>{contentEl.appendChild(createCard(f.name,()=>openPDF(f.dataUrl,f.name),false,true,folderPath,f.name,true));});
         }
     }
     updateStats();
@@ -549,7 +517,6 @@ window.addNewFolder=addNewFolder;
 window.addNewDepartment=addNewDepartment;
 window.goBack=goBack;
 window.triggerUpload=triggerUpload;
-window.closeViewer=closeViewer;
 window.openPDF=openPDF;
 window.clearSearch=clearSearch;
 window.navigateToBreadcrumb=navigateToBreadcrumb;
