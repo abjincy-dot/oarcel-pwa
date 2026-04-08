@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="OARCEL">
-<meta name="theme-color" content="#6366f1">
+<meta name="theme-color" content="#0a1f2e">
 <link rel="apple-touch-icon" href="https://img.icons8.com/fluency/192/folder-invoices.png">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
@@ -44,15 +44,84 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .delete-folder-btn:hover{background:#ec4899}
 .add-folder-btn:hover{background:#10b981}
 
-/* Department List View - SAME SIZE AS SUBFOLDERS */
-.departments-grid{display:flex;flex-direction:column;gap:8px;margin-bottom:25px}
-.dept-card{background:var(--bg-card);padding:12px 16px;border-radius:12px;cursor:pointer;display:flex;align-items:center;gap:12px;border:1px solid var(--border-color);transition:all 0.2s}
-.dept-card:hover{transform:translateX(4px);background:rgba(99,102,241,0.2);border-color:#6366f1}
-.dept-card i{font-size:1.1rem;width:28px;background:linear-gradient(135deg,#6366f1,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.dept-card span{font-size:0.85rem;font-weight:500;flex:1}
-.dept-card small{font-size:0.7rem;color:var(--text-secondary);background:rgba(0,0,0,0.2);padding:2px 8px;border-radius:20px}
+/* ========== NEW OVAL ICON DESIGN - Full department names inside long ovals ========== */
+.departments-grid{display:flex;flex-direction:column;gap:12px;margin-bottom:25px}
 
-/* LIST VIEW ONLY - All items as list (subfolders) */
+/* Department card - clean, no extra background */
+.dept-card{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    cursor:pointer;
+    transition:all 0.25s ease;
+    padding:4px 0;
+}
+
+.dept-card:hover{
+    transform:translateX(6px);
+}
+
+/* LONG OVAL ICON - contains FULL department name inside */
+.dept-oval{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:12px 28px;
+    border-radius:60px;
+    background:linear-gradient(145deg,#FF6B6B,#EE5A24);
+    box-shadow:0 6px 14px -4px rgba(0,0,0,0.3);
+    transition:all 0.2s ease;
+    cursor:pointer;
+}
+
+.dept-card:hover .dept-oval{
+    transform:scale(1.02);
+    box-shadow:0 8px 20px -6px rgba(0,0,0,0.4);
+}
+
+/* FULL DEPARTMENT NAME inside the oval */
+.dept-oval span{
+    font-size:14px;
+    font-weight:600;
+    color:white;
+    text-shadow:0 1px 2px rgba(0,0,0,0.2);
+    letter-spacing:0.3px;
+    white-space:nowrap;
+}
+
+/* Right arrow after oval */
+.dept-arrow{
+    color:rgba(99,102,241,0.6);
+    font-size:16px;
+    transition:transform 0.2s;
+}
+
+.dept-card:hover .dept-arrow{
+    transform:translateX(4px);
+    color:#ec4899;
+}
+
+/* Department info badge (folder count) */
+.dept-info{
+    margin-left:auto;
+    font-size:12px;
+    color:var(--text-secondary);
+    background:rgba(0,0,0,0.2);
+    padding:4px 12px;
+    border-radius:30px;
+}
+
+/* COLORFUL GRADIENTS for each department */
+.dept-card[data-dept="REMELT"] .dept-oval{background:linear-gradient(145deg,#FF6B6B,#EE5A24);}
+.dept-card[data-dept="CASTER"] .dept-oval{background:linear-gradient(145deg,#4ECDC4,#44B39D);}
+.dept-card[data-dept="HRM"] .dept-oval{background:linear-gradient(145deg,#A29BFE,#6C5CE7);}
+.dept-card[data-dept="CRM"] .dept-oval{background:linear-gradient(145deg,#FDCB6E,#F39C12);}
+.dept-card[data-dept="ANNEALING"] .dept-oval{background:linear-gradient(145deg,#FD79A8,#E84393);}
+.dept-card[data-dept="TLL"] .dept-oval{background:linear-gradient(145deg,#00CEC9,#00B894);}
+.dept-card[data-dept="SLITTER"] .dept-oval{background:linear-gradient(145deg,#74B9FF,#0984E3);}
+.dept-card[data-dept="UTILITY"] .dept-oval{background:linear-gradient(145deg,#FF7675,#D63031);}
+
+/* LIST VIEW - All items as list (subfolders) */
 .content{display:flex;flex-direction:column;gap:8px}
 .card{background:var(--bg-card);padding:12px 16px;border-radius:12px;cursor:pointer;display:flex;align-items:center;gap:12px;border:1px solid var(--border-color);position:relative}
 .card i:first-child{font-size:1.1rem;width:28px}
@@ -93,10 +162,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 @media (max-width:640px){
     .app{padding:12px}
     .btn-back span,.btn-upload span,.theme-toggle span{display:none}
-    .dept-card{padding:10px 12px}
-    .dept-card i{font-size:0.9rem;width:24px}
-    .dept-card span{font-size:0.75rem}
-    .dept-card small{font-size:0.65rem}
+    .dept-oval{padding:8px 18px}
+    .dept-oval span{font-size:12px}
+    .dept-info{font-size:10px;padding:3px 8px}
     .card{padding:10px 12px}
     .card i:first-child{font-size:0.9rem;width:24px}
     .card span{font-size:0.75rem}
@@ -185,13 +253,6 @@ let pdfDoc = null;
 let currentPageNum = 1;
 let currentZoom = 1.2;
 let totalPages = 0;
-
-// Department Icons
-const departmentIcons = {
-    "REMELT": "fas fa-industry", "CASTER": "fas fa-tachometer-alt", "HRM": "fas fa-users",
-    "CRM": "fas fa-chart-line", "ANNEALING": "fas fa-fire", "TLL": "fas fa-microchip",
-    "SLITTER": "fas fa-cut", "UTILITY": "fas fa-bolt"
-};
 
 // File System
 let fileSystem = {
@@ -384,19 +445,39 @@ function updateBreadcrumb(){
 
 function navigateToBreadcrumb(idx){if(idx===-1){currentPath=[];}else{currentPath=currentPath.slice(0,idx+1);}render();}
 
+// NEW: Render department buttons with LONG OVAL icons (full name inside)
 function renderDepartmentButtons(){
     if(currentPath.length===0){
         departmentsSection.innerHTML='<div class="section-title"><i class="fas fa-building"></i> Departments</div><div class="departments-grid">';
         for(let dept in fileSystem){
             const subCount=Object.keys(fileSystem[dept]).length;
-            const icon=departmentIcons[dept]||"fas fa-folder";
-            departmentsSection.innerHTML+=`<div class="dept-card" onclick="selectDepartment('${dept}')"><i class="${icon}"></i><span>${dept}</span><small>${subCount}</small></div>`;
+            const fileCountInDept = allFiles[dept] ? allFiles[dept].length : 0;
+            const totalItems = subCount + fileCountInDept;
+            
+            departmentsSection.innerHTML+=`
+                <div class="dept-card" data-dept="${dept}" onclick="selectDepartment('${dept}')">
+                    <div class="dept-oval">
+                        <span>${dept}</span>
+                    </div>
+                    <div class="dept-arrow">
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                    <div class="dept-info">
+                        ${totalItems} items
+                    </div>
+                </div>
+            `;
         }
         departmentsSection.innerHTML+='</div>';
-    }else{departmentsSection.innerHTML='';}
+    }else{
+        departmentsSection.innerHTML='';
+    }
 }
 
-function selectDepartment(deptName){currentPath=[deptName];render();}
+function selectDepartment(deptName){
+    currentPath=[deptName];
+    render();
+}
 
 function createCard(title,onClick,isFolder=true,showDelete=false,deletePath=null,deleteName=null,showRename=false){
     const card=document.createElement("div");
