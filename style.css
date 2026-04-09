@@ -1,94 +1,26 @@
-/* PDF Viewer with zoom support */
-.pdf-viewer-container {
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    min-height: 100vh;
+    /* Change this URL to your wallpaper image */
+    background: url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1600') no-repeat center center fixed;
+    background-size: cover;
+    position: relative;
+    overflow-x: hidden;
+    color: var(--text-primary);
+    transition: background 0.3s ease;
+}
+
+/* Dark overlay for better text readability - adjust opacity as needed */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
-    display: flex;
-    flex-direction: column;
-    background: #1a1a1a;
-    overflow: hidden;
-}
-
-.pdf-canvas-wrapper {
-    flex: 1;
-    overflow: auto;
-    -webkit-overflow-scrolling: touch;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    background: #525659;
-}
-
-#pdfCanvas {
-    display: block;
-    margin: 0 auto;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-    background: white;
-    transition: transform 0.1s ease;
-}
-
-.pdf-zoom-controls {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    padding: 12px 20px;
-    background: rgba(0,0,0,0.9);
-    border-top: 1px solid rgba(255,255,255,0.1);
-    position: sticky;
-    bottom: 0;
-    z-index: 10;
-}
-
-.zoom-btn {
-    background: rgba(255,255,255,0.15);
-    border: none;
-    color: white;
-    padding: 12px 24px;
-    border-radius: 40px;
-    font-size: 18px;
-    font-weight: bold;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    touch-action: manipulation;
-    min-width: 80px;
-    justify-content: center;
-}
-
-.zoom-btn:active {
-    transform: scale(0.96);
-    background: #6366f1;
-}
-
-.zoom-level {
-    color: white;
-    font-size: 14px;
-    background: rgba(0,0,0,0.5);
-    padding: 8px 16px;
-    border-radius: 30px;
-    font-weight: 500;
-}
-
-/* Mobile zoom hint */
-.zoom-hint {
-    position: absolute;
-    bottom: 80px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0,0,0,0.7);
-    color: white;
-    padding: 8px 16px;
-    border-radius: 30px;
-    font-size: 12px;
+    background: rgba(0, 0, 0, 0.4);
     pointer-events: none;
-    z-index: 20;
-    white-space: nowrap;
-    backdrop-filter: blur(10px);
-    animation: fadeOut 3s forwards;
+    z-index: 0;
 }
 
-@keyframes fadeOut {
-    0% { opacity: 1; }
-    70% { opacity: 1; }
-    100% { opacity: 0; visibility: hidden; }
-}
+/* Remove the animated glow effect by deleting the old body::before */
