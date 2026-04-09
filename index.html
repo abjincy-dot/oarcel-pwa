@@ -11,6 +11,11 @@
 <meta name="theme-color" content="#0a1128">
 <link rel="apple-touch-icon" href="https://img.icons8.com/fluency/192/folder-invoices.png">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<!-- PDF.js library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+</script>
 <style>
 * {
     margin: 0;
@@ -180,6 +185,7 @@ body::before {
     transform: translateY(-50%);
     color: #bbd9ff;
     font-size: 0.9rem;
+    z-index: 1;
 }
 
 #searchInput {
@@ -192,6 +198,19 @@ body::before {
     color: var(--text-primary);
     outline: none;
     font-size: 0.85rem;
+}
+
+.clear-search {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 1rem;
+    z-index: 1;
 }
 
 .hidden { display: none !important; }
@@ -380,6 +399,124 @@ body::before {
 .section-title { font-size: 0.9rem; font-weight: 600; margin: 0 0 12px 0; display: flex; align-items: center; gap: 8px; }
 #fileInput, #restoreInput { display: none; }
 
+.search-result-info {
+    margin: 8px 0;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    background: var(--glass-bg);
+    border-radius: 20px;
+    display: inline-block;
+}
+
+/* PDF Viewer with zoom support */
+.pdf-viewer-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2000;
+    background: #1a1a1a;
+}
+
+.pdf-viewer-modal.hidden {
+    display: none;
+}
+
+.pdf-viewer-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: #1a1a1a;
+    overflow: hidden;
+}
+
+.pdf-canvas-wrapper {
+    flex: 1;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    background: #525659;
+}
+
+#pdfCanvas {
+    display: block;
+    margin: 0 auto;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    background: white;
+    transition: transform 0.1s ease;
+}
+
+.pdf-zoom-controls {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding: 12px 20px;
+    background: rgba(0,0,0,0.9);
+    border-top: 1px solid rgba(255,255,255,0.1);
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+}
+
+.zoom-btn {
+    background: rgba(255,255,255,0.15);
+    border: none;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 40px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    touch-action: manipulation;
+    min-width: 80px;
+    justify-content: center;
+}
+
+.zoom-btn:active {
+    transform: scale(0.96);
+    background: #6366f1;
+}
+
+.zoom-level {
+    color: white;
+    font-size: 14px;
+    background: rgba(0,0,0,0.5);
+    padding: 8px 16px;
+    border-radius: 30px;
+    font-weight: 500;
+}
+
+/* Mobile zoom hint */
+.zoom-hint {
+    position: absolute;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.7);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 30px;
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 20;
+    white-space: nowrap;
+    backdrop-filter: blur(10px);
+    animation: fadeOut 3s forwards;
+}
+
+@keyframes fadeOut {
+    0% { opacity: 1; }
+    70% { opacity: 1; }
+    100% { opacity: 0; visibility: hidden; }
+}
+
 /* Mobile adjustments */
 @media (max-width: 640px) {
     .app { padding: 12px; }
@@ -394,6 +531,7 @@ body::before {
     .dept-oval span { font-size: 12px; }
     .stat-item span { font-size: 1.1rem; }
     .stat-item i { font-size: 1.1rem; }
+    .zoom-btn { padding: 8px 16px; font-size: 14px; min-width: 60px; }
 }
 </style>
 </head>
@@ -437,6 +575,22 @@ body::before {
   <div id="searchInfo" class="search-result-info hidden"></div>
   <div id="content" class="content"></div>
 </div>
+
+<!-- PDF Viewer Modal -->
+<div id="pdfViewerModal" class="pdf-viewer-modal hidden">
+  <div class="pdf-viewer-container">
+    <div class="pdf-canvas-wrapper" id="pdfCanvasWrapper">
+      <canvas id="pdfCanvas"></canvas>
+    </div>
+    <div class="pdf-zoom-controls">
+      <button class="zoom-btn" id="zoomOutBtn"><i class="fas fa-search-minus"></i> -</button>
+      <span class="zoom-level" id="zoomLevel">100%</span>
+      <button class="zoom-btn" id="zoomInBtn"><i class="fas fa-search-plus"></i> +</button>
+      <button class="zoom-btn" id="closePdfBtn"><i class="fas fa-times"></i> Close</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast" class="toast hidden"><i class="fas fa-check-circle"></i><span></span></div>
 
 <script>
@@ -449,6 +603,13 @@ let fileSystem = {};
 let recentFiles = [];
 let currentPath = [];
 let isSearchMode = false;
+
+// PDF Viewer variables
+let pdfDoc = null;
+let currentPage = 1;
+let currentScale = 1.0;
+let pdfCanvas = null;
+let ctx = null;
 
 // Initialize IndexedDB
 function initDB() {
@@ -479,112 +640,170 @@ function dataURLToBlob(dataUrl) {
     return new Blob([u8arr], { type: mime });
 }
 
-// ANDROID PDF OPENER - Using download + system viewer
-function openPDFOnAndroid(dataUrl, fileName) {
+// PDF Viewer Functions
+async function openPDF(dataUrl, fileName) {
     try {
-        // Create a download link - this works in Capacitor WebView
-        const blob = dataURLToBlob(dataUrl);
-        const blobUrl = URL.createObjectURL(blob);
+        const folderPath = currentPath.join("/");
+        addToRecent(fileName, folderPath, dataUrl);
         
-        // Create a temporary anchor element
-        const link = document.createElement('a');
-        link.href = blobUrl;
-        link.download = fileName;
-        document.body.appendChild(link);
+        // Show the PDF viewer modal
+        const modal = document.getElementById('pdfViewerModal');
+        if (!modal) {
+            // Fallback to window.open if modal doesn't exist
+            window.open(dataUrl, '_blank');
+            showToast(`Opening ${fileName}...`);
+            return;
+        }
         
-        // Trigger download
-        link.click();
-        document.body.removeChild(link);
+        modal.classList.remove('hidden');
         
-        // Show instructions
-        showToast(`📄 "${fileName}" saved to Downloads folder. Open from there.`);
+        // Initialize canvas
+        pdfCanvas = document.getElementById('pdfCanvas');
+        ctx = pdfCanvas.getContext('2d');
         
-        // Clean up
-        setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+        // Show loading toast
+        showToast(`Loading ${fileName}...`);
+        
+        // Load PDF document
+        const loadingTask = pdfjsLib.getDocument(dataUrl);
+        pdfDoc = await loadingTask.promise;
+        currentPage = 1;
+        currentScale = 1.0;
+        
+        await renderPage(currentPage);
+        updateZoomDisplay();
+        
+        // Show zoom hint on first open
+        showZoomHint();
+        
+        showToast(`Loaded: ${fileName}`);
+        
     } catch (err) {
-        console.error('Android PDF open error:', err);
-        showToast('Failed to save PDF', true);
+        console.error('Error opening PDF:', err);
+        showToast('Failed to open PDF', true);
+        
+        // Fallback: try opening in new tab
+        try {
+            window.open(dataUrl, '_blank');
+        } catch (e) {
+            showToast('Cannot open PDF', true);
+        }
     }
 }
 
-// Try to open using intent if available
-function openPDFWithIntent(dataUrl, fileName) {
+async function renderPage(pageNum) {
+    if (!pdfDoc) return;
+    
     try {
-        // Check if we can use Android intent
-        const base64Data = dataUrl.split(',')[1];
+        const page = await pdfDoc.getPage(pageNum);
+        const viewport = page.getViewport({ scale: currentScale });
         
-        // Method 1: Use custom Android interface if set up
-        if (window.AndroidBridge && window.AndroidBridge.openPDF) {
-            window.AndroidBridge.openPDF(base64Data, fileName);
-            showToast(`Opening ${fileName}...`);
-            return true;
-        }
+        pdfCanvas.width = viewport.width;
+        pdfCanvas.height = viewport.height;
+        pdfCanvas.style.width = `${viewport.width}px`;
+        pdfCanvas.style.height = `${viewport.height}px`;
         
-        // Method 2: Use download method (always works)
-        openPDFOnAndroid(dataUrl, fileName);
-        return true;
+        const renderContext = {
+            canvasContext: ctx,
+            viewport: viewport
+        };
+        
+        await page.render(renderContext).promise;
     } catch (err) {
-        openPDFOnAndroid(dataUrl, fileName);
-        return false;
+        console.error('Render error:', err);
     }
 }
 
-// Main PDF opener - detects environment and uses appropriate method
-function openPDF(dataUrl, fileName) {
-    // Add to recent files
-    const folderPath = currentPath.join('/');
-    addToRecent(fileName, folderPath, dataUrl);
-    
-    // Check if running on Android
-    const isAndroid = /android/i.test(navigator.userAgent);
-    
-    if (isAndroid) {
-        // Android app mode - use download method
-        openPDFWithIntent(dataUrl, fileName);
-    } else {
-        // Web browser mode - open in new tab
-        try {
-            const blob = dataURLToBlob(dataUrl);
-            const blobUrl = URL.createObjectURL(blob);
-            window.open(blobUrl, '_blank');
-            setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
-            showToast(`Opening ${fileName}...`);
-        } catch (err) {
-            showToast('Failed to open PDF', true);
-        }
+function zoomIn() {
+    if (!pdfDoc) return;
+    if (currentScale < 3.0) {
+        currentScale += 0.25;
+        renderPage(currentPage);
+        updateZoomDisplay();
     }
 }
 
-// Alternative: Save and open via creating a file entry
-function saveAndOpenPDF(dataUrl, fileName) {
-    // Create a blob and save using File System API (for modern browsers)
-    const blob = dataURLToBlob(dataUrl);
-    
-    // Create a file handle if supported
-    if ('showSaveFilePicker' in window) {
-        try {
-            const opts = {
-                suggestedName: fileName,
-                types: [{
-                    description: 'PDF Files',
-                    accept: { 'application/pdf': ['.pdf'] }
-                }]
-            };
-            window.showSaveFilePicker(opts).then(fileHandle => {
-                fileHandle.createWritable().then(writable => {
-                    writable.write(blob);
-                    writable.close();
-                    showToast(`Saved: ${fileName}`);
-                });
-            }).catch(() => {
-                openPDFOnAndroid(dataUrl, fileName);
-            });
-        } catch(e) {
-            openPDFOnAndroid(dataUrl, fileName);
-        }
-    } else {
-        openPDFOnAndroid(dataUrl, fileName);
+function zoomOut() {
+    if (!pdfDoc) return;
+    if (currentScale > 0.5) {
+        currentScale -= 0.25;
+        renderPage(currentPage);
+        updateZoomDisplay();
     }
+}
+
+function updateZoomDisplay() {
+    const zoomLevel = document.getElementById('zoomLevel');
+    if (zoomLevel) {
+        zoomLevel.textContent = `${Math.round(currentScale * 100)}%`;
+    }
+}
+
+function closePDFViewer() {
+    const modal = document.getElementById('pdfViewerModal');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+    pdfDoc = null;
+    // Clear canvas
+    if (pdfCanvas && ctx) {
+        ctx.clearRect(0, 0, pdfCanvas.width, pdfCanvas.height);
+    }
+}
+
+function showZoomHint() {
+    // Remove existing hint
+    const existingHint = document.querySelector('.zoom-hint');
+    if (existingHint) existingHint.remove();
+    
+    // Create new hint
+    const hint = document.createElement('div');
+    hint.className = 'zoom-hint';
+    hint.innerHTML = '<i class="fas fa-hand-peace"></i> Pinch or use buttons to zoom';
+    document.querySelector('.pdf-viewer-container').appendChild(hint);
+    
+    // Auto remove after animation
+    setTimeout(() => {
+        if (hint) hint.remove();
+    }, 3000);
+}
+
+// Setup pinch-to-zoom for mobile
+function setupPinchZoom() {
+    let initialDistance = 0;
+    let initialScale = 1;
+    
+    const wrapper = document.getElementById('pdfCanvasWrapper');
+    if (!wrapper) return;
+    
+    wrapper.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 2) {
+            e.preventDefault();
+            initialDistance = Math.hypot(
+                e.touches[0].pageX - e.touches[1].pageX,
+                e.touches[0].pageY - e.touches[1].pageY
+            );
+            initialScale = currentScale;
+        }
+    });
+    
+    wrapper.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 2 && initialDistance > 0) {
+            e.preventDefault();
+            const currentDistance = Math.hypot(
+                e.touches[0].pageX - e.touches[1].pageX,
+                e.touches[0].pageY - e.touches[1].pageY
+            );
+            const scale = (currentDistance / initialDistance) * initialScale;
+            currentScale = Math.min(3.0, Math.max(0.5, scale));
+            renderPage(currentPage);
+            updateZoomDisplay();
+        }
+    });
+    
+    wrapper.addEventListener('touchend', () => {
+        initialDistance = 0;
+    });
 }
 
 async function loadFromIndexedDB() {
@@ -623,7 +842,8 @@ async function loadFromIndexedDB() {
 function saveFolderStructureToDB() {
     const tx = db.transaction('folderStructure', 'readwrite');
     tx.objectStore('folderStructure').put({ key: 'structure', value: fileSystem });
-    tx.commit();
+    tx.oncomplete = () => {};
+    tx.onerror = (e) => console.error('Save error', e);
 }
 
 function saveAllFilesToDB() {
@@ -631,13 +851,15 @@ function saveAllFilesToDB() {
     const store = tx.objectStore('files');
     store.clear();
     for (const folderPath in allFiles) store.put({ id: folderPath, folderPath: folderPath, files: allFiles[folderPath] });
-    tx.commit();
+    tx.oncomplete = () => {};
+    tx.onerror = (e) => console.error('Save error', e);
 }
 
 function saveRecentToDB() {
     const tx = db.transaction('recent', 'readwrite');
     tx.objectStore('recent').put({ id: 'recentList', value: recentFiles });
-    tx.commit();
+    tx.oncomplete = () => {};
+    tx.onerror = (e) => console.error('Save error', e);
 }
 
 function showToast(msg, isErr = false) {
@@ -899,6 +1121,20 @@ function updateThemeIcon() {
     const isDark = !document.body.classList.contains('light-mode'); 
     document.getElementById('themeToggle').innerHTML = isDark ? '<i class="fas fa-sun"></i><span>Light</span>' : '<i class="fas fa-moon"></i><span>Dark</span>'; 
 }
+
+// Initialize event listeners
+document.addEventListener('DOMContentLoaded', () => {
+    const zoomInBtn = document.getElementById('zoomInBtn');
+    const zoomOutBtn = document.getElementById('zoomOutBtn');
+    const closeBtn = document.getElementById('closePdfBtn');
+    
+    if (zoomInBtn) zoomInBtn.addEventListener('click', zoomIn);
+    if (zoomOutBtn) zoomOutBtn.addEventListener('click', zoomOut);
+    if (closeBtn) closeBtn.addEventListener('click', closePDFViewer);
+    
+    setupPinchZoom();
+});
+
 document.getElementById('themeToggle').onclick = toggleTheme;
 const savedTheme = localStorage.getItem('oarcel_theme'); 
 if(savedTheme === 'light-mode') document.body.classList.add('light-mode'); 
