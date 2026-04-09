@@ -151,7 +151,7 @@ body::before {
 }
 
 /* Compact buttons for action bar */
-.btn-back, .btn-upload, .theme-toggle, .btn-backup, .btn-restore {
+.btn-back, .btn-upload, .theme-toggle {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -169,8 +169,6 @@ body::before {
 .btn-back { background: rgba(30, 55, 80, 0.8); }
 .btn-upload { background: linear-gradient(135deg, #3b82f6, #7c3aed); color: white; }
 .theme-toggle { background: rgba(30, 55, 80, 0.8); }
-.btn-backup { background: rgba(16, 185, 129, 0.8); color: white; }
-.btn-restore { background: rgba(245, 158, 11, 0.8); color: white; }
 
 .search-container {
     flex: 1;
@@ -520,8 +518,8 @@ body::before {
 /* Mobile adjustments */
 @media (max-width: 640px) {
     .app { padding: 12px; }
-    .btn-back span, .btn-upload span, .theme-toggle span, .btn-backup span, .btn-restore span { display: none; }
-    .btn-back, .btn-upload, .theme-toggle, .btn-backup, .btn-restore { padding: 10px 14px; }
+    .btn-back span, .btn-upload span, .theme-toggle span { display: none; }
+    .btn-back, .btn-upload, .theme-toggle { padding: 10px 14px; }
     .action-btn { padding: 6px 14px; font-size: 0.75rem; }
     .action-btn i { font-size: 0.75rem; }
     .card { padding: 10px 12px; }
@@ -553,11 +551,8 @@ body::before {
       <button id="clearSearchBtn" class="clear-search hidden"><i class="fas fa-times-circle"></i></button>
     </div>
     <button id="themeToggle" class="theme-toggle"><i class="fas fa-moon"></i><span>Theme</span></button>
-    <button id="backupBtn" class="btn-backup" onclick="exportBackup()"><i class="fas fa-download"></i><span>Backup</span></button>
-    <button id="restoreBtn" class="btn-restore" onclick="triggerRestore()"><i class="fas fa-upload"></i><span>Restore</span></button>
     <button id="uploadBtn" class="btn-upload hidden" onclick="triggerUpload()"><i class="fas fa-cloud-upload-alt"></i><span>Upload</span></button>
     <input type="file" id="fileInput" accept="application/pdf" multiple>
-    <input type="file" id="restoreInput" accept=".json" onchange="importBackup(this)">
   </div>
 
   <div class="stats-bar">
@@ -1076,38 +1071,6 @@ function render() {
     updateStats();
 }
 
-async function exportBackup() {
-    const backupData = { version: 2, timestamp: Date.now(), folderStructure: fileSystem, allFiles: allFiles, recentFiles: recentFiles };
-    const jsonStr = JSON.stringify(backupData);
-    const blob = new Blob([jsonStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `oarcel_backup_${new Date().toISOString().slice(0,19)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    showToast('✅ Backup exported');
-}
-
-function triggerRestore() { document.getElementById('restoreInput').click(); }
-async function importBackup(input) {
-    if (!input.files.length) return;
-    try {
-        const text = await input.files[0].text();
-        const data = JSON.parse(text);
-        if (data.folderStructure) fileSystem = data.folderStructure;
-        if (data.allFiles) allFiles = data.allFiles;
-        if (data.recentFiles) recentFiles = data.recentFiles;
-        await saveFolderStructureToDB();
-        await saveAllFilesToDB();
-        await saveRecentToDB();
-        currentPath = [];
-        showToast('✅ Restore completed! Reloading...');
-        setTimeout(() => location.reload(), 1000);
-    } catch (e) { showToast('❌ Invalid backup file', true); }
-    input.value = '';
-}
-
 function navigateToBreadcrumb(idx) { if(idx === -1) currentPath = []; else currentPath = currentPath.slice(0, idx+1); render(); }
 function clearAllRecent() { if(confirm("Clear recent history?")){ recentFiles = []; saveRecentToDB(); updateRecentUI(); showToast("Cleared"); } }
 
@@ -1156,8 +1119,7 @@ window.renameFile = (p, old) => { const nu = prompt("New name:", old.replace('.p
 window.goBack = goBack; window.triggerUpload = triggerUpload; window.selectDepartment = selectDepartment; 
 window.openRecentFile = openRecentFile; window.clearAllRecent = clearAllRecent; window.renameCurrentFolder = renameCurrentFolder;
 window.deleteCurrentFolder = deleteCurrentFolder; window.addNewFolder = addNewFolder; window.addNewDepartment = addNewDepartment;
-window.navigateToBreadcrumb = navigateToBreadcrumb; window.exportBackup = exportBackup; window.triggerRestore = triggerRestore;
-window.importBackup = importBackup; window.openPDF = openPDF;
+window.navigateToBreadcrumb = navigateToBreadcrumb; window.openPDF = openPDF;
 
 initDB().then(() => loadFromIndexedDB()).catch(e => console.error('DB error', e));
 </script>
