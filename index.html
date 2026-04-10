@@ -4,487 +4,250 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
 <title>OARCEL | Document Manager</title>
-<link rel="manifest" href="manifest.json">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="OARCEL">
-<meta name="theme-color" content="#0a1128">
-<link rel="apple-touch-icon" href="https://img.icons8.com/fluency/192/folder-invoices.png">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-<script>
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-</script>
+<script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';</script>
 <style>
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-/* Wallpaper & Glass Variables */
+* { margin: 0; padding: 0; box-sizing: border-box; }
 :root {
-    /* Dark Mode Wallpaper */
-    --bg-wallpaper: url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072&auto=format&fit=crop');
+    --bg-wallpaper: url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072');
     --glass-bg: rgba(10, 25, 47, 0.75);
     --glass-border: rgba(255, 255, 255, 0.15);
     --text-primary: #ffffff;
-    --text-secondary: #a0c4ff;
-    --card-bg: rgba(15, 32, 55, 0.85);
-    --input-bg: rgba(0, 0, 0, 0.4);
     --accent: #3b82f6;
 }
-
 body.light-mode {
-    /* Light Mode Wallpaper */
-    --bg-wallpaper: url('https://images.unsplash.com/photo-1519750783826-e2420f4d687f?q=80&w=1974&auto=format&fit=crop');
+    --bg-wallpaper: url('https://images.unsplash.com/photo-1519750783826-e2420f4d687f?q=80&w=1974');
     --glass-bg: rgba(255, 255, 255, 0.85);
     --glass-border: rgba(0, 0, 0, 0.1);
     --text-primary: #1a2a3a;
-    --text-secondary: #4a5568;
-    --card-bg: rgba(255, 255, 255, 0.9);
-    --input-bg: rgba(255, 255, 255, 0.7);
 }
-
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: -apple-system, sans-serif;
     min-height: 100vh;
-    /* Wallpaper setup */
     background: var(--bg-wallpaper) no-repeat center center fixed;
     background-size: cover;
-    position: relative;
-    overflow-x: hidden;
     color: var(--text-primary);
-    transition: background 0.5s ease;
+    transition: 0.5s;
 }
-
-/* Background Overlay for readability */
 body::after {
-    content: '';
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0, 0, 0, 0.35); /* Darkens the wallpaper slightly */
-    z-index: 1;
-    pointer-events: none;
+    content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.35); z-index: 1; pointer-events: none;
 }
-
-body.light-mode::after {
-    background: rgba(255, 255, 255, 0.1);
+.app { position: relative; z-index: 10; max-width: 1200px; margin: 0 auto; padding: 16px; }
+.header, .stats-bar, .card, .action-bar, .top-bar, .breadcrumb {
+    backdrop-filter: blur(12px); background: var(--glass-bg);
+    border: 1px solid var(--glass-border); border-radius: 24px;
 }
-
-.app {
-    position: relative;
-    z-index: 10; /* Above overlay */
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 16px;
-}
-
-/* Floating particles (optional, kept for aesthetic) */
-.particle {
-    position: fixed;
-    background: rgba(255, 255, 255, 0.15);
-    border-radius: 50%;
-    pointer-events: none;
-    z-index: 2;
-    animation: floatUp 14s infinite ease-out;
-}
-
-@keyframes floatUp {
-    0% { transform: translateY(0) scale(1); opacity: 0; }
-    50% { opacity: 0.4; }
-    100% { transform: translateY(-100px) scale(1.2); opacity: 0; }
-}
-
-/* Glassmorphic elements */
-.header, .stats-bar, .card, .dept-oval, .action-bar, .top-bar, .breadcrumb, .search-container input {
-    backdrop-filter: blur(12px) saturate(180%);
-    -webkit-backdrop-filter: blur(12px) saturate(180%);
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-}
-
-.header {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    margin-bottom: 20px;
-    padding: 16px 22px;
-    border-radius: 24px;
-}
-
-.logo {
-    width: 48px; height: 48px;
-    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-    border-radius: 16px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.4rem; color: white;
-}
-
-.header-title h1 { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.5px; }
-.header-title span { font-size: 0.7rem; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px; }
-
-.top-bar {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 16px; gap: 10px; padding: 10px 16px;
-    border-radius: 50px;
-}
-
-.btn-back, .btn-upload, .theme-toggle {
-    display: flex; align-items: center; gap: 8px;
-    padding: 10px 18px; border: none; border-radius: 40px;
-    font-weight: 600; font-size: 0.85rem; cursor: pointer;
-    transition: 0.2s; color: var(--text-primary);
-    background: rgba(255, 255, 255, 0.1);
-}
-
-.btn-upload { background: var(--accent); color: white; border: none; }
-
-.search-container { flex: 1; position: relative; min-width: 180px; }
-.search-container i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); opacity: 0.6; }
-
-#searchInput {
-    width: 100%; padding: 10px 14px 10px 40px; border-radius: 40px;
-    background: var(--input-bg); color: var(--text-primary);
-    outline: none; font-size: 0.85rem; border: 1px solid var(--glass-border);
-}
-
-.stats-bar {
-    display: flex; gap: 12px; margin-bottom: 20px;
-    padding: 14px; border-radius: 24px;
-}
-
-.stat-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; }
-.stat-item i { font-size: 1.1rem; color: var(--accent); margin-bottom: 4px; }
-.stat-item span { font-size: 1.2rem; font-weight: 800; }
-.stat-item label { font-size: 0.65rem; opacity: 0.7; font-weight: 600; }
-
-.action-bar {
-    display: flex; gap: 10px; padding: 10px;
-    justify-content: center; margin-bottom: 16px;
-    border-radius: 50px;
-}
-
-.action-btn {
-    background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border);
-    padding: 8px 16px; border-radius: 40px; color: var(--text-primary);
-    cursor: pointer; font-size: 0.75rem; font-weight: 600;
-}
-
-.departments-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
-.dept-card { display: flex; align-items: center; gap: 14px; cursor: pointer; }
-.dept-oval { 
-    flex: 1; padding: 14px 24px; border-radius: 50px; 
-    display: flex; justify-content: space-between; align-items: center;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    transition: 0.3s;
-}
-.dept-oval:hover { transform: scale(1.02); }
-.dept-oval span { font-weight: 700; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
-
+.header { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; padding: 16px; }
+.logo { width: 48px; height: 48px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; color: white; }
+.top-bar { display: flex; gap: 10px; padding: 10px; border-radius: 50px; margin-bottom: 16px; }
+.search-container { flex: 1; position: relative; }
+.search-container input { width: 100%; padding: 10px 40px; border-radius: 40px; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); color: white; outline: none; }
+.search-container i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); opacity: 0.6; }
+.stats-bar { display: flex; gap: 12px; padding: 15px; margin-bottom: 20px; text-align: center; }
+.stat-item { flex: 1; }
+.stat-item span { display: block; font-size: 1.2rem; font-weight: 800; }
+.stat-item label { font-size: 0.7rem; opacity: 0.7; }
+.departments-grid { display: grid; gap: 10px; margin-bottom: 20px; }
+.dept-card { cursor: pointer; padding: 15px 25px; border-radius: 50px; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; font-weight: bold; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+.dept-card:hover { transform: scale(1.01); }
 /* Dept Colors */
-.dept-card[data-dept="REMELT"] .dept-oval { background: linear-gradient(90deg, #e63946, #b91c1c); }
-.dept-card[data-dept="CASTER"] .dept-oval { background: linear-gradient(90deg, #2a9d8f, #0f766e); }
-.dept-card[data-dept="HRM"] .dept-oval { background: linear-gradient(90deg, #4361ee, #3730a3); }
-.dept-card[data-dept="CRM"] .dept-oval { background: linear-gradient(90deg, #f8961e, #c2410c); }
-.dept-card[data-dept="ANNEALING"] .dept-oval { background: linear-gradient(90deg, #7209b7, #4c0519); }
-.dept-card[data-dept="TLL"] .dept-oval { background: linear-gradient(90deg, #06d6a0, #065f46); }
-.dept-card[data-dept="SLITTER"] .dept-oval { background: linear-gradient(90deg, #118ab2, #1e3a8a); }
-.dept-card[data-dept="UTILITY"] .dept-oval { background: linear-gradient(90deg, #ef476f, #9d174d); }
+.dept-card[data-dept="REMELT"] { background: linear-gradient(90deg, #d45a2b, #a53f15); }
+.dept-card[data-dept="CASTER"] { background: linear-gradient(90deg, #1f8a7c, #146b60); }
+.dept-card[data-dept="HRM"] { background: linear-gradient(90deg, #6b6bd6, #4a4ab0); }
+.dept-card[data-dept="CRM"] { background: linear-gradient(90deg, #e68a2e, #c0681a); }
+.dept-card[data-dept="ANNEALING"] { background: linear-gradient(90deg, #c53b6b, #9e2550); }
+.dept-card[data-dept="TLL"] { background: linear-gradient(90deg, #1f958b, #147a70); }
+.dept-card[data-dept="SLITTER"] { background: linear-gradient(90deg, #3b70e0, #2a53b3); }
+.dept-card[data-dept="UTILITY"] { background: linear-gradient(90deg, #cf4a2e, #aa351a); }
 
-.card {
-    background: var(--card-bg); padding: 14px 18px;
-    border-radius: 20px; cursor: pointer; display: flex;
-    align-items: center; gap: 12px; margin-bottom: 8px;
-    transition: 0.2s; border: 1px solid var(--glass-border);
-}
-.card:hover { transform: translateY(-2px); border-color: var(--accent); }
-.card-icon { font-size: 1.4rem; color: #ff0000; }
-.card-filename { flex: 1; font-size: 0.9rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
-
-.card-buttons button {
-    padding: 6px 12px; border-radius: 20px; border: none;
-    font-size: 0.7rem; font-weight: 700; cursor: pointer; margin-left: 5px;
-}
-.rename-file-btn { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
-.delete-btn { background: rgba(239, 68, 68, 0.2); color: #f87171; }
-
-.breadcrumb {
-    display: flex; align-items: center; gap: 8px;
-    padding: 8px 16px; background: rgba(0,0,0,0.2);
-    border-radius: 40px; margin-bottom: 16px; width: fit-content;
-    font-size: 0.8rem;
-}
-.breadcrumb-item { cursor: pointer; opacity: 0.8; }
-.breadcrumb-item:last-child { font-weight: 700; opacity: 1; }
-
-/* PDF Viewer */
-.pdf-viewer-modal {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    z-index: 2000; background: #000; display: flex; flex-direction: column;
-}
-.pdf-canvas-wrapper { flex: 1; overflow: auto; display: flex; justify-content: center; background: #333; }
-.pdf-zoom-controls {
-    display: flex; justify-content: space-around; align-items: center;
-    padding: 15px; background: #1a1a1a;
-}
-.zoom-btn { background: #444; color: white; border: none; padding: 10px 20px; border-radius: 30px; }
-
+.card { display: flex; align-items: center; gap: 12px; padding: 15px; margin-bottom: 8px; cursor: pointer; }
+.card i { font-size: 1.3rem; }
+.card-filename { flex: 1; font-weight: 600; font-size: 0.9rem; }
+.breadcrumb { padding: 10px 20px; margin-bottom: 16px; font-size: 0.8rem; display: inline-flex; gap: 8px; align-items: center; }
+.btn { border: none; padding: 10px 20px; border-radius: 40px; cursor: pointer; font-weight: 600; color: white; background: var(--accent); }
+.action-bar { padding: 10px; display: flex; gap: 10px; justify-content: center; margin-bottom: 15px; border-radius: 50px; }
+.pdf-viewer-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2000; background: #000; display: flex; flex-direction: column; }
+.pdf-canvas-wrapper { flex: 1; overflow: auto; display: flex; justify-content: center; background: #222; }
 .hidden { display: none !important; }
-
-@media (max-width: 600px) {
-    .btn-back span, .btn-upload span, .theme-toggle span { display: none; }
-    .header-title h1 { font-size: 1.1rem; }
-}
 </style>
 </head>
 <body>
-<div class="particle" style="left:10%; width:5px; height:5px;"></div>
-<div class="particle" style="left:30%; width:8px; height:8px; animation-delay:2s;"></div>
-<div class="particle" style="left:70%; width:4px; height:4px; animation-delay:4s;"></div>
-
 <div class="app">
     <div class="header">
-        <div class="logo"><i class="fas fa-file-pdf"></i></div>
-        <div class="header-title">
-            <h1>OARCEL</h1>
-            <span>Secure Document Manager</span>
-        </div>
+        <div class="logo"><i class="fas fa-folder-open"></i></div>
+        <div><h1 style="font-size:1.4rem">OARCEL</h1><p style="font-size:0.7rem; opacity:0.7">DOCUMENT MANAGER</p></div>
     </div>
-
     <div class="top-bar">
-        <button id="backBtn" class="btn-back hidden" onclick="goBack()"><i class="fas fa-chevron-left"></i><span>Back</span></button>
+        <button id="backBtn" class="btn hidden" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
         <div class="search-container">
             <i class="fas fa-search"></i>
-            <input type="text" id="searchInput" placeholder="Search files...">
+            <input type="text" id="searchInput" placeholder="Search your documents..." oninput="render()">
         </div>
-        <button id="themeToggle" class="theme-toggle"><i class="fas fa-moon"></i></button>
-        <button id="uploadBtn" class="btn-upload hidden" onclick="triggerUpload()"><i class="fas fa-plus"></i><span>Upload</span></button>
+        <button class="btn" onclick="document.body.classList.toggle('light-mode')"><i class="fas fa-adjust"></i></button>
+        <button id="uploadBtn" class="btn hidden" onclick="document.getElementById('fileInput').click()">Upload</button>
         <input type="file" id="fileInput" accept="application/pdf" multiple style="display:none">
     </div>
-
     <div class="stats-bar">
-        <div class="stat-item"><i class="fas fa-folder"></i><span id="folderCount">0</span><label>Folders</label></div>
-        <div class="stat-item"><i class="fas fa-file-pdf"></i><span id="fileCount">0</span><label>Files</label></div>
+        <div class="stat-item"><span id="folderCount">0</span><label>Folders</label></div>
+        <div class="stat-item"><span id="fileCount">0</span><label>Documents</label></div>
     </div>
-
     <div id="breadcrumb" class="breadcrumb"></div>
-    <div id="departmentsSection"></div>
-    <div id="content" class="content"></div>
+    <div id="departmentsSection" class="departments-grid"></div>
+    <div id="content"></div>
 </div>
 
 <div id="pdfViewerModal" class="pdf-viewer-modal hidden">
-    <div class="pdf-canvas-wrapper" id="pdfCanvasWrapper">
-        <canvas id="pdfCanvas"></canvas>
-    </div>
-    <div class="pdf-zoom-controls">
-        <button class="zoom-btn" onclick="zoomOut()"><i class="fas fa-minus"></i></button>
-        <span id="zoomLevel">100%</span>
-        <button class="zoom-btn" onclick="zoomIn()"><i class="fas fa-plus"></i></button>
-        <button class="zoom-btn" style="background:#ef4444" onclick="closePDFViewer()">Close</button>
+    <div class="pdf-canvas-wrapper"><canvas id="pdfCanvas"></canvas></div>
+    <div style="padding:15px; background:#111; display:flex; justify-content:center; gap:20px;">
+        <button class="btn" onclick="zoomOut()">-</button>
+        <button class="btn" onclick="zoomIn()">+</button>
+        <button class="btn" style="background:#ef4444" onclick="closePDFViewer()">Close</button>
     </div>
 </div>
 
 <script>
-const DB_NAME = 'OarcelDB';
-const DB_VERSION = 2;
-let db, allFiles = {}, fileSystem = {}, currentPath = [];
-let pdfDoc = null, currentScale = 1.0;
+let db, allFiles = {}, fileSystem = {}, currentPath = [], pdfDoc = null, currentScale = 1.0;
 
-// Database Init
-function initDB() {
-    return new Promise((resolve) => {
-        const request = indexedDB.open(DB_NAME, DB_VERSION);
-        request.onupgradeneeded = (e) => {
-            const db = e.target.result;
-            if (!db.objectStoreNames.contains('files')) db.createObjectStore('files', { keyPath: 'id' });
-            if (!db.objectStoreNames.contains('structure')) db.createObjectStore('structure', { keyPath: 'key' });
-        };
-        request.onsuccess = (e) => { db = e.target.result; resolve(); };
-    });
+const defaultStructure = {
+    "REMELT":{}, "CASTER":{}, "HRM":{}, "CRM":{}, "ANNEALING":{}, "TLL":{}, "SLITTER":{}, "UTILITY":{}
+};
+
+async function init() {
+    const request = indexedDB.open('OarcelDB', 2);
+    request.onupgradeneeded = (e) => {
+        let db = e.target.result;
+        if (!db.objectStoreNames.contains('files')) db.createObjectStore('files', { keyPath: 'id' });
+        if (!db.objectStoreNames.contains('folderStructure')) db.createObjectStore('folderStructure', { keyPath: 'key' });
+    };
+    request.onsuccess = (e) => {
+        db = e.target.result;
+        loadFromDB();
+    };
 }
 
-async function loadData() {
-    const structReq = db.transaction('structure', 'readonly').objectStore('structure').get('main');
+function loadFromDB() {
+    const structReq = db.transaction('folderStructure', 'readonly').objectStore('folderStructure').get('structure');
     structReq.onsuccess = () => {
-        if (structReq.result) fileSystem = structReq.result.value;
-        else fileSystem = {
-            "REMELT":{}, "CASTER":{}, "HRM":{}, "CRM":{}, "ANNEALING":{}, "TLL":{}, "SLITTER":{}, "UTILITY":{}
-        };
+        fileSystem = structReq.result ? structReq.result.value : defaultStructure;
         const fileReq = db.transaction('files', 'readonly').objectStore('files').getAll();
         fileReq.onsuccess = () => {
-            fileReq.result.forEach(item => allFiles[item.id] = item.files);
+            fileReq.result.forEach(f => allFiles[f.id] = f.files);
             render();
         };
     };
 }
 
-function saveData() {
-    db.transaction('structure', 'readwrite').objectStore('structure').put({ key: 'main', value: fileSystem });
+function saveToDB() {
+    db.transaction('folderStructure', 'readwrite').objectStore('folderStructure').put({ key: 'structure', value: fileSystem });
     const tx = db.transaction('files', 'readwrite');
     const store = tx.objectStore('files');
-    store.clear();
-    for (const path in allFiles) store.put({ id: path, files: allFiles[path] });
+    for (let path in allFiles) store.put({ id: path, files: allFiles[path] });
 }
 
-// Rendering
 function render() {
-    const content = document.getElementById('content');
     const depts = document.getElementById('departmentsSection');
+    const content = document.getElementById('content');
     const bc = document.getElementById('breadcrumb');
     const query = document.getElementById('searchInput').value.toLowerCase();
     
-    content.innerHTML = '';
-    depts.innerHTML = '';
+    depts.innerHTML = ''; content.innerHTML = '';
     
-    // Stats
-    let totalFiles = 0;
-    for(let p in allFiles) totalFiles += allFiles[p].length;
-    document.getElementById('fileCount').textContent = totalFiles;
-    document.getElementById('folderCount').textContent = Object.keys(fileSystem).length;
-
     // Breadcrumb
-    bc.innerHTML = `<span class="breadcrumb-item" onclick="goToPath([])">Home</span>`;
-    currentPath.forEach((p, i) => {
-        bc.innerHTML += ` <i class="fas fa-chevron-right" style="font-size:0.6rem; opacity:0.5"></i> <span class="breadcrumb-item" onclick="goToPath(currentPath.slice(0,${i+1}))">${p}</span>`;
-    });
+    bc.innerHTML = `<span onclick="currentPath=[];render()">Home</span>`;
+    currentPath.forEach((p, i) => bc.innerHTML += ` > <span onclick="currentPath=currentPath.slice(0,${i+1});render()">${p}</span>`);
 
-    const isRoot = currentPath.length === 0;
-    document.getElementById('backBtn').classList.toggle('hidden', isRoot);
-    document.getElementById('uploadBtn').classList.toggle('hidden', isRoot);
+    document.getElementById('backBtn').classList.toggle('hidden', currentPath.length === 0);
+    document.getElementById('uploadBtn').classList.toggle('hidden', currentPath.length === 0);
 
-    if (isRoot) {
-        for (let dept in fileSystem) {
-            const el = document.createElement('div');
-            el.className = 'dept-card';
-            el.setAttribute('data-dept', dept);
-            el.innerHTML = `<div class="dept-oval"><span>${dept}</span><i class="fas fa-chevron-right"></i></div>`;
-            el.onclick = () => { currentPath = [dept]; render(); };
-            depts.appendChild(el);
+    if (currentPath.length === 0) {
+        for (let d in fileSystem) {
+            const div = document.createElement('div');
+            div.className = 'dept-card'; div.dataset.dept = d;
+            div.innerHTML = `<span>${d}</span> <i class="fas fa-chevron-right"></i>`;
+            div.onclick = () => { currentPath = [d]; render(); };
+            depts.appendChild(div);
         }
     } else {
-        const pathStr = currentPath.join('/');
-        const files = allFiles[pathStr] || [];
-        
-        // Folder Actions
+        const activeObj = currentPath.reduce((o, i) => o[i], fileSystem);
         const actions = document.createElement('div');
         actions.className = 'action-bar';
-        actions.innerHTML = `<button class="action-btn" onclick="addFolder()">+ Subfolder</button>
-                             <button class="action-btn" onclick="deleteFolder()" style="color:#f87171">Delete Folder</button>`;
+        actions.innerHTML = `<button class="btn" onclick="addFolder()">+ Folder</button>`;
         content.appendChild(actions);
 
-        // Render Subfolders
-        let currentObj = currentPath.reduce((o, i) => o[i], fileSystem);
-        for (let sub in currentObj) {
-            const card = document.createElement('div');
-            card.className = 'card';
-            card.innerHTML = `<i class="fas fa-folder" style="color:#fbbf24"></i><div class="card-filename">${sub}</div>`;
-            card.onclick = () => { currentPath.push(sub); render(); };
-            content.appendChild(card);
+        for (let folder in activeObj) {
+            const div = document.createElement('div');
+            div.className = 'card'; div.innerHTML = `<i class="fas fa-folder" style="color:#fbbf24"></i><div class="card-filename">${folder}</div>`;
+            div.onclick = () => { currentPath.push(folder); render(); };
+            content.appendChild(div);
         }
 
-        // Render Files
-        files.filter(f => f.name.toLowerCase().includes(query)).forEach((file, idx) => {
-            const card = document.createElement('div');
-            card.className = 'card';
-            card.innerHTML = `
-                <i class="fas fa-file-pdf card-icon"></i>
-                <div class="card-filename">${file.name}</div>
-                <div class="card-buttons">
-                    <button class="delete-btn" onclick="event.stopPropagation(); deleteFile(${idx})"><i class="fas fa-trash"></i></button>
-                </div>
-            `;
-            card.onclick = () => openPDF(file.data);
-            content.appendChild(card);
+        const files = allFiles[currentPath.join('/')] || [];
+        files.filter(f => f.name.toLowerCase().includes(query)).forEach((f, i) => {
+            const div = document.createElement('div');
+            div.className = 'card';
+            div.innerHTML = `<i class="fas fa-file-pdf" style="color:#ef4444"></i><div class="card-filename">${f.name}</div><button class="btn" style="background:none; color:#ef4444" onclick="event.stopPropagation();deleteFile(${i})"><i class="fas fa-trash"></i></button>`;
+            div.onclick = () => openPDF(f.data);
+            content.appendChild(div);
         });
     }
+    updateStats();
 }
 
-// Logic Functions
-function goToPath(path) { currentPath = path; render(); }
-
-function triggerUpload() { document.getElementById('fileInput').click(); }
-
-document.getElementById('fileInput').onchange = async (e) => {
-    const pathStr = currentPath.join('/');
-    if (!allFiles[pathStr]) allFiles[pathStr] = [];
-    
-    for (let file of e.target.files) {
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-            allFiles[pathStr].push({ name: file.name, data: ev.target.result });
-            saveData();
-            render();
-        };
-        reader.readAsDataURL(file);
-    }
-};
+function updateStats() {
+    let fCount = 0; for (let p in allFiles) fCount += allFiles[p].length;
+    document.getElementById('fileCount').textContent = fCount;
+    document.getElementById('folderCount').textContent = Object.keys(fileSystem).length;
+}
 
 function addFolder() {
-    const name = prompt("Folder Name:");
-    if (!name) return;
-    let currentObj = currentPath.reduce((o, i) => o[i], fileSystem);
-    currentObj[name] = {};
-    saveData();
-    render();
+    const n = prompt("Folder Name:");
+    if (!n) return;
+    currentPath.reduce((o, i) => o[i], fileSystem)[n] = {};
+    saveToDB(); render();
 }
 
-function deleteFile(idx) {
-    if (confirm("Delete this file?")) {
-        allFiles[currentPath.join('/')].splice(idx, 1);
-        saveData();
-        render();
-    }
-}
-
-function deleteFolder() {
-    if (currentPath.length < 1) return;
-    if (confirm("Delete this folder and everything inside?")) {
-        const toDelete = currentPath.pop();
-        let parent = currentPath.reduce((o, i) => o[i], fileSystem);
-        delete parent[toDelete];
-        saveData();
-        render();
+function deleteFile(i) {
+    if (confirm("Delete file?")) {
+        allFiles[currentPath.join('/')].splice(i, 1);
+        saveToDB(); render();
     }
 }
 
 function goBack() { currentPath.pop(); render(); }
 
-// PDF Viewer Logic
-async function openPDF(data) {
-    document.getElementById('pdfViewerModal').classList.remove('hidden');
-    const loadingTask = pdfjsLib.getDocument(data);
-    pdfDoc = await loadingTask.promise;
-    currentScale = 1.0;
-    renderPage(1);
-}
-
-async function renderPage(num) {
-    const page = await pdfDoc.getPage(num);
-    const canvas = document.getElementById('pdfCanvas');
-    const ctx = canvas.getContext('2d');
-    const viewport = page.getViewport({ scale: currentScale });
-    canvas.height = viewport.height;
-    canvas.width = viewport.width;
-    await page.render({ canvasContext: ctx, viewport }).promise;
-    document.getElementById('zoomLevel').textContent = Math.round(currentScale * 100) + "%";
-}
-
-function zoomIn() { currentScale += 0.2; renderPage(1); }
-function zoomOut() { if (currentScale > 0.4) { currentScale -= 0.2; renderPage(1); } }
-function closePDFViewer() { document.getElementById('pdfViewerModal').classList.add('hidden'); }
-
-// Theme
-document.getElementById('themeToggle').onclick = () => {
-    document.body.classList.toggle('light-mode');
-    const icon = document.getElementById('themeToggle').querySelector('i');
-    icon.className = document.body.classList.contains('light-mode') ? 'fas fa-sun' : 'fas fa-moon';
+document.getElementById('fileInput').onchange = (e) => {
+    const path = currentPath.join('/');
+    if (!allFiles[path]) allFiles[path] = [];
+    Array.from(e.target.files).forEach(file => {
+        const r = new FileReader();
+        r.onload = (ev) => {
+            allFiles[path].push({ name: file.name, data: ev.target.result });
+            saveToDB(); render();
+        };
+        r.readAsDataURL(file);
+    });
 };
 
-document.getElementById('searchInput').oninput = render;
+async function openPDF(d) {
+    document.getElementById('pdfViewerModal').classList.remove('hidden');
+    const loadingTask = pdfjsLib.getDocument(d);
+    pdfDoc = await loadingTask.promise;
+    currentScale = 1.0; renderPage(1);
+}
+async function renderPage(n) {
+    const page = await pdfDoc.getPage(n);
+    const canvas = document.getElementById('pdfCanvas');
+    const viewport = page.getViewport({ scale: currentScale });
+    canvas.height = viewport.height; canvas.width = viewport.width;
+    await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+}
+function zoomIn() { currentScale += 0.2; renderPage(1); }
+function zoomOut() { currentScale -= 0.2; renderPage(1); }
+function closePDFViewer() { document.getElementById('pdfViewerModal').classList.add('hidden'); }
 
-// Init
-initDB().then(loadData);
+init();
 </script>
 </body>
 </html>
