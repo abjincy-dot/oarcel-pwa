@@ -1,194 +1,378 @@
-// ==================== OARCEL - COMPLETE WORKING VERSION ====================
-
-const content = document.getElementById("content");
-const pathText = document.getElementById("path");
-const pathContainer = document.getElementById("pathContainer");
-const backBtn = document.getElementById("backBtn");
-const uploadBtn = document.getElementById("uploadBtn");
-const fileInput = document.getElementById("fileInput");
-const viewer = document.getElementById("viewer");
-const frame = document.getElementById("pdfFrame");
-const toast = document.getElementById("toast");
-const folderCountSpan = document.getElementById("folderCount");
-const fileCountSpan = document.getElementById("fileCount");
-
-let currentViewMode = "grid";
-let allFiles = {};
-let currentPath = [];
-
-// ==================== FOLDER STRUCTURE ====================
-let fileSystem = {
-    "REMELT": { "A": {}, "B": {}, "C": {}, "D": {}, "E": {}, "F": {}, "G": {}, "H": {}, "I": {}, "J": {}, "K": {}, "L": {}, "M": {}, "N": {}, "O": {}, "P": {}, "Q": {}, "R": {}, "S": {}, "T": {}, "U": {}, "V": {}, "W": {}, "X": {}, "Y": {}, "Z": {} },
-    "CASTER": { "Quality Reports": {}, "Mechanical": {}, "Maintenance": {}, "Production Data": {}, "Testing": {}, "Checklists": {}, "Safety": {}, "Training": {} },
-    "HRM": { "Employee Records": {}, "Attendance": {}, "Performance": {}, "Training Logs": {}, "Safety Compliance": {}, "Policies": {}, "Reports": {}, "Certifications": {} },
-    "CRM": { "PLC Programs": {}, "CAD Drawings": {}, "Electrical": {}, "SCADA": {}, "Automation": {}, "Reports": {}, "Configurations": {}, "Manuals": {} },
-    "ANNEALING": { "Temperature Control": {}, "Process Parameters": {}, "Quality Assurance": {}, "Maintenance": {}, "Safety": {}, "Production Logs": {}, "Testing": {}, "SOP Documents": {} },
-    "TLL": { "PLC Programs": {}, "CAD Drawings": {}, "Maintenance": {}, "Production Logs": {}, "Process Optimization": {}, "Quality Reports": {}, "Manuals": {}, "Safety": {} },
-    "SLITTER": { "Blade Maintenance": {}, "Quality Control": {}, "Production Reports": {}, "Mechanical": {}, "Safety": {}, "Checklists": {}, "Training": {}, "Testing": {} },
-    "UTILITY": { "Power Supply": {}, "Water System": {}, "Compressed Air": {}, "HVAC": {}, "Reports": {}, "Safety": {}, "Manuals": {}, "Testing": {} }
-};
-
-// ==================== STORAGE ====================
-function saveFolderStructure() { localStorage.setItem('oarcel_folders', JSON.stringify(fileSystem)); }
-function loadFolderStructure() { const saved = localStorage.getItem('oarcel_folders'); if (saved) fileSystem = JSON.parse(saved); }
-function saveAllFiles() { try { const toSave = {}; for (const folder in allFiles) { toSave[folder] = allFiles[folder].map(file => ({ name: file.name, dataUrl: file.dataUrl, date: file.date })); } localStorage.setItem('oarcel_all_files', JSON.stringify(toSave)); return true; } catch(e) { return false; } }
-function loadAllFiles() { try { const saved = localStorage.getItem('oarcel_all_files'); if (saved) { allFiles = JSON.parse(saved); let total = 0; for (const folder in allFiles) total += allFiles[folder].length; if (total > 0) showToast(`Loaded ${total} saved files`); } } catch(e) { allFiles = {}; } }
-function getFilesForCurrentFolder() { const folderPath = currentPath.join("/"); return allFiles[folderPath] || []; }
-async function addFileToCurrentFolder(file) { const folderPath = currentPath.join("/"); if (!allFiles[folderPath]) allFiles[folderPath] = []; const base64Data = await new Promise((resolve) => { const reader = new FileReader(); reader.onload = (e) => resolve(e.target.result); reader.readAsDataURL(file); }); allFiles[folderPath].push({ name: file.name, dataUrl: base64Data, date: new Date().toISOString() }); saveAllFiles(); return true; }
-function deleteFileFromFolder(folderPath, fileName) { if (allFiles[folderPath]) { const index = allFiles[folderPath].findIndex(f => f.name === fileName); if (index !== -1) { allFiles[folderPath].splice(index, 1); if (allFiles[folderPath].length === 0) delete allFiles[folderPath]; saveAllFiles(); render(); showToast(`Deleted "${fileName}"`); return true; } } return false; }
-
-// ==================== FOLDER MANAGEMENT ====================
-function renameCurrentFolder() {
-    if (currentPath.length === 0) { showToast("Cannot rename root folder", true); return; }
-    const oldName = currentPath[currentPath.length - 1];
-    const newName = prompt("📁 Enter new folder name:", oldName);
-    if (newName && newName !== oldName && newName.trim() !== "") {
-        const parentPath = currentPath.slice(0, -1);
-        let parent = fileSystem;
-        for (let p of parentPath) parent = parent[p];
-        parent[newName] = parent[oldName];
-        delete parent[oldName];
-        const oldFolderPath = currentPath.join("/");
-        const newFolderPath = [...parentPath, newName].join("/");
-        if (allFiles[oldFolderPath]) { allFiles[newFolderPath] = allFiles[oldFolderPath]; delete allFiles[oldFolderPath]; }
-        currentPath[parentPath.length] = newName;
-        saveFolderStructure(); saveAllFiles(); render();
-        showToast(`✅ Renamed to "${newName}"`);
-    }
-}
-function addNewFolder() {
-    const folderName = prompt("📁 Enter new folder name:", "New Folder");
-    if (folderName && folderName.trim() !== "") {
-        const currentFolder = getCurrentFolderObject();
-        if (currentFolder && !currentFolder[folderName]) { currentFolder[folderName] = {}; saveFolderStructure(); render(); showToast(`✅ Folder "${folderName}" created`); }
-        else if (currentFolder && currentFolder[folderName]) showToast("❌ Folder already exists!", true);
-    }
-}
-function addNewDepartment() {
-    const deptName = prompt("🏭 Enter new department name:", "New Department");
-    if (deptName && deptName.trim() !== "") {
-        if (!fileSystem[deptName]) { fileSystem[deptName] = {}; saveFolderStructure(); render(); showToast(`✅ Department "${deptName}" created`); }
-        else showToast("❌ Department already exists!", true);
-    }
-}
-function deleteCurrentFolder() {
-    if (currentPath.length === 0) { showToast("Cannot delete root folder", true); return; }
-    const folderName = currentPath[currentPath.length - 1];
-    if (confirm(`⚠️ Delete "${folderName}" and ALL contents? This cannot be undone!`)) {
-        const folderPath = currentPath.join("/");
-        if (allFiles[folderPath]) delete allFiles[folderPath];
-        const parentPath = currentPath.slice(0, -1);
-        let parent = fileSystem;
-        for (let p of parentPath) parent = parent[p];
-        delete parent[folderName];
-        currentPath.pop();
-        saveFolderStructure(); saveAllFiles(); render();
-        showToast(`🗑️ Folder "${folderName}" deleted`);
-    }
-}
-function getCurrentFolderObject() { let folder = fileSystem; for (let p of currentPath) { if (folder[p]) folder = folder[p]; else return null; } return folder; }
-
-// ==================== UI FUNCTIONS ====================
-function showToast(message, isError = false) {
-    toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-circle' : 'fa-check-circle'}"></i><span>${message}</span>`;
-    toast.style.background = isError ? "linear-gradient(135deg, #ef4444, #dc2626)" : "linear-gradient(135deg, #10b981, #059669)";
-    toast.classList.remove("hidden");
-    setTimeout(() => toast.classList.add("hidden"), 3000);
-}
-function updateStats() {
-    let folderCount = 0, fileCount = 0;
-    function countRecursive(obj) { for (let key in obj) { if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) { folderCount++; countRecursive(obj[key]); } } }
-    countRecursive(fileSystem);
-    for (let key in allFiles) fileCount += allFiles[key].length;
-    folderCountSpan.textContent = folderCount;
-    fileCountSpan.textContent = fileCount;
-}
-function getCurrentFolder() { let folder = fileSystem; for (let p of currentPath) { if (folder[p]) folder = folder[p]; else return null; } return folder; }
-function escapeHtml(text) { const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
-function createCard(title, onClick, isFolder = true, showDelete = false, deletePath = null, deleteName = null) {
-    const card = document.createElement("div");
-    card.className = "card";
-    const iconClass = isFolder ? "fa-folder" : "fa-file-pdf";
-    const iconColor = isFolder ? "linear-gradient(135deg, #f59e0b, #ef4444)" : "linear-gradient(135deg, #3b82f6, #8b5cf6)";
-    if (currentViewMode === "list") {
-        card.innerHTML = `<i class="fas ${iconClass}" style="background: ${iconColor}; -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i><span style="flex:1">${escapeHtml(title)}</span>${showDelete ? `<button class="delete-btn" onclick="event.stopPropagation(); window.deleteFileFromFolder('${deletePath}', '${deleteName}')"><i class="fas fa-trash"></i></button>` : ''}`;
-    } else {
-        card.innerHTML = `<i class="fas ${iconClass}" style="background: ${iconColor}; -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 2rem;"></i><span>${escapeHtml(title)}</span>${showDelete ? `<button class="delete-btn-small" onclick="event.stopPropagation(); window.deleteFileFromFolder('${deletePath}', '${deleteName}')"><i class="fas fa-trash"></i></button>` : ''}`;
-    }
-    card.onclick = onClick;
-    return card;
-}
-function openPDF(dataUrl) { viewer.classList.remove("hidden"); document.body.style.overflow = "hidden"; frame.src = "about:blank"; if (dataUrl.startsWith('data:application/pdf')) { fetch(dataUrl).then(res => res.blob()).then(blob => { const blobUrl = URL.createObjectURL(blob); frame.src = `https://docs.google.com/viewer?embedded=true&url=${encodeURIComponent(blobUrl)}`; }).catch(err => frame.src = dataUrl); return; } frame.src = `https://docs.google.com/viewer?embedded=true&url=${encodeURIComponent(dataUrl)}`; }
-function closeViewer() { viewer.classList.add("hidden"); frame.src = ""; document.body.style.overflow = "auto"; }
-function goBack() { if (currentPath.length > 0) { currentPath.pop(); render(); } }
-function triggerUpload() { fileInput.click(); }
-fileInput.addEventListener("change", async (e) => { const files_list = e.target.files; if (!files_list.length) return; let uploadedCount = 0; for (let file of files_list) { if (file.type === "application/pdf") { await addFileToCurrentFolder(file); uploadedCount++; } } if (uploadedCount > 0) { showToast(`${uploadedCount} PDF(s) saved permanently!`); render(); } fileInput.value = ""; });
-function setViewMode(mode) { currentViewMode = mode; render(); document.getElementById("gridViewBtn").classList.toggle("active", mode === "grid"); document.getElementById("listViewBtn").classList.toggle("active", mode === "list"); }
-
-// ==================== RENDER FUNCTION WITH BUTTONS ====================
-function render() {
-    content.innerHTML = "";
-    const folder = getCurrentFolder();
-    if (!folder) { currentPath = []; render(); return; }
-    content.className = `content ${currentViewMode === "grid" ? "grid-view" : "list-view"}`;
-    pathText.innerText = currentPath.length === 0 ? "Home" : currentPath.join(" / ");
-    backBtn.classList.toggle("hidden", currentPath.length === 0);
-    const isLeafFolder = Object.keys(folder).length === 0;
-    const isRoot = currentPath.length === 0;
-    
-    // ACTION BUTTONS for folder management
-    if (!isRoot) {
-        const actionBar = document.createElement("div");
-        actionBar.className = "action-bar";
-        actionBar.innerHTML = `
-            <button class="action-btn rename-btn" onclick="window.renameCurrentFolder()"><i class="fas fa-edit"></i> Rename</button>
-            <button class="action-btn delete-folder-btn" onclick="window.deleteCurrentFolder()"><i class="fas fa-trash-alt"></i> Delete</button>
-            <button class="action-btn add-folder-btn" onclick="window.addNewFolder()"><i class="fas fa-plus"></i> Add Subfolder</button>
-        `;
-        content.appendChild(actionBar);
-    }
-    if (isRoot) {
-        const actionBar = document.createElement("div");
-        actionBar.className = "action-bar";
-        actionBar.innerHTML = `<button class="action-btn add-folder-btn" onclick="window.addNewDepartment()"><i class="fas fa-building"></i> Add Department</button>`;
-        content.appendChild(actionBar);
-    }
-    
-    // Show subfolders
-    for (let key in folder) { content.appendChild(createCard(key, () => { currentPath.push(key); render(); }, true)); }
-    
-    // Show files
-    if (isLeafFolder) {
-        uploadBtn.classList.toggle("hidden", false);
-        const folderFiles = getFilesForCurrentFolder();
-        const folderPath = currentPath.join("/");
-        if (folderFiles.length === 0 && Object.keys(folder).length === 0) {
-            const emptyDiv = document.createElement("div");
-            emptyDiv.className = "empty-state";
-            emptyDiv.innerHTML = '<i class="fas fa-cloud-upload-alt"></i><p>No PDFs yet. Click Upload to add files.</p>';
-            content.appendChild(emptyDiv);
-        } else {
-            folderFiles.forEach((f) => { content.appendChild(createCard(f.name, () => openPDF(f.dataUrl), false, true, folderPath, f.name)); });
-        }
-    } else { uploadBtn.classList.toggle("hidden", true); }
-    updateStats();
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-// Make functions global
-window.deleteFileFromFolder = (folderPath, fileName) => { if (confirm(`Delete "${fileName}"?`)) deleteFileFromFolder(folderPath, fileName); };
-window.renameCurrentFolder = renameCurrentFolder;
-window.deleteCurrentFolder = deleteCurrentFolder;
-window.addNewFolder = addNewFolder;
-window.addNewDepartment = addNewDepartment;
-pathContainer.addEventListener("click", () => { currentPath = []; render(); });
-document.getElementById("gridViewBtn").addEventListener("click", () => setViewMode("grid"));
-document.getElementById("listViewBtn").addEventListener("click", () => setViewMode("list"));
-window.goBack = goBack;
-window.triggerUpload = triggerUpload;
-window.closeViewer = closeViewer;
-window.openPDF = openPDF;
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background: linear-gradient(135deg, #0f0c29 0%, #1a1a3e 50%, #24243e 100%);
+  color: #ffffff;
+  min-height: 100vh;
+}
 
-// Initialize
-loadFolderStructure();
-loadAllFiles();
-render();
+.app {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding: 20px 28px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.logo {
+  width: 52px;
+  height: 52px;
+  background: linear-gradient(135deg, #6366f1, #ec4899);
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+}
+
+.header-title h1 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #ffffff, #a855f7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.header-title span {
+  font-size: 0.7rem;
+  color: #a855f7;
+}
+
+/* Top Bar */
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 10px 18px;
+  border-radius: 60px;
+}
+
+.btn-back, .btn-upload {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 40px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-back {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.btn-back:hover {
+  background: rgba(99, 102, 241, 0.4);
+  transform: translateX(-3px);
+}
+
+.btn-upload {
+  background: linear-gradient(135deg, #6366f1, #ec4899);
+  color: white;
+}
+
+.btn-upload:hover {
+  transform: translateY(-2px);
+}
+
+.path-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 40px;
+  font-size: 0.85rem;
+  color: #aaa;
+  cursor: pointer;
+}
+
+.path-container:hover {
+  color: #6366f1;
+}
+
+.view-toggle {
+  display: flex;
+  gap: 5px;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 4px;
+  border-radius: 40px;
+}
+
+.toggle-btn {
+  background: transparent;
+  border: none;
+  color: #888;
+  padding: 8px 16px;
+  border-radius: 30px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.toggle-btn.active {
+  background: linear-gradient(135deg, #6366f1, #ec4899);
+  color: white;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* Stats Bar */
+.stats-bar {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 24px;
+  padding: 16px 24px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 20px;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.stat-item i {
+  font-size: 1.5rem;
+  color: #6366f1;
+}
+
+.stat-item span {
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.stat-item label {
+  font-size: 0.7rem;
+  color: #aaa;
+  margin-left: auto;
+}
+
+/* Action Bar - THIS IS WHERE THE BUTTONS LIVE */
+.action-bar {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 20px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 60px;
+}
+
+.action-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 10px 20px;
+  border-radius: 40px;
+  color: white;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+  transform: translateY(-2px);
+}
+
+.rename-btn:hover { background: #6366f1; border-color: #6366f1; }
+.delete-folder-btn:hover { background: #ec4899; border-color: #ec4899; }
+.add-folder-btn:hover { background: #10b981; border-color: #10b981; }
+
+/* Content Grid */
+.content {
+  display: grid;
+  gap: 20px;
+}
+
+.content.grid-view {
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+}
+
+.content.list-view {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Cards */
+.grid-view .card {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(10px);
+  padding: 24px 12px;
+  border-radius: 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  position: relative;
+}
+
+.grid-view .card:hover {
+  transform: translateY(-5px);
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+.grid-view .card i:first-child {
+  font-size: 2.2rem;
+  margin-bottom: 12px;
+  display: block;
+}
+
+.grid-view .card span {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.list-view .card {
+  background: rgba(255, 255, 255, 0.06);
+  padding: 14px 20px;
+  border-radius: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.list-view .card:hover {
+  background: rgba(255, 255, 255, 0.12);
+  transform: translateX(5px);
+}
+
+.list-view .card i:first-child {
+  font-size: 1.3rem;
+  width: 30px;
+}
+
+.list-view .card span {
+  font-size: 0.85rem;
+  flex: 1;
+}
+
+/* Delete Buttons */
+.delete-btn, .delete-btn-small {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #f87171;
+  cursor: pointer;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.delete-btn { width: 32px; height: 32px; }
+.delete-btn-small { position: absolute; top: 10px; right: 10px; width: 28px; height: 28px; font-size: 0.75rem; }
+.delete-btn:hover, .delete-btn-small:hover { background: #ef4444; color: white; }
+
+.card { position: relative; }
+
+/* Viewer */
+.viewer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.96);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+}
+.viewer.hidden { display: none; }
+.viewer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background: rgba(0, 0, 0, 0.8);
+  border-bottom: 1px solid rgba(99, 102, 241, 0.3);
+}
+.viewer-title i { color: #6366f1; margin-right: 8px; }
+.viewer-close {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #f87171;
+  padding: 8px 20px;
+  border-radius: 40px;
+  cursor: pointer;
+}
+.viewer-close:hover { background: #ef4444; color: white; }
+.viewer-body { flex: 1; padding: 20px; }
+iframe { width: 100%; height: 100%; border: none; border-radius: 16px; background: white; }
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 50px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85rem;
+  z-index: 1100;
+}
+.toast.hidden { display: none; }
+
+.empty-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 60px 20px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 24px;
+}
+.empty-state i { font-size: 48px; color: #6366f1; margin-bottom: 16px; }
+
+@media (max-width: 640px) {
+  .app { padding: 12px; }
+  .header { padding: 14px 18px; }
+  .logo { width: 42px; height: 42px; font-size: 1.3rem; }
+  .header-title h1 { font-size: 1.3rem; }
+  .btn-back span, .btn-upload span { display: none; }
+  .btn-back, .btn-upload { padding: 10px 14px; }
+  .content.grid-view { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; }
+  .action-btn span { display: none; }
+  .action-btn { padding: 10px 14px; }
+  .stat-item span { font-size: 1.2rem; }
+  .stat-item i { font-size: 1.1rem; }
+}
