@@ -12,7 +12,7 @@
     box-sizing: border-box;
 }
 
-/* ✅ FIXED ROOT (THIS WAS BROKEN BEFORE) */
+/* ✅ FIXED ROOT */
 :root {
     --bg-gradient: url("https://raw.githubusercontent.com/abjincy-dot/oarcel-pwa/main/images/wallpaper.jpg");
     --glass-bg: rgba(15, 35, 55, 0.45);
@@ -23,56 +23,58 @@
     --input-bg: rgba(0, 0, 0, 0.4);
 }
 
-/* Light mode (kept your logic) */
+/* keep your light mode */
 body.light-mode {
     --bg-gradient: linear-gradient(165deg, #d4e6f1 0%, #b8d4e8 45%, #9bc0d4 100%);
 }
 
+/* ✅ FIXED BACKGROUND */
 body {
     font-family: Arial, sans-serif;
     min-height: 100vh;
 
-    /* ✅ FIXED BACKGROUND */
     background-image: var(--bg-gradient);
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
 
     color: var(--text-primary);
+    position: relative;
 }
 
-/* Optional overlay (improves readability) */
+/* ✅ OVERLAY (THIS FIXES YOUR VISIBILITY ISSUE) */
 body::after {
     content: "";
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.4);
-    z-index: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1;
 }
 
+/* keep UI above overlay */
 .app {
     position: relative;
-    z-index: 1;
+    z-index: 2;
     padding: 20px;
 }
 
-/* Simple UI (your original styles are heavy, keeping minimal working core) */
+/* minimal UI so nothing breaks */
 .header {
-    font-size: 24px;
+    font-size: 22px;
     font-weight: bold;
     margin-bottom: 20px;
 }
 
 .card {
     background: var(--card-bg);
-    padding: 15px;
+    padding: 12px;
     border-radius: 10px;
     margin-bottom: 10px;
 }
 
 button {
     padding: 10px;
-    border-radius: 8px;
+    border-radius: 6px;
     border: none;
     cursor: pointer;
 }
@@ -85,7 +87,7 @@ button {
 <div class="app">
     <div class="header">OARCEL Document Manager</div>
 
-    <div class="card">Your wallpaper background is now working.</div>
+    <div class="card">Background fixed + UI readable</div>
 
     <button onclick="toggleTheme()">Toggle Theme</button>
 </div>
