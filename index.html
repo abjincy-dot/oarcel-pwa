@@ -2,101 +2,61 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OARCEL</title>
-
-<style>
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-/* ✅ FIXED ROOT */
-:root {
-    --bg-gradient: url("https://raw.githubusercontent.com/abjincy-dot/oarcel-pwa/main/images/wallpaper.jpg");
-    --glass-bg: rgba(15, 35, 55, 0.45);
-    --glass-border: rgba(255, 255, 255, 0.2);
-    --text-primary: #ffffff;
-    --text-secondary: #cfecff;
-    --card-bg: rgba(12, 32, 50, 0.65);
-    --input-bg: rgba(0, 0, 0, 0.4);
-}
-
-/* keep your light mode */
-body.light-mode {
-    --bg-gradient: linear-gradient(165deg, #d4e6f1 0%, #b8d4e8 45%, #9bc0d4 100%);
-}
-
-/* ✅ FIXED BACKGROUND */
-body {
-    font-family: Arial, sans-serif;
-    min-height: 100vh;
-
-    background-image: var(--bg-gradient);
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-
-    color: var(--text-primary);
-    position: relative;
-}
-
-/* ✅ OVERLAY (THIS FIXES YOUR VISIBILITY ISSUE) */
-body::after {
-    content: "";
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.5);
-    z-index: 1;
-}
-
-/* keep UI above overlay */
-.app {
-    position: relative;
-    z-index: 2;
-    padding: 20px;
-}
-
-/* minimal UI so nothing breaks */
-.header {
-    font-size: 22px;
-    font-weight: bold;
-    margin-bottom: 20px;
-}
-
-.card {
-    background: var(--card-bg);
-    padding: 12px;
-    border-radius: 10px;
-    margin-bottom: 10px;
-}
-
-button {
-    padding: 10px;
-    border-radius: 6px;
-    border: none;
-    cursor: pointer;
-}
-
-</style>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+<title>OARCEL | Document Manager</title>
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="OARCEL">
+<meta name="theme-color" content="#6366f1">
+<link rel="apple-touch-icon" href="https://img.icons8.com/fluency/192/folder-invoices.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
 <div class="app">
-    <div class="header">OARCEL Document Manager</div>
+  <div class="header">
+    <div class="logo"><i class="fas fa-folder-open"></i></div>
+    <div class="header-title"><h1>OARCEL</h1><span>Document Manager</span></div>
+  </div>
 
-    <div class="card">Background fixed + UI readable</div>
+  <div class="top-bar">
+    <button id="backBtn" class="btn-back hidden" onclick="goBack()"><i class="fas fa-arrow-left"></i><span>Back</span></button>
+    <div class="path-container" id="pathContainer"><i class="fas fa-home"></i><span id="path">Home</span></div>
+    <div class="view-toggle">
+      <button id="gridViewBtn" class="toggle-btn active"><i class="fas fa-th"></i></button>
+      <button id="listViewBtn" class="toggle-btn"><i class="fas fa-list"></i></button>
+    </div>
+    <button id="uploadBtn" class="btn-upload hidden" onclick="triggerUpload()"><i class="fas fa-cloud-upload-alt"></i><span>Upload</span></button>
+    <input type="file" id="fileInput" accept="application/pdf" multiple hidden>
+  </div>
 
-    <button onclick="toggleTheme()">Toggle Theme</button>
+  <div class="stats-bar">
+    <div class="stat-item"><i class="fas fa-folder"></i><span id="folderCount">0</span><label>Folders</label></div>
+    <div class="stat-item"><i class="fas fa-file-pdf"></i><span id="fileCount">0</span><label>Documents</label></div>
+  </div>
+
+  <div id="content" class="content grid-view"></div>
 </div>
 
+<div id="viewer" class="viewer hidden">
+  <div class="viewer-header">
+    <div class="viewer-title"><i class="fas fa-file-pdf"></i><span>Document Viewer</span></div>
+    <button class="viewer-close" onclick="closeViewer()"><i class="fas fa-times"></i><span>Close</span></button>
+  </div>
+  <div class="viewer-body"><iframe id="pdfFrame"></iframe></div>
+</div>
+
+<div id="toast" class="toast hidden"><i class="fas fa-check-circle"></i><span>Upload successful!</span></div>
+
+<script src="app.js"></script>
 <script>
-function toggleTheme(){
-    document.body.classList.toggle("light-mode");
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(err => console.log('SW error:', err));
+  });
 }
 </script>
-
 </body>
 </html>
