@@ -6,251 +6,515 @@
 <title>OARCEL | Document Manager</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-<script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';</script>
+<script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+</script>
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-
-:root {
-    /* Background set to your image file */
-    --bg-wallpaper: url('image.png');
-    --glass-bg: rgba(255, 255, 255, 0.18); 
-    --glass-border: rgba(255, 255, 255, 0.25);
-    --text-primary: #111111; 
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 body {
-    font-family: -apple-system, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     min-height: 100vh;
-    background: var(--bg-wallpaper) no-repeat center center fixed;
-    background-size: cover;
-    color: var(--text-primary);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    background-attachment: fixed;
+    color: #fff;
 }
 
-.app { position: relative; z-index: 10; max-width: 1200px; margin: 0 auto; padding: 16px; }
+/* Glass container */
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 24px 32px;
+}
 
-.header, .stats-bar, .card, .top-bar, .breadcrumb {
-    backdrop-filter: blur(14px); 
-    -webkit-backdrop-filter: blur(14px);
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border); 
+/* Header */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.logo h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #fff, #e0d4ff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.logo p {
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
+.header-right {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+.notification-icon, .profile-icon {
+    width: 40px;
+    height: 40px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+}
+
+/* Stats Cards */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.stat-card {
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(10px);
     border-radius: 24px;
+    padding: 24px;
+    border: 1px solid rgba(255,255,255,0.2);
+    transition: transform 0.3s ease;
 }
 
-.header { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; padding: 16px; }
-.logo { width: 48px; height: 48px; background: rgba(0,0,0,0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
+.stat-card:hover {
+    transform: translateY(-5px);
+}
 
-.top-bar { display: flex; gap: 10px; padding: 10px; border-radius: 50px; margin-bottom: 16px; }
-.search-container { flex: 1; position: relative; }
-.search-container input { width: 100%; padding: 10px 40px; border-radius: 40px; background: rgba(255,255,255,0.3); border: 1px solid rgba(0,0,0,0.1); color: #000; outline: none; }
-.search-container i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); opacity: 0.6; }
+.stat-card h3 {
+    font-size: 0.9rem;
+    font-weight: 500;
+    opacity: 0.8;
+    margin-bottom: 12px;
+}
 
-.stats-bar { display: flex; gap: 12px; padding: 15px; margin-bottom: 20px; text-align: center; }
-.stat-item { flex: 1; }
-.stat-item span { display: block; font-size: 1.2rem; font-weight: 800; }
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
 
-.departments-grid { display: grid; gap: 12px; margin-bottom: 20px; }
-.dept-card { cursor: pointer; padding: 18px 25px; border-radius: 50px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; color: white; transition: 0.2s; box-shadow: 0 4px 15px rgba(0,0,0,0.15); }
+.stat-change {
+    font-size: 0.8rem;
+    opacity: 0.7;
+}
 
-/* Folder Colors */
-.dept-card[data-dept="REMELT"] { background: linear-gradient(90deg, #ff007f, #e60073); }
-.dept-card[data-dept="CASTER"] { background: linear-gradient(90deg, #d63384, #b02a6b); }
-.dept-card[data-dept="HRM"] { background: linear-gradient(90deg, #9b59b6, #8e44ad); }
-.dept-card[data-dept="CRM"] { background: linear-gradient(90deg, #6f42c1, #59359a); }
-.dept-card[data-dept="ANNEALING"] { background: linear-gradient(90deg, #4b6cb7, #182848); }
-.dept-card[data-dept="TLL"] { background: linear-gradient(90deg, #2c3e50, #000000); }
-.dept-card[data-dept="SLITTER"] { background: linear-gradient(90deg, #1e3c72, #2a5298); }
-.dept-card[data-dept="UTILITY"] { background: linear-gradient(90deg, #20b2aa, #008b8b); }
+/* Breadcrumb */
+.breadcrumb {
+    margin-bottom: 24px;
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
 
-.card { display: flex; align-items: center; gap: 12px; padding: 15px; margin-bottom: 8px; cursor: pointer; }
-.card-filename { flex: 1; font-weight: 600; }
+.breadcrumb span {
+    cursor: pointer;
+}
 
-.breadcrumb { padding: 10px 20px; margin-bottom: 16px; font-size: 0.8rem; display: inline-flex; gap: 8px; }
-.btn { border: none; padding: 10px 20px; border-radius: 40px; cursor: pointer; font-weight: 600; color: #fff; background: #333; }
+.breadcrumb span:hover {
+    opacity: 1;
+    text-decoration: underline;
+}
 
-.pdf-viewer-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2000; background: #000; display: flex; flex-direction: column; }
-.pdf-canvas-wrapper { flex: 1; overflow: auto; display: flex; justify-content: center; }
-.hidden { display: none !important; }
+/* Department Header */
+.department-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.department-header h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.header-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.action-btn {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 8px 20px;
+    border-radius: 40px;
+    color: white;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.action-btn:hover {
+    background: rgba(255,255,255,0.25);
+    transform: translateY(-2px);
+}
+
+/* Search and Filter Bar */
+.search-filter-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.search-box {
+    display: flex;
+    align-items: center;
+    background: rgba(255,255,255,0.15);
+    border-radius: 40px;
+    padding: 8px 20px;
+    flex: 1;
+    max-width: 400px;
+}
+
+.search-box i {
+    margin-right: 12px;
+    opacity: 0.7;
+}
+
+.search-box input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: white;
+    width: 100%;
+    font-size: 0.9rem;
+}
+
+.search-box input::placeholder {
+    color: rgba(255,255,255,0.6);
+}
+
+.filter-buttons {
+    display: flex;
+    gap: 12px;
+}
+
+.filter-btn {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 8px 20px;
+    border-radius: 40px;
+    color: white;
+    cursor: pointer;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.filter-btn.active {
+    background: rgba(255,255,255,0.3);
+    border-color: rgba(255,255,255,0.5);
+}
+
+/* Departments Grid */
+.departments-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+}
+
+.department-card {
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 20px;
+    border: 1px solid rgba(255,255,255,0.15);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.department-card:hover {
+    background: rgba(255,255,255,0.15);
+    transform: translateY(-3px);
+    border-color: rgba(255,255,255,0.3);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.dept-icon {
+    width: 48px;
+    height: 48px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+}
+
+.dept-menu {
+    opacity: 0.6;
+    cursor: pointer;
+}
+
+.dept-menu:hover {
+    opacity: 1;
+}
+
+.card-body h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.card-body p {
+    font-size: 0.8rem;
+    opacity: 0.7;
+    margin-bottom: 16px;
+}
+
+.card-stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.stat {
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
+.stat i {
+    margin-right: 6px;
+}
+
+.view-link {
+    color: #fff;
+    text-decoration: none;
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
+.view-link:hover {
+    opacity: 1;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .container {
+        padding: 16px;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .departments-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .search-filter-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .search-box {
+        max-width: 100%;
+    }
+    
+    .filter-buttons {
+        justify-content: center;
+    }
+    
+    .header {
+        flex-direction: column;
+        text-align: center;
+    }
+}
 </style>
 </head>
 <body>
-<div class="app">
+<div class="container">
+    <!-- Header -->
     <div class="header">
-        <div class="logo"><i class="fas fa-folder-open"></i></div>
-        <div><h1 style="font-size:1.4rem">OARCEL</h1><p style="font-size:0.7rem; opacity:0.7">DOCUMENT MANAGER</p></div>
-    </div>
-    <div class="top-bar">
-        <button id="backBtn" class="btn hidden" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
-        <div class="search-container">
-            <i class="fas fa-search"></i>
-            <input type="text" id="searchInput" placeholder="Search..." oninput="render()">
+        <div class="logo">
+            <h1>OARCEL</h1>
+            <p>Document Manager</p>
         </div>
-        <button id="uploadBtn" class="btn hidden" onclick="document.getElementById('fileInput').click()">Upload</button>
-        <input type="file" id="fileInput" accept="application/pdf" multiple style="display:none">
+        <div class="header-right">
+            <div class="notification-icon">
+                <i class="fas fa-bell"></i>
+            </div>
+            <div class="profile-icon">
+                <i class="fas fa-user"></i>
+            </div>
+        </div>
     </div>
-    <div class="stats-bar">
-        <div class="stat-item"><span id="folderCount">0</span><label>Folders</label></div>
-        <div class="stat-item"><span id="fileCount">0</span><label>Documents</label></div>
-    </div>
-    <div id="breadcrumb" class="breadcrumb"></div>
-    <div id="departmentsSection" class="departments-grid"></div>
-    <div id="content"></div>
-</div>
 
-<div id="pdfViewerModal" class="pdf-viewer-modal hidden">
-    <div class="pdf-canvas-wrapper"><canvas id="pdfCanvas"></canvas></div>
-    <div style="padding:15px; background:#111; display:flex; justify-content:center; gap:20px;">
-        <button class="btn" onclick="zoomOut()">-</button>
-        <button class="btn" onclick="zoomIn()">+</button>
-        <button class="btn" style="background:#ef4444" onclick="closePDFViewer()">Close</button>
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>Total Documents</h3>
+            <div class="stat-number">1,336</div>
+            <div class="stat-change">↑ 12% from last month</div>
+        </div>
+        <div class="stat-card">
+            <h3>Active Users</h3>
+            <div class="stat-number">102k</div>
+            <div class="stat-change">↑ 8% from last month</div>
+        </div>
+        <div class="stat-card">
+            <h3>Storage Used</h3>
+            <div class="stat-number">160 GB</div>
+            <div class="stat-change">of 500 GB</div>
+        </div>
+    </div>
+
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+        <span>Home</span> &gt; <span>Document Manager</span>
+    </div>
+
+    <!-- Department Header -->
+    <div class="department-header">
+        <h2>Departments</h2>
+        <div class="header-actions">
+            <button class="action-btn" onclick="addNewDepartment()"><i class="fas fa-plus"></i> Add Department</button>
+            <button class="action-btn"><i class="fas fa-download"></i> Export</button>
+        </div>
+    </div>
+
+    <!-- Search and Filter Bar -->
+    <div class="search-filter-bar">
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Search departments...">
+        </div>
+        <div class="filter-buttons">
+            <button class="filter-btn active"><i class="fas fa-th-large"></i> All</button>
+            <button class="filter-btn"><i class="fas fa-star"></i> Favorites</button>
+            <button class="filter-btn"><i class="fas fa-chart-line"></i> Trending</button>
+        </div>
+    </div>
+
+    <!-- Departments Grid -->
+    <div id="departmentsGrid" class="departments-grid">
+        <!-- Departments will be dynamically loaded here -->
     </div>
 </div>
 
 <script>
-// --- DATABASE RECOVERY LOGIC ---
-let db, allFiles = {}, fileSystem = {}, currentPath = [], pdfDoc = null, currentScale = 1.0;
+// Department data
+const departments = [
+    { name: "REMELT", icon: "fas fa-fire", items: 26, color: "#d45a2b", description: "Metal remelting and processing" },
+    { name: "CASTER", icon: "fas fa-industry", items: 8, color: "#1f8a7c", description: "Casting operations" },
+    { name: "HRM", icon: "fas fa-users", items: 8, color: "#6b6bd6", description: "Human resource management" },
+    { name: "CRM", icon: "fas fa-chart-line", items: 8, color: "#e68a2e", description: "Customer relationship management" },
+    { name: "ANNEALING", icon: "fas fa-temperature-high", items: 8, color: "#c53b6b", description: "Heat treatment process" },
+    { name: "TLL", icon: "fas fa-microchip", items: 8, color: "#1f958b", description: "Technology and logistics" },
+    { name: "SLITTER", icon: "fas fa-cut", items: 8, color: "#3b70e0", description: "Slitting operations" },
+    { name: "UTILITY", icon: "fas fa-bolt", items: 8, color: "#cf4a2e", description: "Utility services" }
+];
 
-const defaultStructure = {
-    "REMELT":{}, "CASTER":{}, "HRM":{}, "CRM":{}, "ANNEALING":{}, "TLL":{}, "SLITTER":{}, "UTILITY":{}
-};
+let searchTerm = '';
 
-async function init() {
-    // Re-linking to your exact original database name
-    const request = indexedDB.open('OarcelDB', 2);
+// Render departments
+function renderDepartments() {
+    const grid = document.getElementById('departmentsGrid');
+    const filtered = departments.filter(dept => 
+        dept.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
     
-    request.onupgradeneeded = (e) => {
-        let db = e.target.result;
-        if (!db.objectStoreNames.contains('files')) db.createObjectStore('files', { keyPath: 'id' });
-        if (!db.objectStoreNames.contains('folderStructure')) db.createObjectStore('folderStructure', { keyPath: 'key' });
-    };
-
-    request.onsuccess = (e) => {
-        db = e.target.result;
-        loadFromDB();
-    };
-}
-
-function loadFromDB() {
-    const structReq = db.transaction('folderStructure', 'readonly').objectStore('folderStructure').get('structure');
-    structReq.onsuccess = () => {
-        // If it finds your old folders, it uses them. Otherwise, it uses the default list.
-        fileSystem = structReq.result ? structReq.result.value : defaultStructure;
-        
-        const fileReq = db.transaction('files', 'readonly').objectStore('files').getAll();
-        fileReq.onsuccess = () => {
-            // Re-loading all your PDF data
-            fileReq.result.forEach(f => allFiles[f.id] = f.files);
-            render();
-        };
-    };
-}
-
-function saveToDB() {
-    db.transaction('folderStructure', 'readwrite').objectStore('folderStructure').put({ key: 'structure', value: fileSystem });
-    const tx = db.transaction('files', 'readwrite');
-    const store = tx.objectStore('files');
-    for (let path in allFiles) store.put({ id: path, files: allFiles[path] });
-}
-
-function render() {
-    const depts = document.getElementById('departmentsSection');
-    const content = document.getElementById('content');
-    const bc = document.getElementById('breadcrumb');
-    const query = document.getElementById('searchInput').value.toLowerCase();
-    
-    depts.innerHTML = ''; content.innerHTML = '';
-    bc.innerHTML = `<span style="cursor:pointer" onclick="currentPath=[];render()">Home</span>`;
-    currentPath.forEach((p, i) => bc.innerHTML += ` > <span style="cursor:pointer" onclick="currentPath=currentPath.slice(0,${i+1});render()">${p}</span>`);
-
-    document.getElementById('backBtn').classList.toggle('hidden', currentPath.length === 0);
-    document.getElementById('uploadBtn').classList.toggle('hidden', currentPath.length === 0);
-
-    if (currentPath.length === 0) {
-        for (let d in fileSystem) {
-            const div = document.createElement('div');
-            div.className = 'dept-card'; div.dataset.dept = d;
-            div.innerHTML = `<span>${d}</span> <i class="fas fa-chevron-right"></i>`;
-            div.onclick = () => { currentPath = [d]; render(); };
-            depts.appendChild(div);
-        }
-    } else {
-        const activeObj = currentPath.reduce((o, i) => o[i], fileSystem);
-        const folderActions = document.createElement('div');
-        folderActions.style.marginBottom = "10px";
-        folderActions.innerHTML = `<button class="btn" onclick="addFolder()">+ New Folder</button>`;
-        content.appendChild(folderActions);
-
-        for (let folder in activeObj) {
-            const div = document.createElement('div');
-            div.className = 'card'; div.innerHTML = `<i class="fas fa-folder" style="color:#666"></i><div class="card-filename">${folder}</div>`;
-            div.onclick = () => { currentPath.push(folder); render(); };
-            content.appendChild(div);
-        }
-
-        const files = allFiles[currentPath.join('/')] || [];
-        files.filter(f => f.name.toLowerCase().includes(query)).forEach((f, i) => {
-            const div = document.createElement('div');
-            div.className = 'card';
-            div.innerHTML = `<i class="fas fa-file-pdf" style="color:#e74c3c"></i><div class="card-filename">${f.name}</div><button class="btn" style="background:none; color:#e74c3c" onclick="event.stopPropagation();deleteFile(${i})"><i class="fas fa-trash"></i></button>`;
-            div.onclick = () => openPDF(f.data);
-            content.appendChild(div);
-        });
+    if (filtered.length === 0) {
+        grid.innerHTML = '<div style="text-align: center; padding: 60px; background: rgba(255,255,255,0.1); border-radius: 20px;">No departments found</div>';
+        return;
     }
-    updateStats();
+    
+    grid.innerHTML = filtered.map(dept => `
+        <div class="department-card" onclick="selectDepartment('${dept.name}')">
+            <div class="card-header">
+                <div class="dept-icon" style="background: ${dept.color}40;">
+                    <i class="${dept.icon}" style="color: ${dept.color};"></i>
+                </div>
+                <div class="dept-menu">
+                    <i class="fas fa-ellipsis-v"></i>
+                </div>
+            </div>
+            <div class="card-body">
+                <h3>${dept.name}</h3>
+                <p>${dept.description}</p>
+            </div>
+            <div class="card-stats">
+                <div class="stat">
+                    <i class="fas fa-file-pdf"></i> ${dept.items} documents
+                </div>
+                <div class="view-link">
+                    View Details <i class="fas fa-arrow-right"></i>
+                </div>
+            </div>
+        </div>
+    `).join('');
 }
 
-function updateStats() {
-    let fCount = 0; for (let p in allFiles) fCount += allFiles[p].length;
-    document.getElementById('fileCount').textContent = fCount;
-    document.getElementById('folderCount').textContent = Object.keys(fileSystem).length;
+// Select department - opens PDF viewer for that department
+function selectDepartment(deptName) {
+    alert(`Opening ${deptName} department documents. This would show all PDF files for ${deptName}.`);
+    // In a full implementation, this would load PDFs for the selected department
 }
 
-function addFolder() {
-    const n = prompt("Folder Name:");
-    if (!n) return;
-    currentPath.reduce((o, i) => o[i], fileSystem)[n] = {};
-    saveToDB(); render();
-}
-
-function deleteFile(i) {
-    if (confirm("Delete file?")) {
-        allFiles[currentPath.join('/')].splice(i, 1);
-        saveToDB(); render();
+// Add new department
+function addNewDepartment() {
+    const name = prompt("Enter new department name:");
+    if (name && name.trim()) {
+        const newDept = {
+            name: name.toUpperCase(),
+            icon: "fas fa-folder",
+            items: 0,
+            color: "#888888",
+            description: "New department"
+        };
+        departments.push(newDept);
+        renderDepartments();
+        alert(`Department "${name}" added successfully!`);
     }
 }
 
-function goBack() { currentPath.pop(); render(); }
+// Search functionality
+document.getElementById('searchInput').addEventListener('input', (e) => {
+    searchTerm = e.target.value;
+    renderDepartments();
+});
 
-document.getElementById('fileInput').onchange = (e) => {
-    const path = currentPath.join('/');
-    if (!allFiles[path]) allFiles[path] = [];
-    Array.from(e.target.files).forEach(file => {
-        const r = new FileReader();
-        r.onload = (ev) => {
-            allFiles[path].push({ name: file.name, data: ev.target.result });
-            saveToDB(); render();
-        };
-        r.readAsDataURL(file);
+// Filter buttons
+document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        // Apply filter logic here if needed
     });
-};
+});
 
-async function openPDF(d) {
-    document.getElementById('pdfViewerModal').classList.remove('hidden');
-    const loadingTask = pdfjsLib.getDocument(d);
-    pdfDoc = await loadingTask.promise;
-    currentScale = 1.0; renderPage(1);
-}
-async function renderPage(n) {
-    const page = await pdfDoc.getPage(n);
-    const canvas = document.getElementById('pdfCanvas');
-    const viewport = page.getViewport({ scale: currentScale });
-    canvas.height = viewport.height; canvas.width = viewport.width;
-    await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-}
-function zoomIn() { currentScale += 0.2; renderPage(1); }
-function zoomOut() { currentScale -= 0.2; renderPage(1); }
-function closePDFViewer() { document.getElementById('pdfViewerModal').classList.add('hidden'); }
-
-init();
+// Initialize
+renderDepartments();
 </script>
 </body>
 </html>
