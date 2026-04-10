@@ -151,7 +151,7 @@ body::before {
 }
 
 /* Compact buttons for action bar */
-.btn-back, .btn-upload, .theme-toggle {
+.btn-back, .btn-upload, .theme-toggle, .btn-backup, .btn-restore {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -169,6 +169,8 @@ body::before {
 .btn-back { background: rgba(30, 55, 80, 0.8); }
 .btn-upload { background: linear-gradient(135deg, #3b82f6, #7c3aed); color: white; }
 .theme-toggle { background: rgba(30, 55, 80, 0.8); }
+.btn-backup { background: rgba(16, 185, 129, 0.8); color: white; }
+.btn-restore { background: rgba(245, 158, 11, 0.8); color: white; }
 
 .search-container {
     flex: 1;
@@ -518,8 +520,8 @@ body::before {
 /* Mobile adjustments */
 @media (max-width: 640px) {
     .app { padding: 12px; }
-    .btn-back span, .btn-upload span, .theme-toggle span { display: none; }
-    .btn-back, .btn-upload, .theme-toggle { padding: 10px 14px; }
+    .btn-back span, .btn-upload span, .theme-toggle span, .btn-backup span, .btn-restore span { display: none; }
+    .btn-back, .btn-upload, .theme-toggle, .btn-backup, .btn-restore { padding: 10px 14px; }
     .action-btn { padding: 6px 14px; font-size: 0.75rem; }
     .action-btn i { font-size: 0.75rem; }
     .card { padding: 10px 12px; }
@@ -551,8 +553,11 @@ body::before {
       <button id="clearSearchBtn" class="clear-search hidden"><i class="fas fa-times-circle"></i></button>
     </div>
     <button id="themeToggle" class="theme-toggle"><i class="fas fa-moon"></i><span>Theme</span></button>
+    <button id="backupBtn" class="btn-backup" onclick="exportBackup()"><i class="fas fa-download"></i><span>Backup</span></button>
+    <button id="restoreBtn" class="btn-restore" onclick="triggerRestore()"><i class="fas fa-upload"></i><span>Restore</span></button>
     <button id="uploadBtn" class="btn-upload hidden" onclick="triggerUpload()"><i class="fas fa-cloud-upload-alt"></i><span>Upload</span></button>
     <input type="file" id="fileInput" accept="application/pdf" multiple>
+    <input type="file" id="restoreInput" accept=".json" onchange="importBackup(this)">
   </div>
 
   <div class="stats-bar">
@@ -1071,6 +1076,38 @@ function render() {
     updateStats();
 }
 
+async function exportBackup() {
+    const backupData = { version: 2, timestamp: Date.now(), folderStructure: fileSystem, allFiles: allFiles, recentFiles: recentFiles };
+    const jsonStr = JSON.stringify(backupData);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `oarcel_backup_${new Date().toISOString().slice(0,19)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('✅ Backup exported');
+}
+
+function triggerRestore() { document.getElementById('restoreInput').click(); }
+async function importBackup(input) {
+    if (!input.files.length) return;
+    try {
+        const text = await input.files[0].text();
+        const data = JSON.parse(text);
+        if (data.folderStructure) fileSystem = data.folderStructure;
+        if (data.allFiles) allFiles = data.allFiles;
+        if (data.recentFiles) recentFiles = data.recentFiles;
+        await saveFolderStructureToDB();
+        await saveAllFilesToDB();
+        await saveRecentToDB();
+        currentPath = [];
+        showToast('✅ Restore completed! Reloading...');
+        setTimeout(() => location.reload(), 1000);
+    } catch (e) { showToast('❌ Invalid backup file', true); }
+    input.value = '';
+}
+
 function navigateToBreadcrumb(idx) { if(idx === -1) currentPath = []; else currentPath = currentPath.slice(0, idx+1); render(); }
 function clearAllRecent() { if(confirm("Clear recent history?")){ recentFiles = []; saveRecentToDB(); updateRecentUI(); showToast("Cleared"); } }
 
@@ -1119,9 +1156,124 @@ window.renameFile = (p, old) => { const nu = prompt("New name:", old.replace('.p
 window.goBack = goBack; window.triggerUpload = triggerUpload; window.selectDepartment = selectDepartment; 
 window.openRecentFile = openRecentFile; window.clearAllRecent = clearAllRecent; window.renameCurrentFolder = renameCurrentFolder;
 window.deleteCurrentFolder = deleteCurrentFolder; window.addNewFolder = addNewFolder; window.addNewDepartment = addNewDepartment;
-window.navigateToBreadcrumb = navigateToBreadcrumb; window.openPDF = openPDF;
+window.navigateToBreadcrumb = navigateToBreadcrumb; window.exportBackup = exportBackup; window.triggerRestore = triggerRestore;
+window.importBackup = importBackup; window.openPDF = openPDF;
 
 initDB().then(() => loadFromIndexedDB()).catch(e => console.error('DB error', e));
 </script>
 </body>
-</html>.    My index file
+</html>.  My HTML.  /* PDF Viewer with zoom support */
+.pdf-viewer-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: #1a1a1a;
+    overflow: hidden;
+}
+
+.pdf-canvas-wrapper {
+    flex: 1;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    background: #525659;
+}
+
+#pdfCanvas {
+    display: block;
+    margin: 0 auto;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    background: white;
+    transition: transform 0.1s ease;
+}
+
+.pdf-zoom-controls {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding: 12px 20px;
+    background: rgba(0,0,0,0.9);
+    border-top: 1px solid rgba(255,255,255,0.1);
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+}
+
+.zoom-btn {
+    background: rgba(255,255,255,0.15);
+    border: none;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 40px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    touch-action: manipulation;
+    min-width: 80px;
+    justify-content: center;
+}
+
+.zoom-btn:active {
+    transform: scale(0.96);
+    background: #6366f1;
+}
+
+.zoom-level {
+    color: white;
+    font-size: 14px;
+    background: rgba(0,0,0,0.5);
+    padding: 8px 16px;
+    border-radius: 30px;
+    font-weight: 500;
+}
+
+/* Mobile zoom hint */
+.zoom-hint {
+    position: absolute;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.7);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 30px;
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 20;
+    white-space: nowrap;
+    backdrop-filter: blur(10px);
+    animation: fadeOut 3s forwards;
+}
+
+@keyframes fadeOut {
+    0% { opacity: 1; }
+    70% { opacity: 1; }
+    100% { opacity: 0; visibility: hidden; }
+}.   My CSS.  function openPDF(dataUrl, fileName) {
+    try {
+        // Fetch the blob from data URL properly
+        fetch(dataUrl)
+            .then(res => res.blob())
+            .then(blob => {
+                const blobUrl = URL.createObjectURL(blob);
+                const folderPath = currentPath.join("/");
+                addToRecent(fileName, folderPath, dataUrl);
+                window.open(blobUrl, '_blank');
+                setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+                showToast(`Opening ${fileName}...`);
+            })
+            .catch(err => {
+                console.error('Fetch error:', err);
+                showToast('Failed to open PDF', true);
+            });
+    } catch (err) {
+        console.error('Error opening PDF:', err);
+        showToast('Failed to open PDF', true);
+    }
+}. My app Js
