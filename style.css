@@ -1,8 +1,8 @@
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     min-height: 100vh;
-    /* Change this URL to your wallpaper image */
-    background: url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1600') no-repeat center center fixed;
+    /* CHANGE THIS PATH to match your image location */
+    background: url('wallpaper.jpg') no-repeat center center fixed;
     background-size: cover;
     position: relative;
     overflow-x: hidden;
@@ -10,7 +10,7 @@ body {
     transition: background 0.3s ease;
 }
 
-/* Dark overlay for better text readability - adjust opacity as needed */
+/* Dark overlay for better text visibility - adjust 0.5 to make darker/lighter */
 body::before {
     content: '';
     position: fixed;
@@ -18,9 +18,9 @@ body::before {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(0, 0, 0, 0.5);
     pointer-events: none;
     z-index: 0;
 }
 
-/* Remove the animated glow effect by deleting the old body::before */
+/* Remove the old animated glow effect - DELETE the old body::before block */
