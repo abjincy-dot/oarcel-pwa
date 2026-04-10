@@ -19,7 +19,8 @@
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     min-height: 100vh;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    /* Beautiful Blue Gradient Background */
+    background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
     background-attachment: fixed;
     color: #fff;
 }
@@ -44,7 +45,7 @@ body {
 .logo h1 {
     font-size: 1.8rem;
     font-weight: 700;
-    background: linear-gradient(135deg, #fff, #e0d4ff);
+    background: linear-gradient(135deg, #fff, #90caf9);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -64,13 +65,19 @@ body {
 .notification-icon, .profile-icon {
     width: 40px;
     height: 40px;
-    background: rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.15);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.notification-icon:hover, .profile-icon:hover {
+    background: rgba(255,255,255,0.25);
+    transform: translateY(-2px);
 }
 
 /* Stats Cards */
@@ -82,7 +89,7 @@ body {
 }
 
 .stat-card {
-    background: rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.1);
     backdrop-filter: blur(10px);
     border-radius: 24px;
     padding: 24px;
@@ -92,6 +99,7 @@ body {
 
 .stat-card:hover {
     transform: translateY(-5px);
+    background: rgba(255,255,255,0.15);
 }
 
 .stat-card h3 {
@@ -180,11 +188,18 @@ body {
 .search-box {
     display: flex;
     align-items: center;
-    background: rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.12);
     border-radius: 40px;
-    padding: 8px 20px;
+    padding: 10px 24px;
     flex: 1;
     max-width: 400px;
+    border: 1px solid rgba(255,255,255,0.15);
+    transition: all 0.3s ease;
+}
+
+.search-box:focus-within {
+    background: rgba(255,255,255,0.18);
+    border-color: rgba(255,255,255,0.3);
 }
 
 .search-box i {
@@ -211,7 +226,7 @@ body {
 }
 
 .filter-btn {
-    background: rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.12);
     border: 1px solid rgba(255,255,255,0.2);
     padding: 8px 20px;
     border-radius: 40px;
@@ -221,11 +236,16 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.filter-btn:hover {
+    background: rgba(255,255,255,0.2);
 }
 
 .filter-btn.active {
-    background: rgba(255,255,255,0.3);
-    border-color: rgba(255,255,255,0.5);
+    background: rgba(255,255,255,0.25);
+    border-color: rgba(255,255,255,0.4);
 }
 
 /* Departments Grid */
@@ -236,19 +256,19 @@ body {
 }
 
 .department-card {
-    background: rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.08);
     backdrop-filter: blur(10px);
     border-radius: 20px;
     padding: 20px;
-    border: 1px solid rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.12);
     cursor: pointer;
     transition: all 0.3s ease;
 }
 
 .department-card:hover {
-    background: rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.14);
     transform: translateY(-3px);
-    border-color: rgba(255,255,255,0.3);
+    border-color: rgba(255,255,255,0.25);
 }
 
 .card-header {
@@ -261,7 +281,7 @@ body {
 .dept-icon {
     width: 48px;
     height: 48px;
-    background: rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.15);
     border-radius: 16px;
     display: flex;
     align-items: center;
@@ -272,6 +292,7 @@ body {
 .dept-menu {
     opacity: 0.6;
     cursor: pointer;
+    transition: opacity 0.3s ease;
 }
 
 .dept-menu:hover {
@@ -312,6 +333,7 @@ body {
     text-decoration: none;
     font-size: 0.8rem;
     opacity: 0.8;
+    transition: opacity 0.3s ease;
 }
 
 .view-link:hover {
@@ -349,7 +371,36 @@ body {
         flex-direction: column;
         text-align: center;
     }
+    
+    .stat-number {
+        font-size: 2rem;
+    }
 }
+
+/* Animation for cards */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.department-card {
+    animation: fadeInUp 0.4s ease forwards;
+}
+
+.department-card:nth-child(1) { animation-delay: 0s; }
+.department-card:nth-child(2) { animation-delay: 0.05s; }
+.department-card:nth-child(3) { animation-delay: 0.1s; }
+.department-card:nth-child(4) { animation-delay: 0.15s; }
+.department-card:nth-child(5) { animation-delay: 0.2s; }
+.department-card:nth-child(6) { animation-delay: 0.25s; }
+.department-card:nth-child(7) { animation-delay: 0.3s; }
+.department-card:nth-child(8) { animation-delay: 0.35s; }
 </style>
 </head>
 <body>
@@ -410,9 +461,9 @@ body {
             <input type="text" id="searchInput" placeholder="Search departments...">
         </div>
         <div class="filter-buttons">
-            <button class="filter-btn active"><i class="fas fa-th-large"></i> All</button>
-            <button class="filter-btn"><i class="fas fa-star"></i> Favorites</button>
-            <button class="filter-btn"><i class="fas fa-chart-line"></i> Trending</button>
+            <button class="filter-btn active" data-filter="all"><i class="fas fa-th-large"></i> All</button>
+            <button class="filter-btn" data-filter="favorites"><i class="fas fa-star"></i> Favorites</button>
+            <button class="filter-btn" data-filter="trending"><i class="fas fa-chart-line"></i> Trending</button>
         </div>
     </div>
 
@@ -425,38 +476,47 @@ body {
 <script>
 // Department data
 const departments = [
-    { name: "REMELT", icon: "fas fa-fire", items: 26, color: "#d45a2b", description: "Metal remelting and processing" },
-    { name: "CASTER", icon: "fas fa-industry", items: 8, color: "#1f8a7c", description: "Casting operations" },
-    { name: "HRM", icon: "fas fa-users", items: 8, color: "#6b6bd6", description: "Human resource management" },
-    { name: "CRM", icon: "fas fa-chart-line", items: 8, color: "#e68a2e", description: "Customer relationship management" },
-    { name: "ANNEALING", icon: "fas fa-temperature-high", items: 8, color: "#c53b6b", description: "Heat treatment process" },
-    { name: "TLL", icon: "fas fa-microchip", items: 8, color: "#1f958b", description: "Technology and logistics" },
-    { name: "SLITTER", icon: "fas fa-cut", items: 8, color: "#3b70e0", description: "Slitting operations" },
-    { name: "UTILITY", icon: "fas fa-bolt", items: 8, color: "#cf4a2e", description: "Utility services" }
+    { name: "REMELT", icon: "fas fa-fire", items: 26, color: "#d45a2b", description: "Metal remelting and processing", favorite: false },
+    { name: "CASTER", icon: "fas fa-industry", items: 8, color: "#1f8a7c", description: "Casting operations management", favorite: true },
+    { name: "HRM", icon: "fas fa-users", items: 8, color: "#6b6bd6", description: "Human resource management", favorite: false },
+    { name: "CRM", icon: "fas fa-chart-line", items: 8, color: "#e68a2e", description: "Customer relationship management", favorite: true },
+    { name: "ANNEALING", icon: "fas fa-temperature-high", items: 8, color: "#c53b6b", description: "Heat treatment process", favorite: false },
+    { name: "TLL", icon: "fas fa-microchip", items: 8, color: "#1f958b", description: "Technology and logistics", favorite: false },
+    { name: "SLITTER", icon: "fas fa-cut", items: 8, color: "#3b70e0", description: "Slitting operations", favorite: false },
+    { name: "UTILITY", icon: "fas fa-bolt", items: 8, color: "#cf4a2e", description: "Utility services management", favorite: false }
 ];
 
 let searchTerm = '';
+let currentFilter = 'all';
 
 // Render departments
 function renderDepartments() {
     const grid = document.getElementById('departmentsGrid');
-    const filtered = departments.filter(dept => 
+    
+    let filtered = departments.filter(dept => 
         dept.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
     
+    // Apply filter
+    if (currentFilter === 'favorites') {
+        filtered = filtered.filter(dept => dept.favorite === true);
+    } else if (currentFilter === 'trending') {
+        filtered = filtered.filter(dept => dept.items > 10);
+    }
+    
     if (filtered.length === 0) {
-        grid.innerHTML = '<div style="text-align: center; padding: 60px; background: rgba(255,255,255,0.1); border-radius: 20px;">No departments found</div>';
+        grid.innerHTML = '<div style="text-align: center; padding: 60px; background: rgba(255,255,255,0.08); border-radius: 20px; backdrop-filter: blur(10px);">No departments found</div>';
         return;
     }
     
     grid.innerHTML = filtered.map(dept => `
         <div class="department-card" onclick="selectDepartment('${dept.name}')">
             <div class="card-header">
-                <div class="dept-icon" style="background: ${dept.color}40;">
+                <div class="dept-icon" style="background: ${dept.color}30;">
                     <i class="${dept.icon}" style="color: ${dept.color};"></i>
                 </div>
-                <div class="dept-menu">
-                    <i class="fas fa-ellipsis-v"></i>
+                <div class="dept-menu" onclick="event.stopPropagation(); toggleFavorite('${dept.name}')">
+                    <i class="fas ${dept.favorite ? 'fa-star' : 'fa-star-o'}" style="color: ${dept.favorite ? '#ffc107' : 'rgba(255,255,255,0.5)'};"></i>
                 </div>
             </div>
             <div class="card-body">
@@ -475,6 +535,15 @@ function renderDepartments() {
     `).join('');
 }
 
+// Toggle favorite
+function toggleFavorite(deptName) {
+    const dept = departments.find(d => d.name === deptName);
+    if (dept) {
+        dept.favorite = !dept.favorite;
+        renderDepartments();
+    }
+}
+
 // Select department - opens PDF viewer for that department
 function selectDepartment(deptName) {
     alert(`Opening ${deptName} department documents. This would show all PDF files for ${deptName}.`);
@@ -490,7 +559,8 @@ function addNewDepartment() {
             icon: "fas fa-folder",
             items: 0,
             color: "#888888",
-            description: "New department"
+            description: "Newly added department",
+            favorite: false
         };
         departments.push(newDept);
         renderDepartments();
@@ -509,7 +579,8 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
     btn.addEventListener('click', function() {
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
         this.classList.add('active');
-        // Apply filter logic here if needed
+        currentFilter = this.getAttribute('data-filter');
+        renderDepartments();
     });
 });
 
