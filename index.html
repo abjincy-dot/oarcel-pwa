@@ -11,21 +11,6 @@
 <meta name="theme-color" content="#0a1128">
 <link rel="apple-touch-icon" href="https://img.icons8.com/fluency/192/folder-invoices.png">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<!-- PDF.js core - using multiple CDN sources for reliability -->
-<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/build/pdf.min.js"></script>
-<script>
-    // Fallback in case the first CDN fails
-    if (typeof pdfjsLib === 'undefined') {
-        var script = document.createElement('script');
-        script.src = 'https://unpkg.com/pdfjs-dist@2.16.105/build/pdf.min.js';
-        script.onload = function() {
-            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@2.16.105/build/pdf.worker.min.js';
-        };
-        document.head.appendChild(script);
-    } else {
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/build/pdf.worker.min.js';
-    }
-</script>
 <style>
 * {
     margin: 0;
@@ -63,7 +48,6 @@ body {
     transition: background 0.3s ease;
 }
 
-/* Prevent body scroll when PDF modal is open */
 body.pdf-modal-open {
     overflow: hidden;
     position: fixed;
@@ -446,7 +430,7 @@ body.light-mode .header-title .owner-name {
     display: inline-block;
 }
 
-/* PDF Viewer Modal */
+/* PDF Viewer Modal - Simple iframe approach */
 .pdf-viewer-modal {
     position: fixed;
     top: 0;
@@ -465,67 +449,44 @@ body.light-mode .header-title .owner-name {
     display: flex;
     flex-direction: column;
     background: #1a1a1a;
-    overflow: hidden;
 }
 
-.pdf-canvas-wrapper {
-    flex: 1;
-    overflow: auto;
-    -webkit-overflow-scrolling: touch;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    background: #525659;
-    padding: 20px;
-    touch-action: pan-x pan-y pinch-zoom;
-}
-
-#pdfCanvas {
-    display: block;
-    margin: 0 auto;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-    background: white;
-    touch-action: none;
-}
-
-.pdf-zoom-controls {
+.pdf-toolbar {
     display: flex;
     justify-content: center;
     gap: 20px;
     padding: 12px 20px;
     background: rgba(0,0,0,0.9);
-    border-top: 1px solid rgba(255,255,255,0.1);
-    position: sticky;
-    bottom: 0;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
     z-index: 10;
 }
 
-.zoom-btn {
+.pdf-toolbar button {
     background: rgba(255,255,255,0.15);
     border: none;
     color: white;
-    padding: 12px 24px;
+    padding: 10px 20px;
     border-radius: 40px;
-    font-size: 18px;
+    font-size: 14px;
     font-weight: bold;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    touch-action: manipulation;
-    min-width: 80px;
-    justify-content: center;
 }
 
-.zoom-btn:active { transform: scale(0.96); background: #6366f1; }
+.pdf-toolbar button:active { transform: scale(0.96); background: #6366f1; }
 
-.zoom-level {
-    color: white;
-    font-size: 14px;
-    background: rgba(0,0,0,0.5);
-    padding: 8px 16px;
-    border-radius: 30px;
-    font-weight: 500;
+.pdf-iframe-wrapper {
+    flex: 1;
+    background: #525659;
+}
+
+#pdfFrame {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: white;
 }
 
 @media (max-width: 640px) {
@@ -537,11 +498,11 @@ body.light-mode .header-title .owner-name {
     .card-filename { font-size: 0.8rem; }
     .dept-oval { padding: 8px 18px; }
     .stat-item span { font-size: 1.1rem; }
-    .zoom-btn { padding: 8px 16px; font-size: 14px; min-width: 60px; }
     .toast { white-space: nowrap; font-size: 0.75rem; bottom: 20px; }
     .header-title h1 { font-size: 1.2rem; }
     .header-title .doc-tag { font-size: 0.6rem; }
     .header-title .owner-name { font-size: 0.6rem; }
+    .pdf-toolbar button { padding: 8px 12px; font-size: 12px; }
 }
 </style>
 </head>
@@ -589,17 +550,16 @@ body.light-mode .header-title .owner-name {
   <div id="content" class="content"></div>
 </div>
 
-<!-- PDF Viewer Modal -->
+<!-- PDF Viewer Modal - Using iframe for reliable rendering -->
 <div id="pdfViewerModal" class="pdf-viewer-modal hidden">
   <div class="pdf-viewer-container">
-    <div class="pdf-canvas-wrapper" id="pdfCanvasWrapper">
-      <canvas id="pdfCanvas"></canvas>
+    <div class="pdf-toolbar">
+      <button id="pdfCloseBtn"><i class="fas fa-times"></i> Close</button>
+      <button id="pdfZoomInBtn"><i class="fas fa-search-plus"></i> Zoom In</button>
+      <button id="pdfZoomOutBtn"><i class="fas fa-search-minus"></i> Zoom Out</button>
     </div>
-    <div class="pdf-zoom-controls">
-      <button class="zoom-btn" id="zoomOutBtn"><i class="fas fa-search-minus"></i> -</button>
-      <span class="zoom-level" id="zoomLevel">100%</span>
-      <button class="zoom-btn" id="zoomInBtn"><i class="fas fa-search-plus"></i> +</button>
-      <button class="zoom-btn" id="closePdfBtn"><i class="fas fa-times"></i> Close</button>
+    <div class="pdf-iframe-wrapper">
+      <iframe id="pdfFrame" title="PDF Viewer"></iframe>
     </div>
   </div>
 </div>
@@ -607,22 +567,6 @@ body.light-mode .header-title .owner-name {
 <div id="toast" class="toast hidden"><i class="fas fa-check-circle"></i><span></span></div>
 
 <script>
-// Wait for PDF.js to be ready
-function waitForPDFjs() {
-    return new Promise((resolve) => {
-        if (typeof pdfjsLib !== 'undefined') {
-            resolve();
-        } else {
-            const checkInterval = setInterval(() => {
-                if (typeof pdfjsLib !== 'undefined') {
-                    clearInterval(checkInterval);
-                    resolve();
-                }
-            }, 100);
-        }
-    });
-}
-
 // ==================== INDEXEDDB CORE ====================
 const DB_NAME = 'OarcelDB';
 const DB_VERSION = 3;
@@ -634,8 +578,9 @@ let currentPath = [];
 let isSearchMode = false;
 
 // PDF viewer globals
-let pdfDoc = null, currentScale = 1.0, pdfCanvas = null, ctx = null;
-let wrapper = null;
+let currentPdfBlobUrl = null;
+let pdfFrame = null;
+let currentZoom = 1.0;
 
 function initDB() {
     return new Promise((resolve, reject) => {
@@ -763,33 +708,30 @@ function openRecentFile(path, name) {
     else showToast('File not found', true);
 }
 
-// PDF OPENING FUNCTION
+// PDF OPENING FUNCTION - Using iframe for reliability
 async function openPDF(dataUrl, fileName) {
-    await waitForPDFjs();
-    
     const modal = document.getElementById('pdfViewerModal');
     modal.classList.remove('hidden');
     document.body.classList.add('pdf-modal-open');
     
-    pdfCanvas = document.getElementById('pdfCanvas');
-    wrapper = document.getElementById('pdfCanvasWrapper');
-    ctx = pdfCanvas.getContext('2d');
+    pdfFrame = document.getElementById('pdfFrame');
+    currentZoom = 1.0;
     
     showToast(`Loading ${fileName}...`);
     
     try {
+        // Clean up old blob URL
+        if (currentPdfBlobUrl) {
+            URL.revokeObjectURL(currentPdfBlobUrl);
+        }
+        
+        // Convert data URL to blob
         const response = await fetch(dataUrl);
         const blob = await response.blob();
-        const blobUrl = URL.createObjectURL(blob);
+        currentPdfBlobUrl = URL.createObjectURL(blob);
         
-        const loadingTask = pdfjsLib.getDocument(blobUrl);
-        pdfDoc = await loadingTask.promise;
-        
-        currentScale = 1.0;
-        await renderPage();
-        updateZoomDisplay();
-        
-        URL.revokeObjectURL(blobUrl);
+        // Load PDF in iframe
+        pdfFrame.src = currentPdfBlobUrl;
         
         const folderPath = currentPath.join("/");
         addToRecent(fileName, folderPath, dataUrl);
@@ -801,47 +743,46 @@ async function openPDF(dataUrl, fileName) {
     }
 }
 
-async function renderPage() {
-    if (!pdfDoc) return;
-    try {
-        const page = await pdfDoc.getPage(1);
-        const viewport = page.getViewport({ scale: currentScale });
-        pdfCanvas.width = viewport.width;
-        pdfCanvas.height = viewport.height;
-        pdfCanvas.style.width = `${viewport.width}px`;
-        pdfCanvas.style.height = `${viewport.height}px`;
-        await page.render({ canvasContext: ctx, viewport }).promise;
-    } catch (err) {
-        console.error('Render error:', err);
-        showToast('Failed to render PDF page', true);
+function zoomPDFIn() {
+    if (pdfFrame) {
+        currentZoom = Math.min(currentZoom + 0.2, 3.0);
+        pdfFrame.style.transform = `scale(${currentZoom})`;
+        pdfFrame.style.transformOrigin = 'top left';
+        pdfFrame.style.width = `${100 / currentZoom}%`;
+        pdfFrame.style.height = `${100 / currentZoom}%`;
     }
 }
 
-function zoomIn() { 
-    if (pdfDoc && currentScale < 3.0) { 
-        currentScale += 0.25; 
-        renderPage(); 
-        updateZoomDisplay(); 
-    } 
+function zoomPDFOut() {
+    if (pdfFrame) {
+        currentZoom = Math.max(currentZoom - 0.2, 0.5);
+        pdfFrame.style.transform = `scale(${currentZoom})`;
+        pdfFrame.style.transformOrigin = 'top left';
+        pdfFrame.style.width = `${100 / currentZoom}%`;
+        pdfFrame.style.height = `${100 / currentZoom}%`;
+    }
 }
-function zoomOut() { 
-    if (pdfDoc && currentScale > 0.5) { 
-        currentScale -= 0.25; 
-        renderPage(); 
-        updateZoomDisplay(); 
-    } 
+
+function resetPDFZoom() {
+    if (pdfFrame) {
+        currentZoom = 1.0;
+        pdfFrame.style.transform = 'scale(1)';
+        pdfFrame.style.transformOrigin = '';
+        pdfFrame.style.width = '100%';
+        pdfFrame.style.height = '100%';
+    }
 }
-function updateZoomDisplay() { 
-    document.getElementById('zoomLevel').textContent = `${Math.round(currentScale * 100)}%`; 
-}
+
 function closePDFViewer() { 
     document.getElementById('pdfViewerModal').classList.add('hidden'); 
     document.body.classList.remove('pdf-modal-open');
-    pdfDoc = null;
-    currentScale = 1.0;
-    if (wrapper) {
-        wrapper.scrollTop = 0;
-        wrapper.scrollLeft = 0;
+    if (pdfFrame) {
+        pdfFrame.src = 'about:blank';
+        resetPDFZoom();
+    }
+    if (currentPdfBlobUrl) {
+        URL.revokeObjectURL(currentPdfBlobUrl);
+        currentPdfBlobUrl = null;
     }
 }
 
@@ -992,11 +933,9 @@ function updateThemeIcon() { const isDark = !document.body.classList.contains('l
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
-    await waitForPDFjs();
-    
-    document.getElementById('zoomInBtn').addEventListener('click', zoomIn);
-    document.getElementById('zoomOutBtn').addEventListener('click', zoomOut);
-    document.getElementById('closePdfBtn').addEventListener('click', closePDFViewer);
+    document.getElementById('pdfCloseBtn').addEventListener('click', closePDFViewer);
+    document.getElementById('pdfZoomInBtn').addEventListener('click', zoomPDFIn);
+    document.getElementById('pdfZoomOutBtn').addEventListener('click', zoomPDFOut);
     document.getElementById('themeToggle').onclick = toggleTheme;
     if(localStorage.getItem('oarcel_theme') === 'light-mode') document.body.classList.add('light-mode');
     updateThemeIcon();
