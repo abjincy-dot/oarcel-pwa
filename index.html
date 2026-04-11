@@ -11,8 +11,6 @@
 <meta name="theme-color" content="#0a1128">
 <link rel="apple-touch-icon" href="https://img.icons8.com/fluency/192/folder-invoices.png">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<!-- PDF.js - Fixed version -->
-<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/build/pdf.min.js"></script>
 <style>
 * {
     margin: 0;
@@ -48,13 +46,6 @@ body {
     overflow-x: hidden;
     color: var(--text-primary);
     transition: background 0.3s ease;
-}
-
-body.pdf-modal-open {
-    overflow: hidden;
-    position: fixed;
-    width: 100%;
-    height: 100%;
 }
 
 body::before {
@@ -432,87 +423,6 @@ body.light-mode .header-title .owner-name {
     display: inline-block;
 }
 
-/* PDF Viewer Modal */
-.pdf-viewer-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 2000;
-    background: #1a1a1a;
-}
-
-.pdf-viewer-modal.hidden { display: none; }
-
-.pdf-viewer-container {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    background: #1a1a1a;
-}
-
-.pdf-toolbar {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 15px;
-    padding: 10px 20px;
-    background: rgba(0,0,0,0.85);
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-    z-index: 10;
-    flex-wrap: wrap;
-    flex-shrink: 0;
-}
-
-.pdf-toolbar button {
-    background: rgba(255,255,255,0.15);
-    border: none;
-    color: white;
-    padding: 8px 18px;
-    border-radius: 40px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    transition: all 0.2s;
-}
-
-.pdf-toolbar button:active { transform: scale(0.96); background: #3b82f6; }
-
-.pdf-toolbar .pdf-filename {
-    color: #9ac4e4;
-    font-size: 13px;
-    margin-left: auto;
-    margin-right: auto;
-    max-width: 300px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.pdf-canvas-container {
-    flex: 1;
-    overflow-y: auto;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 20px;
-    background: #525659;
-}
-
-#pdfCanvas {
-    display: block;
-    margin: 0 auto;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-    background: white;
-}
-
 @media (max-width: 640px) {
     .app { padding: 12px; }
     .btn-back span, .btn-upload span, .theme-toggle span { display: none; }
@@ -526,7 +436,6 @@ body.light-mode .header-title .owner-name {
     .header-title h1 { font-size: 1.2rem; }
     .header-title .doc-tag { font-size: 0.6rem; }
     .header-title .owner-name { font-size: 0.6rem; }
-    .pdf-toolbar button { padding: 6px 12px; font-size: 11px; }
 }
 </style>
 </head>
@@ -574,30 +483,9 @@ body.light-mode .header-title .owner-name {
   <div id="content" class="content"></div>
 </div>
 
-<!-- PDF Viewer Modal -->
-<div id="pdfViewerModal" class="pdf-viewer-modal hidden">
-  <div class="pdf-viewer-container">
-    <div class="pdf-toolbar">
-      <button id="pdfCloseBtn"><i class="fas fa-times"></i> Close</button>
-      <span class="pdf-filename" id="pdfFilename">Loading...</span>
-      <button id="pdfZoomOutBtn"><i class="fas fa-search-minus"></i> Zoom Out</button>
-      <span id="pdfZoomLevel" style="color:white; background:rgba(255,255,255,0.2); padding:5px 12px; border-radius:20px;">100%</span>
-      <button id="pdfZoomInBtn"><i class="fas fa-search-plus"></i> Zoom In</button>
-    </div>
-    <div class="pdf-canvas-container" id="pdfContainer">
-      <canvas id="pdfCanvas"></canvas>
-    </div>
-  </div>
-</div>
-
 <div id="toast" class="toast hidden"><i class="fas fa-check-circle"></i><span></span></div>
 
 <script>
-// Configure PDF.js worker
-if (typeof pdfjsLib !== 'undefined') {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/build/pdf.worker.min.js';
-}
-
 // ==================== INDEXEDDB CORE ====================
 const DB_NAME = 'OarcelDB';
 const DB_VERSION = 3;
@@ -607,14 +495,6 @@ let fileSystem = {};
 let recentFiles = [];
 let currentPath = [];
 let isSearchMode = false;
-
-// PDF viewer globals
-let pdfDoc = null;
-let currentPage = 1;
-let currentScale = 1.0;
-let totalPages = 0;
-let pdfCanvas = null;
-let ctx = null;
 
 function initDB() {
     return new Promise((resolve, reject) => {
@@ -742,97 +622,33 @@ function openRecentFile(path, name) {
     else showToast('File not found', true);
 }
 
-// RENDER ALL PAGES FOR MULTI-PAGE PDF (Horizontal support)
-async function renderAllPages() {
-    const container = document.getElementById('pdfContainer');
-    // Clear previous canvases
-    while (container.firstChild) {
-        container.removeChild(container.firstChild);
-    }
-    
-    for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
-        const page = await pdfDoc.getPage(pageNum);
-        const viewport = page.getViewport({ scale: currentScale });
-        
-        const canvas = document.createElement('canvas');
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-        canvas.style.width = `${viewport.width}px`;
-        canvas.style.height = `${viewport.height}px`;
-        canvas.style.marginBottom = '10px';
-        canvas.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)';
-        canvas.style.backgroundColor = 'white';
-        
-        container.appendChild(canvas);
-        
-        const ctx = canvas.getContext('2d');
-        await page.render({ canvasContext: ctx, viewport }).promise;
-    }
-}
-
-async function openPDF(dataUrl, fileName) {
-    const modal = document.getElementById('pdfViewerModal');
-    modal.classList.remove('hidden');
-    document.body.classList.add('pdf-modal-open');
-    
-    const filenameSpan = document.getElementById('pdfFilename');
-    filenameSpan.textContent = fileName;
-    
-    showToast(`Loading ${fileName}...`);
-    
+// SIMPLE PDF OPENING - Direct download/view in new tab
+// This avoids all rendering issues and uses the device's native PDF viewer
+function openPDF(dataUrl, fileName) {
     try {
-        const response = await fetch(dataUrl);
-        const blob = await response.blob();
-        const blobUrl = URL.createObjectURL(blob);
+        showToast(`Opening ${fileName}...`);
         
-        const loadingTask = pdfjsLib.getDocument(blobUrl);
-        pdfDoc = await loadingTask.promise;
-        totalPages = pdfDoc.numPages;
-        currentScale = 1.0;
+        // Create a temporary link element
+        const link = document.createElement('a');
+        link.download = fileName;
+        link.href = dataUrl;
+        link.target = '_blank';
         
-        await renderAllPages();
-        updateZoomDisplay();
+        // For mobile, this will trigger download or open in native viewer
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
         
-        URL.revokeObjectURL(blobUrl);
-        
+        // Add to recent files
         const folderPath = currentPath.join("/");
         addToRecent(fileName, folderPath, dataUrl);
-        showToast(`${fileName} loaded (${totalPages} pages)`);
+        
+        setTimeout(() => {
+            showToast(`Opening ${fileName} in PDF viewer`);
+        }, 500);
     } catch (err) {
-        console.error('PDF error:', err);
-        showToast(`Error: ${err.message}`, true);
-        closePDFViewer();
-    }
-}
-
-async function zoomIn() {
-    if (pdfDoc && currentScale < 3.0) {
-        currentScale = Math.min(currentScale + 0.25, 3.0);
-        await renderAllPages();
-        updateZoomDisplay();
-    }
-}
-
-async function zoomOut() {
-    if (pdfDoc && currentScale > 0.5) {
-        currentScale = Math.max(currentScale - 0.25, 0.5);
-        await renderAllPages();
-        updateZoomDisplay();
-    }
-}
-
-function updateZoomDisplay() {
-    document.getElementById('pdfZoomLevel').textContent = `${Math.round(currentScale * 100)}%`;
-}
-
-function closePDFViewer() {
-    document.getElementById('pdfViewerModal').classList.add('hidden');
-    document.body.classList.remove('pdf-modal-open');
-    pdfDoc = null;
-    currentScale = 1.0;
-    const container = document.getElementById('pdfContainer');
-    while (container.firstChild) {
-        container.removeChild(container.firstChild);
+        console.error('PDF open error:', err);
+        showToast(`Error opening PDF: ${err.message}`, true);
     }
 }
 
@@ -983,9 +799,6 @@ function updateThemeIcon() { const isDark = !document.body.classList.contains('l
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
-    document.getElementById('pdfCloseBtn').addEventListener('click', closePDFViewer);
-    document.getElementById('pdfZoomInBtn').addEventListener('click', zoomIn);
-    document.getElementById('pdfZoomOutBtn').addEventListener('click', zoomOut);
     document.getElementById('themeToggle').onclick = toggleTheme;
     if(localStorage.getItem('oarcel_theme') === 'light-mode') document.body.classList.add('light-mode');
     updateThemeIcon();
