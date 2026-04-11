@@ -11,10 +11,20 @@
 <meta name="theme-color" content="#0a1128">
 <link rel="apple-touch-icon" href="https://img.icons8.com/fluency/192/folder-invoices.png">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<!-- PDF.js core -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<!-- PDF.js core - using multiple CDN sources for reliability -->
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/build/pdf.min.js"></script>
 <script>
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+    // Fallback in case the first CDN fails
+    if (typeof pdfjsLib === 'undefined') {
+        var script = document.createElement('script');
+        script.src = 'https://unpkg.com/pdfjs-dist@2.16.105/build/pdf.min.js';
+        script.onload = function() {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@2.16.105/build/pdf.worker.min.js';
+        };
+        document.head.appendChild(script);
+    } else {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/build/pdf.worker.min.js';
+    }
 </script>
 <style>
 * {
@@ -436,7 +446,7 @@ body.light-mode .header-title .owner-name {
     display: inline-block;
 }
 
-/* PDF Viewer Modal - FIXED pinch zoom */
+/* PDF Viewer Modal */
 .pdf-viewer-modal {
     position: fixed;
     top: 0;
@@ -458,7 +468,6 @@ body.light-mode .header-title .owner-name {
     overflow: hidden;
 }
 
-/* Canvas wrapper handles pinch zoom - NOT the entire page */
 .pdf-canvas-wrapper {
     flex: 1;
     overflow: auto;
@@ -468,7 +477,6 @@ body.light-mode .header-title .owner-name {
     align-items: flex-start;
     background: #525659;
     padding: 20px;
-    /* Enable smooth pinch zoom on this container only */
     touch-action: pan-x pan-y pinch-zoom;
 }
 
@@ -477,7 +485,6 @@ body.light-mode .header-title .owner-name {
     margin: 0 auto;
     box-shadow: 0 2px 8px rgba(0,0,0,0.3);
     background: white;
-    /* Prevent browser zoom on canvas */
     touch-action: none;
 }
 
@@ -600,6 +607,22 @@ body.light-mode .header-title .owner-name {
 <div id="toast" class="toast hidden"><i class="fas fa-check-circle"></i><span></span></div>
 
 <script>
+// Wait for PDF.js to be ready
+function waitForPDFjs() {
+    return new Promise((resolve) => {
+        if (typeof pdfjsLib !== 'undefined') {
+            resolve();
+        } else {
+            const checkInterval = setInterval(() => {
+                if (typeof pdfjsLib !== 'undefined') {
+                    clearInterval(checkInterval);
+                    resolve();
+                }
+            }, 100);
+        }
+    });
+}
+
 // ==================== INDEXEDDB CORE ====================
 const DB_NAME = 'OarcelDB';
 const DB_VERSION = 3;
@@ -740,12 +763,12 @@ function openRecentFile(path, name) {
     else showToast('File not found', true);
 }
 
-// FIXED PDF OPENING with proper pinch zoom handling
+// PDF OPENING FUNCTION
 async function openPDF(dataUrl, fileName) {
+    await waitForPDFjs();
+    
     const modal = document.getElementById('pdfViewerModal');
     modal.classList.remove('hidden');
-    
-    // Prevent body scroll when modal is open
     document.body.classList.add('pdf-modal-open');
     
     pdfCanvas = document.getElementById('pdfCanvas');
@@ -967,7 +990,10 @@ function escapeHtml(str) { const div = document.createElement('div'); div.textCo
 function toggleTheme() { document.body.classList.toggle('light-mode'); localStorage.setItem('oarcel_theme', document.body.classList.contains('light-mode') ? 'light-mode' : ''); updateThemeIcon(); }
 function updateThemeIcon() { const isDark = !document.body.classList.contains('light-mode'); document.getElementById('themeToggle').innerHTML = isDark ? '<i class="fas fa-sun"></i><span>Light</span>' : '<i class="fas fa-moon"></i><span>Dark</span>'; }
 
-document.addEventListener('DOMContentLoaded', () => {
+// Initialize
+document.addEventListener('DOMContentLoaded', async () => {
+    await waitForPDFjs();
+    
     document.getElementById('zoomInBtn').addEventListener('click', zoomIn);
     document.getElementById('zoomOutBtn').addEventListener('click', zoomOut);
     document.getElementById('closePdfBtn').addEventListener('click', closePDFViewer);
@@ -984,8 +1010,16 @@ document.addEventListener('DOMContentLoaded', () => {
     window.deleteFile = (p,n) => { if(confirm(`Delete "${n}"?`)) deleteFileFromFolder(p,n); };
     window.renameFile = (p,old) => { const nu = prompt("New name:", old.replace('.pdf','')); if(nu?.trim()) renameFileInFolder(p, old, nu.trim()); };
     window.openRecentFile = openRecentFile;
-    initDB().then(() => loadFromIndexedDB()).catch(e => console.error(e));
+    
+    try {
+        await initDB();
+        await loadFromIndexedDB();
+    } catch(e) {
+        console.error(e);
+        showToast('Database error', true);
+    }
 });
+
 window.goBack = goBack; window.triggerUpload = triggerUpload; window.selectDepartment = selectDepartment; window.navigateToBreadcrumb = navigateToBreadcrumb;
 window.renameCurrentFolder = renameCurrentFolder; window.deleteCurrentFolder = deleteCurrentFolder; window.addNewFolder = addNewFolder; window.addNewDepartment = addNewDepartment;
 window.clearAllRecent = clearAllRecent; window.openPDF = openPDF;
