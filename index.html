@@ -11,11 +11,8 @@
 <meta name="theme-color" content="#0a1128">
 <link rel="apple-touch-icon" href="https://img.icons8.com/fluency/192/folder-invoices.png">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<!-- PDF.js -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-<script>
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-</script>
+<!-- PDF.js - Fixed version -->
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/build/pdf.min.js"></script>
 <style>
 * {
     margin: 0;
@@ -435,7 +432,7 @@ body.light-mode .header-title .owner-name {
     display: inline-block;
 }
 
-/* PDF Viewer Modal - PDF.js with multi-page vertical scrolling */
+/* PDF Viewer Modal */
 .pdf-viewer-modal {
     position: fixed;
     top: 0;
@@ -497,29 +494,23 @@ body.light-mode .header-title .owner-name {
     white-space: nowrap;
 }
 
-/* Multi-page PDF container - VERTICAL SCROLLING */
-.pdf-pages-container {
+.pdf-canvas-container {
     flex: 1;
-    overflow-y: auto !important;
-    overflow-x: auto !important;
+    overflow-y: auto;
+    overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-    background: #525659;
-    padding: 20px;
-}
-
-#pdfPages {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 16px;
+    padding: 20px;
+    background: #525659;
 }
 
-.pdf-page-canvas {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    background: white;
+#pdfCanvas {
     display: block;
-    max-width: 100%;
-    height: auto;
+    margin: 0 auto;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    background: white;
 }
 
 @media (max-width: 640px) {
@@ -536,7 +527,6 @@ body.light-mode .header-title .owner-name {
     .header-title .doc-tag { font-size: 0.6rem; }
     .header-title .owner-name { font-size: 0.6rem; }
     .pdf-toolbar button { padding: 6px 12px; font-size: 11px; }
-    .pdf-toolbar .pdf-filename { font-size: 10px; max-width: 150px; }
 }
 </style>
 </head>
@@ -584,19 +574,18 @@ body.light-mode .header-title .owner-name {
   <div id="content" class="content"></div>
 </div>
 
-<!-- PDF Viewer Modal - PDF.js Multi-page -->
+<!-- PDF Viewer Modal -->
 <div id="pdfViewerModal" class="pdf-viewer-modal hidden">
   <div class="pdf-viewer-container">
     <div class="pdf-toolbar">
       <button id="pdfCloseBtn"><i class="fas fa-times"></i> Close</button>
       <span class="pdf-filename" id="pdfFilename">Loading...</span>
       <button id="pdfZoomOutBtn"><i class="fas fa-search-minus"></i> Zoom Out</button>
-      <span id="pdfZoomLevel" style="color:white; font-size:12px;">100%</span>
+      <span id="pdfZoomLevel" style="color:white; background:rgba(255,255,255,0.2); padding:5px 12px; border-radius:20px;">100%</span>
       <button id="pdfZoomInBtn"><i class="fas fa-search-plus"></i> Zoom In</button>
-      <button id="pdfFullscreenBtn"><i class="fas fa-expand"></i> Fullscreen</button>
     </div>
-    <div class="pdf-pages-container" id="pdfPagesContainer">
-      <div id="pdfPages"></div>
+    <div class="pdf-canvas-container" id="pdfContainer">
+      <canvas id="pdfCanvas"></canvas>
     </div>
   </div>
 </div>
@@ -604,6 +593,11 @@ body.light-mode .header-title .owner-name {
 <div id="toast" class="toast hidden"><i class="fas fa-check-circle"></i><span></span></div>
 
 <script>
+// Configure PDF.js worker
+if (typeof pdfjsLib !== 'undefined') {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/build/pdf.worker.min.js';
+}
+
 // ==================== INDEXEDDB CORE ====================
 const DB_NAME = 'OarcelDB';
 const DB_VERSION = 3;
@@ -614,11 +608,13 @@ let recentFiles = [];
 let currentPath = [];
 let isSearchMode = false;
 
-// PDF.js viewer globals
-let currentPdfDoc = null;
+// PDF viewer globals
+let pdfDoc = null;
+let currentPage = 1;
 let currentScale = 1.0;
-let currentPdfDataUrl = null;
-let currentFileName = '';
+let totalPages = 0;
+let pdfCanvas = null;
+let ctx = null;
 
 function initDB() {
     return new Promise((resolve, reject) => {
@@ -746,36 +742,62 @@ function openRecentFile(path, name) {
     else showToast('File not found', true);
 }
 
-// PDF.js Multi-page renderer with vertical scrolling
+// RENDER ALL PAGES FOR MULTI-PAGE PDF (Horizontal support)
+async function renderAllPages() {
+    const container = document.getElementById('pdfContainer');
+    // Clear previous canvases
+    while (container.firstChild) {
+        container.removeChild(container.firstChild);
+    }
+    
+    for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+        const page = await pdfDoc.getPage(pageNum);
+        const viewport = page.getViewport({ scale: currentScale });
+        
+        const canvas = document.createElement('canvas');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        canvas.style.width = `${viewport.width}px`;
+        canvas.style.height = `${viewport.height}px`;
+        canvas.style.marginBottom = '10px';
+        canvas.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)';
+        canvas.style.backgroundColor = 'white';
+        
+        container.appendChild(canvas);
+        
+        const ctx = canvas.getContext('2d');
+        await page.render({ canvasContext: ctx, viewport }).promise;
+    }
+}
+
 async function openPDF(dataUrl, fileName) {
     const modal = document.getElementById('pdfViewerModal');
     modal.classList.remove('hidden');
     document.body.classList.add('pdf-modal-open');
     
-    currentFileName = fileName;
-    document.getElementById('pdfFilename').textContent = fileName;
-    currentPdfDataUrl = dataUrl;
-    currentScale = 1.0;
-    updateZoomDisplay();
+    const filenameSpan = document.getElementById('pdfFilename');
+    filenameSpan.textContent = fileName;
     
     showToast(`Loading ${fileName}...`);
     
     try {
-        // Clean up old PDF
-        if (currentPdfDoc) {
-            currentPdfDoc.destroy();
-        }
+        const response = await fetch(dataUrl);
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
         
-        // Load PDF document
-        const loadingTask = pdfjsLib.getDocument(dataUrl);
-        currentPdfDoc = await loadingTask.promise;
+        const loadingTask = pdfjsLib.getDocument(blobUrl);
+        pdfDoc = await loadingTask.promise;
+        totalPages = pdfDoc.numPages;
+        currentScale = 1.0;
         
-        // Render all pages
         await renderAllPages();
+        updateZoomDisplay();
+        
+        URL.revokeObjectURL(blobUrl);
         
         const folderPath = currentPath.join("/");
         addToRecent(fileName, folderPath, dataUrl);
-        showToast(`${fileName} loaded - ${currentPdfDoc.numPages} page(s)`);
+        showToast(`${fileName} loaded (${totalPages} pages)`);
     } catch (err) {
         console.error('PDF error:', err);
         showToast(`Error: ${err.message}`, true);
@@ -783,65 +805,19 @@ async function openPDF(dataUrl, fileName) {
     }
 }
 
-async function renderAllPages() {
-    if (!currentPdfDoc) return;
-    
-    const pagesContainer = document.getElementById('pdfPages');
-    pagesContainer.innerHTML = '';
-    
-    const numPages = currentPdfDoc.numPages;
-    
-    for (let pageNum = 1; pageNum <= numPages; pageNum++) {
-        const page = await currentPdfDoc.getPage(pageNum);
-        const viewport = page.getViewport({ scale: currentScale });
-        
-        // Create canvas for this page
-        const canvas = document.createElement('canvas');
-        canvas.className = 'pdf-page-canvas';
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-        canvas.style.width = `${viewport.width}px`;
-        canvas.style.height = `${viewport.height}px`;
-        
-        const context = canvas.getContext('2d');
-        await page.render({ canvasContext: context, viewport }).promise;
-        
-        // Add page number indicator
-        const pageWrapper = document.createElement('div');
-        pageWrapper.style.marginBottom = '16px';
-        pageWrapper.style.textAlign = 'center';
-        
-        const pageLabel = document.createElement('div');
-        pageLabel.textContent = `Page ${pageNum} of ${numPages}`;
-        pageLabel.style.color = '#ccc';
-        pageLabel.style.fontSize = '12px';
-        pageLabel.style.marginBottom = '8px';
-        
-        pageWrapper.appendChild(pageLabel);
-        pageWrapper.appendChild(canvas);
-        pagesContainer.appendChild(pageWrapper);
-    }
-    
-    // Scroll to top
-    const container = document.getElementById('pdfPagesContainer');
-    if (container) {
-        container.scrollTop = 0;
+async function zoomIn() {
+    if (pdfDoc && currentScale < 3.0) {
+        currentScale = Math.min(currentScale + 0.25, 3.0);
+        await renderAllPages();
+        updateZoomDisplay();
     }
 }
 
-async function zoomPDFIn() {
-    if (currentPdfDoc && currentScale < 2.5) {
-        currentScale += 0.25;
-        updateZoomDisplay();
+async function zoomOut() {
+    if (pdfDoc && currentScale > 0.5) {
+        currentScale = Math.max(currentScale - 0.25, 0.5);
         await renderAllPages();
-    }
-}
-
-async function zoomPDFOut() {
-    if (currentPdfDoc && currentScale > 0.5) {
-        currentScale -= 0.25;
         updateZoomDisplay();
-        await renderAllPages();
     }
 }
 
@@ -849,24 +825,14 @@ function updateZoomDisplay() {
     document.getElementById('pdfZoomLevel').textContent = `${Math.round(currentScale * 100)}%`;
 }
 
-function closePDFViewer() { 
-    document.getElementById('pdfViewerModal').classList.add('hidden'); 
+function closePDFViewer() {
+    document.getElementById('pdfViewerModal').classList.add('hidden');
     document.body.classList.remove('pdf-modal-open');
-    if (currentPdfDoc) {
-        currentPdfDoc.destroy();
-        currentPdfDoc = null;
-    }
-    document.getElementById('pdfPages').innerHTML = '';
-}
-
-function toggleFullscreen() {
-    const modal = document.getElementById('pdfViewerModal');
-    if (!document.fullscreenElement) {
-        modal.requestFullscreen().catch(err => {
-            showToast(`Fullscreen error: ${err.message}`, true);
-        });
-    } else {
-        document.exitFullscreen();
+    pdfDoc = null;
+    currentScale = 1.0;
+    const container = document.getElementById('pdfContainer');
+    while (container.firstChild) {
+        container.removeChild(container.firstChild);
     }
 }
 
@@ -1018,9 +984,8 @@ function updateThemeIcon() { const isDark = !document.body.classList.contains('l
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('pdfCloseBtn').addEventListener('click', closePDFViewer);
-    document.getElementById('pdfZoomInBtn').addEventListener('click', zoomPDFIn);
-    document.getElementById('pdfZoomOutBtn').addEventListener('click', zoomPDFOut);
-    document.getElementById('pdfFullscreenBtn').addEventListener('click', toggleFullscreen);
+    document.getElementById('pdfZoomInBtn').addEventListener('click', zoomIn);
+    document.getElementById('pdfZoomOutBtn').addEventListener('click', zoomOut);
     document.getElementById('themeToggle').onclick = toggleTheme;
     if(localStorage.getItem('oarcel_theme') === 'light-mode') document.body.classList.add('light-mode');
     updateThemeIcon();
