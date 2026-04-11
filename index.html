@@ -622,34 +622,43 @@ function openRecentFile(path, name) {
     else showToast('File not found', true);
 }
 
-// SIMPLE PDF OPENING - Direct download/view in new tab
-// This avoids all rendering issues and uses the device's native PDF viewer
+// FIXED PDF OPENING - Using blob URL and window.open
 function openPDF(dataUrl, fileName) {
-    try {
-        showToast(`Opening ${fileName}...`);
-        
-        // Create a temporary link element
-        const link = document.createElement('a');
-        link.download = fileName;
-        link.href = dataUrl;
-        link.target = '_blank';
-        
-        // For mobile, this will trigger download or open in native viewer
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        // Add to recent files
-        const folderPath = currentPath.join("/");
-        addToRecent(fileName, folderPath, dataUrl);
-        
-        setTimeout(() => {
-            showToast(`Opening ${fileName} in PDF viewer`);
-        }, 500);
-    } catch (err) {
-        console.error('PDF open error:', err);
-        showToast(`Error opening PDF: ${err.message}`, true);
-    }
+    showToast(`Opening ${fileName}...`);
+    
+    // Convert data URL to blob and open in new tab
+    fetch(dataUrl)
+        .then(response => response.blob())
+        .then(blob => {
+            const blobUrl = URL.createObjectURL(blob);
+            // Open in new tab/window
+            const newWindow = window.open(blobUrl, '_blank');
+            
+            // Fallback if popup blocked
+            if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+                // Try alternative method
+                const link = document.createElement('a');
+                link.href = blobUrl;
+                link.target = '_blank';
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+            
+            // Clean up blob URL after a delay
+            setTimeout(() => {
+                URL.revokeObjectURL(blobUrl);
+            }, 60000);
+            
+            // Add to recent files
+            const folderPath = currentPath.join("/");
+            addToRecent(fileName, folderPath, dataUrl);
+        })
+        .catch(err => {
+            console.error('PDF error:', err);
+            showToast(`Failed to open PDF: ${err.message}`, true);
+        });
 }
 
 function selectDepartment(d) { currentPath = [d]; render(); }
