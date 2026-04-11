@@ -430,7 +430,7 @@ body.light-mode .header-title .owner-name {
     display: inline-block;
 }
 
-/* PDF Viewer Modal - Clean iframe with native browser controls */
+/* PDF Viewer Modal - Fixed for multi-page scrolling */
 .pdf-viewer-modal {
     position: fixed;
     top: 0;
@@ -461,6 +461,7 @@ body.light-mode .header-title .owner-name {
     border-bottom: 1px solid rgba(255,255,255,0.1);
     z-index: 10;
     flex-wrap: wrap;
+    flex-shrink: 0;
 }
 
 .pdf-toolbar button {
@@ -491,17 +492,23 @@ body.light-mode .header-title .owner-name {
     white-space: nowrap;
 }
 
+/* CRITICAL FIX: Wrapper must allow vertical scrolling */
 .pdf-iframe-wrapper {
     flex: 1;
     background: #525659;
-    overflow: auto;
+    overflow-y: auto !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    position: relative;
 }
 
 #pdfFrame {
     width: 100%;
     height: 100%;
+    min-height: 100%;
     border: none;
     background: white;
+    display: block;
 }
 
 @media (max-width: 640px) {
@@ -566,7 +573,7 @@ body.light-mode .header-title .owner-name {
   <div id="content" class="content"></div>
 </div>
 
-<!-- PDF Viewer Modal - Simple iframe with native browser PDF viewer -->
+<!-- PDF Viewer Modal - Fixed for multi-page scrolling -->
 <div id="pdfViewerModal" class="pdf-viewer-modal hidden">
   <div class="pdf-viewer-container">
     <div class="pdf-toolbar">
@@ -574,7 +581,7 @@ body.light-mode .header-title .owner-name {
       <span class="pdf-filename" id="pdfFilename">Loading...</span>
       <button id="pdfFullscreenBtn"><i class="fas fa-expand"></i> Fullscreen</button>
     </div>
-    <div class="pdf-iframe-wrapper">
+    <div class="pdf-iframe-wrapper" id="pdfWrapper">
       <iframe id="pdfFrame" title="PDF Viewer" allowfullscreen></iframe>
     </div>
   </div>
@@ -723,16 +730,23 @@ function openRecentFile(path, name) {
     else showToast('File not found', true);
 }
 
-// PDF OPENING - Using iframe with browser's native PDF viewer (supports multiple pages)
+// PDF OPENING - Fixed for multi-page scrolling
 async function openPDF(dataUrl, fileName) {
     const modal = document.getElementById('pdfViewerModal');
     modal.classList.remove('hidden');
     document.body.classList.add('pdf-modal-open');
     
     const pdfFrame = document.getElementById('pdfFrame');
+    const pdfWrapper = document.getElementById('pdfWrapper');
     const filenameSpan = document.getElementById('pdfFilename');
     currentFileName = fileName;
     filenameSpan.textContent = fileName;
+    
+    // Reset scroll position
+    if (pdfWrapper) {
+        pdfWrapper.scrollTop = 0;
+        pdfWrapper.scrollLeft = 0;
+    }
     
     showToast(`Loading ${fileName}...`);
     
@@ -747,12 +761,23 @@ async function openPDF(dataUrl, fileName) {
         const blob = await response.blob();
         currentPdfBlobUrl = URL.createObjectURL(blob);
         
-        // Load PDF in iframe - browser's native PDF viewer handles multiple pages
+        // Load PDF in iframe - browser's native PDF viewer handles multiple pages with scrolling
         pdfFrame.src = currentPdfBlobUrl;
+        
+        // Ensure iframe loads properly and enables scrolling
+        pdfFrame.onload = function() {
+            // Try to enable scrolling within the iframe's document
+            try {
+                const iframeDoc = pdfFrame.contentDocument || pdfFrame.contentWindow.document;
+                if (iframeDoc) {
+                    iframeDoc.body.style.overflow = 'auto';
+                }
+            } catch(e) { /* Cross-origin, can't access */ }
+            showToast(`${fileName} loaded - Scroll vertically for all pages`);
+        };
         
         const folderPath = currentPath.join("/");
         addToRecent(fileName, folderPath, dataUrl);
-        showToast(`${fileName} loaded`);
     } catch (err) {
         console.error('PDF error:', err);
         showToast(`Error: ${err.message}`, true);
@@ -766,6 +791,7 @@ function closePDFViewer() {
     const pdfFrame = document.getElementById('pdfFrame');
     if (pdfFrame) {
         pdfFrame.src = 'about:blank';
+        pdfFrame.onload = null;
     }
     if (currentPdfBlobUrl) {
         URL.revokeObjectURL(currentPdfBlobUrl);
