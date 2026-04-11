@@ -430,7 +430,7 @@ body.light-mode .header-title .owner-name {
     display: inline-block;
 }
 
-/* PDF Viewer Modal - Simple iframe approach */
+/* PDF Viewer Modal - Clean iframe with native browser controls */
 .pdf-viewer-modal {
     position: fixed;
     top: 0;
@@ -454,32 +454,47 @@ body.light-mode .header-title .owner-name {
 .pdf-toolbar {
     display: flex;
     justify-content: center;
-    gap: 20px;
-    padding: 12px 20px;
-    background: rgba(0,0,0,0.9);
+    align-items: center;
+    gap: 15px;
+    padding: 10px 20px;
+    background: rgba(0,0,0,0.85);
     border-bottom: 1px solid rgba(255,255,255,0.1);
     z-index: 10;
+    flex-wrap: wrap;
 }
 
 .pdf-toolbar button {
     background: rgba(255,255,255,0.15);
     border: none;
     color: white;
-    padding: 10px 20px;
+    padding: 8px 18px;
     border-radius: 40px;
     font-size: 14px;
-    font-weight: bold;
+    font-weight: 500;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    transition: all 0.2s;
 }
 
-.pdf-toolbar button:active { transform: scale(0.96); background: #6366f1; }
+.pdf-toolbar button:active { transform: scale(0.96); background: #3b82f6; }
+
+.pdf-toolbar .pdf-filename {
+    color: #9ac4e4;
+    font-size: 13px;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
 
 .pdf-iframe-wrapper {
     flex: 1;
     background: #525659;
+    overflow: auto;
 }
 
 #pdfFrame {
@@ -502,7 +517,8 @@ body.light-mode .header-title .owner-name {
     .header-title h1 { font-size: 1.2rem; }
     .header-title .doc-tag { font-size: 0.6rem; }
     .header-title .owner-name { font-size: 0.6rem; }
-    .pdf-toolbar button { padding: 8px 12px; font-size: 12px; }
+    .pdf-toolbar button { padding: 6px 12px; font-size: 11px; }
+    .pdf-toolbar .pdf-filename { font-size: 10px; max-width: 150px; }
 }
 </style>
 </head>
@@ -550,16 +566,16 @@ body.light-mode .header-title .owner-name {
   <div id="content" class="content"></div>
 </div>
 
-<!-- PDF Viewer Modal - Using iframe for reliable rendering -->
+<!-- PDF Viewer Modal - Simple iframe with native browser PDF viewer -->
 <div id="pdfViewerModal" class="pdf-viewer-modal hidden">
   <div class="pdf-viewer-container">
     <div class="pdf-toolbar">
       <button id="pdfCloseBtn"><i class="fas fa-times"></i> Close</button>
-      <button id="pdfZoomInBtn"><i class="fas fa-search-plus"></i> Zoom In</button>
-      <button id="pdfZoomOutBtn"><i class="fas fa-search-minus"></i> Zoom Out</button>
+      <span class="pdf-filename" id="pdfFilename">Loading...</span>
+      <button id="pdfFullscreenBtn"><i class="fas fa-expand"></i> Fullscreen</button>
     </div>
     <div class="pdf-iframe-wrapper">
-      <iframe id="pdfFrame" title="PDF Viewer"></iframe>
+      <iframe id="pdfFrame" title="PDF Viewer" allowfullscreen></iframe>
     </div>
   </div>
 </div>
@@ -579,8 +595,7 @@ let isSearchMode = false;
 
 // PDF viewer globals
 let currentPdfBlobUrl = null;
-let pdfFrame = null;
-let currentZoom = 1.0;
+let currentFileName = '';
 
 function initDB() {
     return new Promise((resolve, reject) => {
@@ -708,14 +723,16 @@ function openRecentFile(path, name) {
     else showToast('File not found', true);
 }
 
-// PDF OPENING FUNCTION - Using iframe for reliability
+// PDF OPENING - Using iframe with browser's native PDF viewer (supports multiple pages)
 async function openPDF(dataUrl, fileName) {
     const modal = document.getElementById('pdfViewerModal');
     modal.classList.remove('hidden');
     document.body.classList.add('pdf-modal-open');
     
-    pdfFrame = document.getElementById('pdfFrame');
-    currentZoom = 1.0;
+    const pdfFrame = document.getElementById('pdfFrame');
+    const filenameSpan = document.getElementById('pdfFilename');
+    currentFileName = fileName;
+    filenameSpan.textContent = fileName;
     
     showToast(`Loading ${fileName}...`);
     
@@ -730,7 +747,7 @@ async function openPDF(dataUrl, fileName) {
         const blob = await response.blob();
         currentPdfBlobUrl = URL.createObjectURL(blob);
         
-        // Load PDF in iframe
+        // Load PDF in iframe - browser's native PDF viewer handles multiple pages
         pdfFrame.src = currentPdfBlobUrl;
         
         const folderPath = currentPath.join("/");
@@ -743,46 +760,27 @@ async function openPDF(dataUrl, fileName) {
     }
 }
 
-function zoomPDFIn() {
-    if (pdfFrame) {
-        currentZoom = Math.min(currentZoom + 0.2, 3.0);
-        pdfFrame.style.transform = `scale(${currentZoom})`;
-        pdfFrame.style.transformOrigin = 'top left';
-        pdfFrame.style.width = `${100 / currentZoom}%`;
-        pdfFrame.style.height = `${100 / currentZoom}%`;
-    }
-}
-
-function zoomPDFOut() {
-    if (pdfFrame) {
-        currentZoom = Math.max(currentZoom - 0.2, 0.5);
-        pdfFrame.style.transform = `scale(${currentZoom})`;
-        pdfFrame.style.transformOrigin = 'top left';
-        pdfFrame.style.width = `${100 / currentZoom}%`;
-        pdfFrame.style.height = `${100 / currentZoom}%`;
-    }
-}
-
-function resetPDFZoom() {
-    if (pdfFrame) {
-        currentZoom = 1.0;
-        pdfFrame.style.transform = 'scale(1)';
-        pdfFrame.style.transformOrigin = '';
-        pdfFrame.style.width = '100%';
-        pdfFrame.style.height = '100%';
-    }
-}
-
 function closePDFViewer() { 
     document.getElementById('pdfViewerModal').classList.add('hidden'); 
     document.body.classList.remove('pdf-modal-open');
+    const pdfFrame = document.getElementById('pdfFrame');
     if (pdfFrame) {
         pdfFrame.src = 'about:blank';
-        resetPDFZoom();
     }
     if (currentPdfBlobUrl) {
         URL.revokeObjectURL(currentPdfBlobUrl);
         currentPdfBlobUrl = null;
+    }
+}
+
+function toggleFullscreen() {
+    const modal = document.getElementById('pdfViewerModal');
+    if (!document.fullscreenElement) {
+        modal.requestFullscreen().catch(err => {
+            showToast(`Fullscreen error: ${err.message}`, true);
+        });
+    } else {
+        document.exitFullscreen();
     }
 }
 
@@ -934,8 +932,7 @@ function updateThemeIcon() { const isDark = !document.body.classList.contains('l
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('pdfCloseBtn').addEventListener('click', closePDFViewer);
-    document.getElementById('pdfZoomInBtn').addEventListener('click', zoomPDFIn);
-    document.getElementById('pdfZoomOutBtn').addEventListener('click', zoomPDFOut);
+    document.getElementById('pdfFullscreenBtn').addEventListener('click', toggleFullscreen);
     document.getElementById('themeToggle').onclick = toggleTheme;
     if(localStorage.getItem('oarcel_theme') === 'light-mode') document.body.classList.add('light-mode');
     updateThemeIcon();
