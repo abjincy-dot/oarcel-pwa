@@ -98,7 +98,7 @@ body::before {
     padding: 16px;
 }
 
-.header, .stats-bar, .card, .dept-oval, .action-bar, .top-bar, .recent-section, .breadcrumb, .search-container input, .empty-state {
+.header, .stats-bar, .card, .dept-oval, .action-bar, .top-bar, .breadcrumb, .search-container input, .empty-state {
     backdrop-filter: blur(16px);
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
@@ -398,19 +398,6 @@ body.light-mode .header-title .owner-name {
     border-radius: 25px;
 }
 
-.recent-section {
-    margin-bottom: 16px;
-    padding: 12px 16px;
-    border-radius: 24px;
-}
-
-.recent-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-.recent-title { font-size: 0.8rem; display: flex; align-items: center; gap: 6px; font-weight: 600; }
-.clear-recent { background: rgba(239, 68, 68, 0.25); border: 1px solid rgba(239, 68, 68, 0.4); color: #fca5a5; padding: 4px 10px; border-radius: 25px; cursor: pointer; font-size: 0.65rem; }
-.recent-list { display: flex; gap: 8px; flex-wrap: wrap; }
-.recent-item { background: rgba(59, 130, 246, 0.25); padding: 5px 12px; border-radius: 25px; font-size: 0.75rem; cursor: pointer; transition: 0.1s; }
-.recent-item:active { transform: scale(0.96); }
-
 .section-title { font-size: 0.9rem; font-weight: 600; margin: 0 0 12px 0; display: flex; align-items: center; gap: 8px; }
 #fileInput { display: none; }
 
@@ -470,15 +457,10 @@ body.light-mode .header-title .owner-name {
   <div class="stats-bar">
     <div class="stat-item"><i class="fas fa-folder"></i><span id="folderCount">0</span><label>Folders</label></div>
     <div class="stat-item"><i class="fas fa-file-pdf"></i><span id="fileCount">0</span><label>Documents</label></div>
-    <div class="stat-item"><i class="fas fa-history"></i><span id="recentCount">0</span><label>Recent</label></div>
   </div>
 
   <div id="breadcrumb" class="breadcrumb"></div>
   <div id="departmentsSection"></div>
-  <div id="recentSection" class="recent-section hidden">
-    <div class="recent-header"><div class="recent-title"><i class="fas fa-history"></i> Recently Viewed</div><button class="clear-recent" onclick="clearAllRecent()"><i class="fas fa-trash-alt"></i> Clear</button></div>
-    <div id="recentList" class="recent-list"></div>
-  </div>
   <div id="searchInfo" class="search-result-info hidden"></div>
   <div id="content" class="content"></div>
 </div>
@@ -492,7 +474,6 @@ const DB_VERSION = 3;
 let db = null;
 let allFiles = {};
 let fileSystem = {};
-let recentFiles = [];
 let currentPath = [];
 let isSearchMode = false;
 
@@ -505,7 +486,6 @@ function initDB() {
             const db = e.target.result;
             if (!db.objectStoreNames.contains('files')) db.createObjectStore('files', { keyPath: 'id' });
             if (!db.objectStoreNames.contains('folderStructure')) db.createObjectStore('folderStructure', { keyPath: 'key' });
-            if (!db.objectStoreNames.contains('recent')) db.createObjectStore('recent', { keyPath: 'id' });
         };
     });
 }
@@ -520,11 +500,6 @@ function saveAllFilesToDB() {
     const store = tx.objectStore('files');
     store.clear();
     for (const folderPath in allFiles) store.put({ id: folderPath, folderPath, files: allFiles[folderPath] });
-    tx.commit();
-}
-function saveRecentToDB() {
-    const tx = db.transaction('recent', 'readwrite');
-    tx.objectStore('recent').put({ id: 'recentList', value: recentFiles });
     tx.commit();
 }
 
@@ -549,12 +524,7 @@ async function loadFromIndexedDB() {
         fileReq.onsuccess = () => {
             allFiles = {};
             for (let item of fileReq.result) allFiles[item.folderPath] = item.files;
-            const recentReq = db.transaction('recent', 'readonly').objectStore('recent').get('recentList');
-            recentReq.onsuccess = () => {
-                recentFiles = recentReq.result?.value || [];
-                updateRecentUI();
-                render();
-            };
+            render();
         };
     };
 }
@@ -575,9 +545,6 @@ function deleteFileFromFolder(folderPath, fileName) {
         allFiles[folderPath] = allFiles[folderPath].filter(f => f.name !== fileName);
         if (allFiles[folderPath].length === 0) delete allFiles[folderPath];
         saveAllFilesToDB();
-        recentFiles = recentFiles.filter(f => !(f.name === fileName && f.path === folderPath));
-        saveRecentToDB();
-        updateRecentUI();
         render();
         showToast(`✅ Deleted "${fileName}"`);
     }
@@ -590,36 +557,10 @@ function renameFileInFolder(folderPath, oldName, newName) {
             if (!newName.toLowerCase().endsWith('.pdf')) newName += '.pdf';
             allFiles[folderPath][idx].name = newName;
             saveAllFilesToDB();
-            recentFiles = recentFiles.map(f => (f.name === oldName && f.path === folderPath) ? { ...f, name: newName } : f);
-            saveRecentToDB();
-            updateRecentUI();
             render();
             showToast(`✅ Renamed to "${newName}"`);
         }
     }
-}
-
-function addToRecent(fileName, filePath, dataUrl) {
-    recentFiles = recentFiles.filter(f => !(f.name === fileName && f.path === filePath));
-    recentFiles.unshift({ name: fileName, path: filePath, dataUrl, timestamp: Date.now() });
-    if (recentFiles.length > 12) recentFiles.pop();
-    saveRecentToDB();
-    updateRecentUI();
-}
-
-function updateRecentUI() {
-    const sec = document.getElementById('recentSection');
-    const list = document.getElementById('recentList');
-    if (recentFiles.length) {
-        sec.classList.remove('hidden');
-        list.innerHTML = recentFiles.map(f => `<div class="recent-item" onclick="openRecentFile('${escapeHtml(f.path)}','${escapeHtml(f.name)}')"><i class="fas fa-file-pdf"></i> ${escapeHtml(f.name.length > 28 ? f.name.substring(0,28)+'...' : f.name)}</div>`).join('');
-    } else sec.classList.add('hidden');
-}
-
-function openRecentFile(path, name) {
-    const file = allFiles[path]?.find(f => f.name === name);
-    if (file) { currentPath = path.split('/'); render(); setTimeout(() => openPDF(file.dataUrl, name), 100); } 
-    else showToast('File not found', true);
 }
 
 // FIXED PDF OPENING - Using blob URL and window.open
@@ -650,10 +591,6 @@ function openPDF(dataUrl, fileName) {
             setTimeout(() => {
                 URL.revokeObjectURL(blobUrl);
             }, 60000);
-            
-            // Add to recent files
-            const folderPath = currentPath.join("/");
-            addToRecent(fileName, folderPath, dataUrl);
         })
         .catch(err => {
             console.error('PDF error:', err);
@@ -784,7 +721,6 @@ function addNewDepartment() {
     if(name && name.trim() && !fileSystem[name]){ fileSystem[name] = {}; saveFolderStructure(); render(); showToast(`✅ Department "${name}" created`); }
     else if(fileSystem[name]) showToast("Department exists", true);
 }
-function clearAllRecent() { if(confirm("Clear recent history?")){ recentFiles = []; saveRecentToDB(); updateRecentUI(); showToast("Cleared"); } }
 function updateStats() {
     let folderCount = 0, fileCount = 0;
     function countFolders(obj) { for(let k in obj) { if(typeof obj[k] === 'object') { folderCount++; countFolders(obj[k]); } } }
@@ -792,7 +728,6 @@ function updateStats() {
     for(let k in allFiles) fileCount += allFiles[k].length;
     document.getElementById('folderCount').textContent = folderCount;
     document.getElementById('fileCount').textContent = fileCount;
-    document.getElementById('recentCount').textContent = recentFiles.length;
 }
 function showToast(msg, isErr = false) {
     const toast = document.getElementById('toast');
@@ -820,7 +755,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('clearSearchBtn').addEventListener('click', clearSearch);
     window.deleteFile = (p,n) => { if(confirm(`Delete "${n}"?`)) deleteFileFromFolder(p,n); };
     window.renameFile = (p,old) => { const nu = prompt("New name:", old.replace('.pdf','')); if(nu?.trim()) renameFileInFolder(p, old, nu.trim()); };
-    window.openRecentFile = openRecentFile;
     
     try {
         await initDB();
@@ -833,7 +767,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 window.goBack = goBack; window.triggerUpload = triggerUpload; window.selectDepartment = selectDepartment; window.navigateToBreadcrumb = navigateToBreadcrumb;
 window.renameCurrentFolder = renameCurrentFolder; window.deleteCurrentFolder = deleteCurrentFolder; window.addNewFolder = addNewFolder; window.addNewDepartment = addNewDepartment;
-window.clearAllRecent = clearAllRecent; window.openPDF = openPDF;
+window.openPDF = openPDF;
 </script>
 </body>
 </html>
