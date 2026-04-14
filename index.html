@@ -875,4 +875,360 @@ function setupPinchZoom() {
     });
 }
 
-async function loadFrom
+async function loadFromIndexedDB() {
+    const folderReq = db.transaction('folderStructure', 'readonly').objectStore('folderStructure').get('structure');
+    folderReq.onsuccess = () => {
+        if (folderReq.result) {
+            fileSystem = folderReq.result.value;
+        } else {
+            fileSystem = {
+                "REMELT":{"A":{},"B":{},"C":{},"D":{},"E":{},"F":{},"G":{},"H":{},"I":{},"J":{},"K":{},"L":{},"M":{},"N":{},"O":{},"P":{},"Q":{},"R":{},"S":{},"T":{},"U":{},"V":{},"W":{},"X":{},"Y":{},"Z":{}},
+                "CASTER":{"Quality Reports":{},"Mechanical":{},"Maintenance":{},"Production Data":{},"Testing":{},"Checklists":{},"Safety":{},"Training":{}},
+                "HRM":{"Employee Records":{},"Attendance":{},"Performance":{},"Training Logs":{},"Safety Compliance":{},"Policies":{},"Reports":{},"Certifications":{}},
+                "CRM":{"PLC Programs":{},"CAD Drawings":{},"Electrical":{},"SCADA":{},"Automation":{},"Reports":{},"Configurations":{},"Manuals":{}},
+                "ANNEALING":{"Temperature Control":{},"Process Parameters":{},"Quality Assurance":{},"Maintenance":{},"Safety":{},"Production Logs":{},"Testing":{},"SOP Documents":{}},
+                "TLL":{"PLC Programs":{},"CAD Drawings":{},"Maintenance":{},"Production Logs":{},"Process Optimization":{},"Quality Reports":{},"Manuals":{},"Safety":{}},
+                "SLITTER":{"Blade Maintenance":{},"Quality Control":{},"Production Reports":{},"Mechanical":{},"Safety":{},"Checklists":{},"Training":{},"Testing":{}},
+                "UTILITY":{"Power Supply":{},"Water System":{},"Compressed Air":{},"HVAC":{},"Reports":{},"Safety":{},"Manuals":{},"Testing":{}}
+            };
+            saveFolderStructureToDB();
+        }
+        const fileReq = db.transaction('files', 'readonly').objectStore('files').getAll();
+        fileReq.onsuccess = () => {
+            allFiles = {};
+            for (let item of fileReq.result) allFiles[item.folderPath] = item.files;
+            const recentReq = db.transaction('recent', 'readonly').objectStore('recent').get('recentList');
+            recentReq.onsuccess = () => {
+                if (recentReq.result) recentFiles = recentReq.result.value;
+                else recentFiles = [];
+                updateRecentUI();
+                render();
+            };
+        };
+    };
+}
+
+function saveFolderStructureToDB() {
+    const tx = db.transaction('folderStructure', 'readwrite');
+    tx.objectStore('folderStructure').put({ key: 'structure', value: fileSystem });
+    tx.oncomplete = () => {};
+    tx.onerror = (e) => console.error('Save error', e);
+}
+
+function saveAllFilesToDB() {
+    const tx = db.transaction('files', 'readwrite');
+    const store = tx.objectStore('files');
+    store.clear();
+    for (const folderPath in allFiles) store.put({ id: folderPath, folderPath: folderPath, files: allFiles[folderPath] });
+    tx.oncomplete = () => {};
+    tx.onerror = (e) => console.error('Save error', e);
+}
+
+function saveRecentToDB() {
+    const tx = db.transaction('recent', 'readwrite');
+    tx.objectStore('recent').put({ id: 'recentList', value: recentFiles });
+    tx.oncomplete = () => {};
+    tx.onerror = (e) => console.error('Save error', e);
+}
+
+function showToast(msg, isErr = false) {
+    const toastEl = document.getElementById('toast');
+    toastEl.querySelector('span').textContent = msg;
+    toastEl.style.background = isErr ? "linear-gradient(135deg,#ef4444,#dc2626)" : "linear-gradient(135deg,#10b981,#059669)";
+    toastEl.classList.remove('hidden');
+    setTimeout(() => toastEl.classList.add('hidden'), 3000);
+}
+
+function escapeHtml(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+
+function updateStats() {
+    let folderCount = 0, fileCount = 0;
+    function countRecursive(obj) { for (let k in obj) { if (typeof obj[k] === 'object' && obj[k] !== null && !Array.isArray(obj[k])) { folderCount++; countRecursive(obj[k]); } } }
+    countRecursive(fileSystem);
+    for (let k in allFiles) fileCount += allFiles[k].length;
+    document.getElementById('folderCount').textContent = folderCount;
+    document.getElementById('fileCount').textContent = fileCount;
+    document.getElementById('recentCount').textContent = recentFiles.length;
+}
+
+function getCurrentFolder() { let f = fileSystem; for (let p of currentPath) { if (f[p]) f = f[p]; else return null; } return f; }
+function getCurrentFolderObject() { return currentPath.reduce((o,p)=>o?.[p], fileSystem); }
+function getFilesForCurrentFolder() { return allFiles[currentPath.join('/')] || []; }
+
+async function addFileToCurrentFolder(file) {
+    const folderPath = currentPath.join('/');
+    if (!allFiles[folderPath]) allFiles[folderPath] = [];
+    const base64 = await new Promise(r => { const rd = new FileReader(); rd.onload = e => r(e.target.result); rd.readAsDataURL(file); });
+    allFiles[folderPath].push({ name: file.name, dataUrl: base64 });
+    await saveAllFilesToDB();
+}
+
+function deleteFileFromFolder(folderPath, fileName) {
+    if (allFiles[folderPath]) {
+        allFiles[folderPath] = allFiles[folderPath].filter(f => f.name !== fileName);
+        if (allFiles[folderPath].length === 0) delete allFiles[folderPath];
+        saveAllFilesToDB();
+        recentFiles = recentFiles.filter(f => !(f.name === fileName && f.path === folderPath));
+        saveRecentToDB();
+        updateRecentUI();
+        render();
+        showToast(`✅ Deleted "${fileName}"`);
+    }
+}
+
+function renameFileInFolder(folderPath, oldName, newName) {
+    if (allFiles[folderPath]) {
+        const idx = allFiles[folderPath].findIndex(f => f.name === oldName);
+        if (idx !== -1) {
+            if (!newName.toLowerCase().endsWith('.pdf')) newName += '.pdf';
+            allFiles[folderPath][idx].name = newName;
+            saveAllFilesToDB();
+            recentFiles = recentFiles.map(f => (f.name === oldName && f.path === folderPath) ? { ...f, name: newName } : f);
+            saveRecentToDB();
+            updateRecentUI();
+            render();
+            showToast(`✅ Renamed to "${newName}"`);
+        }
+    }
+}
+
+function addToRecent(fileName, filePath, dataUrl) {
+    recentFiles = recentFiles.filter(f => !(f.name === fileName && f.path === filePath));
+    recentFiles.unshift({ name: fileName, path: filePath, dataUrl, timestamp: Date.now() });
+    if (recentFiles.length > 10) recentFiles.pop();
+    saveRecentToDB();
+    updateRecentUI();
+}
+
+function updateRecentUI() {
+    const sec = document.getElementById('recentSection');
+    const list = document.getElementById('recentList');
+    if (recentFiles.length) {
+        sec.classList.remove('hidden');
+        list.innerHTML = recentFiles.map(f => `<div class="recent-item" onclick="openRecentFile('${escapeHtml(f.path)}','${escapeHtml(f.name)}')"><i class="fas fa-file-pdf"></i> ${escapeHtml(f.name.length > 25 ? f.name.substring(0,25)+'...' : f.name)}</div>`).join('');
+    } else { sec.classList.add('hidden'); }
+}
+
+function openRecentFile(path, name) {
+    const file = allFiles[path]?.find(f => f.name === name);
+    if (file) { currentPath = path.split('/'); render(); setTimeout(() => openPDF(file.dataUrl, name), 100); } 
+    else showToast('File not found', true);
+}
+
+function renameCurrentFolder() { 
+    if (!currentPath.length) return showToast("Cannot rename root", true); 
+    const old = currentPath[currentPath.length-1], newName = prompt("New folder name:", old); 
+    if(newName && newName !== old && newName.trim()){
+        const parent = currentPath.slice(0,-1).reduce((o,p)=>o[p], fileSystem); 
+        parent[newName] = parent[old]; 
+        delete parent[old]; 
+        const oldPath = currentPath.join('/'), newPath = [...currentPath.slice(0,-1), newName].join('/'); 
+        if(allFiles[oldPath]){ allFiles[newPath] = allFiles[oldPath]; delete allFiles[oldPath]; } 
+        currentPath[currentPath.length-1] = newName; 
+        saveFolderStructureToDB(); saveAllFilesToDB(); render(); 
+        showToast(`✅ Renamed to "${newName}"`);
+    } 
+}
+
+function addNewFolder() { 
+    const name = prompt("Folder name:"); 
+    if(name && name.trim()){ 
+        const cur = getCurrentFolderObject(); 
+        if(cur && !cur[name]){ cur[name] = {}; saveFolderStructureToDB(); render(); showToast(`✅ Folder "${name}" created`); } 
+        else showToast("Exists", true); 
+    } 
+}
+
+function addNewDepartment() { 
+    const name = prompt("Department name:"); 
+    if(name && name.trim() && !fileSystem[name]){ fileSystem[name] = {}; saveFolderStructureToDB(); render(); showToast(`✅ Department "${name}" created`); } 
+    else if(fileSystem[name]) showToast("Department exists", true); 
+}
+
+function deleteCurrentFolder() { 
+    if(!currentPath.length) return; 
+    const name = currentPath[currentPath.length-1]; 
+    if(confirm(`Delete "${name}" and all contents?`)){ 
+        const path = currentPath.join('/'); 
+        delete allFiles[path]; 
+        const parent = currentPath.slice(0,-1).reduce((o,p)=>o[p], fileSystem); 
+        delete parent[name]; 
+        currentPath.pop(); 
+        saveFolderStructureToDB(); saveAllFilesToDB(); render(); 
+        showToast(`🗑️ Folder "${name}" deleted`);
+    } 
+}
+
+function selectDepartment(d) { currentPath = [d]; render(); }
+function goBack() { if(currentPath.length && !isSearchMode) { currentPath.pop(); render(); } else if(isSearchMode) clearSearch(); }
+function triggerUpload() { document.getElementById('fileInput').click(); }
+function clearSearch() { document.getElementById('searchInput').value = ''; isSearchMode = false; document.getElementById('searchInfo').classList.add('hidden'); document.getElementById('clearSearchBtn').classList.add('hidden'); render(); }
+
+function searchFiles(q) { 
+    if(!q.trim()) return []; 
+    const all = []; 
+    for(const path in allFiles) allFiles[path].forEach(f => all.push({...f, folder:path})); 
+    return all.filter(f => f.name.toLowerCase().includes(q.toLowerCase())); 
+}
+
+function createCard(title, onClick, isFolder=false, showDel=false, delPath=null, delName=null, showRename=false) {
+    const div = document.createElement('div'); div.className = 'card';
+    div.innerHTML = `
+        <div class="card-icon"><i class="fas ${isFolder ? 'fa-folder' : 'fa-file-pdf'}" style="color:${isFolder ? '#fbbf24' : '#60a5fa'}"></i></div>
+        <div class="card-filename">${escapeHtml(title)}</div>
+        <div class="card-buttons">
+            ${showRename ? `<button class="rename-file-btn" onclick="event.stopPropagation(); window.renameFile('${delPath}','${escapeHtml(delName)}')"><i class="fas fa-edit"></i> Rename</button>` : ''}
+            ${showDel ? `<button class="delete-btn" onclick="event.stopPropagation(); window.deleteFile('${delPath}','${escapeHtml(delName)}')"><i class="fas fa-trash"></i> Delete</button>` : ''}
+        </div>
+    `;
+    div.onclick = onClick; 
+    return div;
+}
+
+function render() {
+    const query = document.getElementById('searchInput').value.trim().toLowerCase();
+    if(query) {
+        isSearchMode = true;
+        document.getElementById('clearSearchBtn').classList.remove('hidden');
+        const results = searchFiles(query);
+        document.getElementById('searchInfo').classList.remove('hidden');
+        document.getElementById('searchInfo').innerHTML = `<i class="fas fa-search"></i> Found ${results.length} result(s) for "${escapeHtml(query)}" <button onclick="clearSearch()" style="background:none;border:none;color:#60a5fa;cursor:pointer;margin-left:10px;">Clear</button>`;
+        const content = document.getElementById('content'); content.innerHTML = '';
+        document.getElementById('backBtn').classList.remove('hidden');
+        document.getElementById('uploadBtn').classList.add('hidden');
+        document.getElementById('departmentsSection').innerHTML = '';
+        document.getElementById('breadcrumb').innerHTML = '';
+        if(!results.length) content.innerHTML = '<div class="empty-state"><i class="fas fa-search"></i><p>No PDFs found.</p></div>';
+        else results.forEach(f => content.appendChild(createCard(f.name, () => openPDF(f.dataUrl, f.name), false)));
+        updateStats(); return;
+    }
+    isSearchMode = false;
+    document.getElementById('clearSearchBtn').classList.add('hidden');
+    document.getElementById('searchInfo').classList.add('hidden');
+    document.getElementById('content').innerHTML = '';
+    const folder = getCurrentFolder();
+    if(!folder) { currentPath = []; render(); return; }
+    document.getElementById('backBtn').classList.toggle('hidden', currentPath.length === 0);
+    
+    const bc = document.getElementById('breadcrumb');
+    bc.innerHTML = `<div class="breadcrumb-item" onclick="navigateToBreadcrumb(-1)"><i class="fas fa-home"></i> Home</div>`;
+    currentPath.forEach((f,i) => { bc.innerHTML += `<span class="breadcrumb-separator">/</span><div class="breadcrumb-item" onclick="navigateToBreadcrumb(${i})">${escapeHtml(f)}</div>`; });
+    
+    if(currentPath.length === 0){
+        let html = '<div class="section-title"><i class="fas fa-building"></i> Departments</div><div class="departments-grid">';
+        for(let dept in fileSystem){
+            const sub = Object.keys(fileSystem[dept]).length;
+            const fcount = allFiles[dept] ? allFiles[dept].length : 0;
+            html += `<div class="dept-card" data-dept="${dept}" onclick="selectDepartment('${dept}')"><div class="dept-oval"><span>${dept}</span></div><div class="dept-arrow"><i class="fas fa-chevron-right"></i></div><div class="dept-info">${sub+fcount} items</div></div>`;
+        }
+        html += '</div>';
+        document.getElementById('departmentsSection').innerHTML = html;
+    } else { document.getElementById('departmentsSection').innerHTML = ''; }
+    
+    const isLeaf = Object.keys(folder).length === 0;
+    const isRoot = currentPath.length === 0;
+    document.getElementById('uploadBtn').classList.toggle('hidden', !(isLeaf && !isRoot));
+    
+    const actionDiv = document.createElement('div');
+    actionDiv.className = 'action-bar';
+    if(!isRoot) actionDiv.innerHTML = `<button class="action-btn rename-btn" onclick="renameCurrentFolder()"><i class="fas fa-edit"></i> Rename Folder</button><button class="action-btn delete-folder-btn" onclick="deleteCurrentFolder()"><i class="fas fa-trash-alt"></i> Delete Folder</button><button class="action-btn add-folder-btn" onclick="addNewFolder()"><i class="fas fa-plus"></i> Add Subfolder</button>`;
+    else actionDiv.innerHTML = `<button class="action-btn add-folder-btn" onclick="addNewDepartment()"><i class="fas fa-building"></i> Add Department</button>`;
+    document.getElementById('content').appendChild(actionDiv);
+    
+    if(!isRoot && !isLeaf) for(let key in folder) document.getElementById('content').appendChild(createCard(key, () => { currentPath.push(key); render(); }, true));
+    if(isLeaf && !isRoot){
+        const files = getFilesForCurrentFolder();
+        const path = currentPath.join('/');
+        if(!files.length) document.getElementById('content').innerHTML += '<div class="empty-state"><i class="fas fa-cloud-upload-alt"></i><p>No PDFs yet. Click Upload to add files.</p></div>';
+        else files.forEach(f => document.getElementById('content').appendChild(createCard(f.name, () => openPDF(f.dataUrl, f.name), false, true, path, f.name, true)));
+    }
+    updateStats();
+}
+
+async function exportBackup() {
+    const backupData = { version: 2, timestamp: Date.now(), folderStructure: fileSystem, allFiles: allFiles, recentFiles: recentFiles };
+    const jsonStr = JSON.stringify(backupData);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `oarcel_backup_${new Date().toISOString().slice(0,19)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('✅ Backup exported');
+}
+
+function triggerRestore() { document.getElementById('restoreInput').click(); }
+async function importBackup(input) {
+    if (!input.files.length) return;
+    try {
+        const text = await input.files[0].text();
+        const data = JSON.parse(text);
+        if (data.folderStructure) fileSystem = data.folderStructure;
+        if (data.allFiles) allFiles = data.allFiles;
+        if (data.recentFiles) recentFiles = data.recentFiles;
+        await saveFolderStructureToDB();
+        await saveAllFilesToDB();
+        await saveRecentToDB();
+        currentPath = [];
+        showToast('✅ Restore completed! Reloading...');
+        setTimeout(() => location.reload(), 1000);
+    } catch (e) { showToast('❌ Invalid backup file', true); }
+    input.value = '';
+}
+
+function navigateToBreadcrumb(idx) { if(idx === -1) currentPath = []; else currentPath = currentPath.slice(0, idx+1); render(); }
+function clearAllRecent() { if(confirm("Clear recent history?")){ recentFiles = []; saveRecentToDB(); updateRecentUI(); showToast("Cleared"); } }
+
+// Theme Toggle
+function toggleTheme() { 
+    document.body.classList.toggle('light-mode'); 
+    localStorage.setItem('oarcel_theme', document.body.classList.contains('light-mode') ? 'light-mode' : ''); 
+    updateThemeIcon(); 
+}
+function updateThemeIcon() { 
+    const isDark = !document.body.classList.contains('light-mode'); 
+    document.getElementById('themeToggle').innerHTML = isDark ? '<i class="fas fa-sun"></i><span>Light</span>' : '<i class="fas fa-moon"></i><span>Dark</span>'; 
+}
+
+// Initialize event listeners
+document.addEventListener('DOMContentLoaded', () => {
+    const zoomInBtn = document.getElementById('zoomInBtn');
+    const zoomOutBtn = document.getElementById('zoomOutBtn');
+    const closeBtn = document.getElementById('closePdfBtn');
+    
+    if (zoomInBtn) zoomInBtn.addEventListener('click', zoomIn);
+    if (zoomOutBtn) zoomOutBtn.addEventListener('click', zoomOut);
+    if (closeBtn) closeBtn.addEventListener('click', closePDFViewer);
+    
+    setupPinchZoom();
+});
+
+document.getElementById('themeToggle').onclick = toggleTheme;
+const savedTheme = localStorage.getItem('oarcel_theme'); 
+if(savedTheme === 'light-mode') document.body.classList.add('light-mode'); 
+updateThemeIcon();
+
+// Event Listeners
+document.getElementById('fileInput').addEventListener('change', async(e) => { 
+    const files = Array.from(e.target.files); 
+    for(let f of files) if(f.type === 'application/pdf') await addFileToCurrentFolder(f); 
+    showToast(`${files.length} PDF(s) saved!`); 
+    render(); 
+    e.target.value = ''; 
+});
+document.getElementById('searchInput').addEventListener('input', () => render());
+document.getElementById('clearSearchBtn').addEventListener('click', clearSearch);
+
+window.deleteFile = (p, n) => { if(confirm(`Delete "${n}"?`)) deleteFileFromFolder(p, n); };
+window.renameFile = (p, old) => { const nu = prompt("New name:", old.replace('.pdf','')); if(nu && nu.trim()) renameFileInFolder(p, old, nu.trim()); };
+window.goBack = goBack; window.triggerUpload = triggerUpload; window.selectDepartment = selectDepartment; 
+window.openRecentFile = openRecentFile; window.clearAllRecent = clearAllRecent; window.renameCurrentFolder = renameCurrentFolder;
+window.deleteCurrentFolder = deleteCurrentFolder; window.addNewFolder = addNewFolder; window.addNewDepartment = addNewDepartment;
+window.navigateToBreadcrumb = navigateToBreadcrumb; window.exportBackup = exportBackup; window.triggerRestore = triggerRestore;
+window.importBackup = importBackup; window.openPDF = openPDF;
+
+initDB().then(() => loadFromIndexedDB()).catch(e => console.error('DB error', e));
+</script>
+</body>
+</html>
