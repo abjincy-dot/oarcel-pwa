@@ -11,6 +11,11 @@
 <meta name="theme-color" content="#0a1128">
 <link rel="apple-touch-icon" href="https://img.icons8.com/fluency/192/folder-invoices.png">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<!-- PDF.js library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+</script>
 <style>
 * {
     margin: 0;
@@ -18,8 +23,9 @@
     box-sizing: border-box;
 }
 
+/* Light Mode Variables */
 :root {
-    --bg-gradient: url("https://raw.githubusercontent.com/abjincy-dot/oarcel-pwa/main/images/wallpaper.jpg");
+    --bg-gradient: linear-gradient(165deg, #0a1f3e 0%, #0c2d5e 45%, #14487a 100%);
     --glass-bg: rgba(15, 35, 55, 0.45);
     --glass-border: rgba(255, 255, 255, 0.2);
     --text-primary: #ffffff;
@@ -48,6 +54,7 @@ body {
     transition: background 0.3s ease;
 }
 
+/* Animated light rays */
 body::before {
     content: '';
     position: fixed;
@@ -66,6 +73,7 @@ body::before {
     100% { opacity: 1; transform: scale(1.05); }
 }
 
+/* Floating particles */
 @keyframes floatUp {
     0% { transform: translateY(0) translateX(0); opacity: 0.2; }
     50% { transform: translateY(-40px) translateX(20px); opacity: 0.6; }
@@ -98,7 +106,8 @@ body::before {
     padding: 16px;
 }
 
-.header, .stats-bar, .card, .dept-oval, .action-bar, .top-bar, .breadcrumb, .search-container input, .empty-state {
+/* Glassmorphic elements */
+.header, .stats-bar, .card, .dept-oval, .action-bar, .top-bar, .recent-section, .breadcrumb, .search-container input, .empty-state {
     backdrop-filter: blur(16px);
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
@@ -126,42 +135,8 @@ body::before {
     font-size: 1.4rem;
 }
 
-.header-title {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-.header-title .main-line {
-    display: flex;
-    align-items: baseline;
-    flex-wrap: wrap;
-    gap: 8px;
-    row-gap: 4px;
-}
-.header-title h1 { 
-    font-size: 1.4rem; 
-    font-weight: 700; 
-    letter-spacing: -0.3px;
-    margin: 0;
-}
-.header-title .doc-tag { 
-    font-size: 0.7rem; 
-    color: #9ac4e4;
-    background: rgba(255,255,255,0.1);
-    padding: 2px 8px;
-    border-radius: 20px;
-    display: inline-block;
-}
-.header-title .owner-name {
-    font-size: 0.7rem;
-    font-weight: 400;
-    color: #cde4ff;
-    margin-top: 2px;
-    word-spacing: -0.15em;
-}
-body.light-mode .header-title .owner-name {
-    color: #2c5282;
-}
+.header-title h1 { font-size: 1.4rem; font-weight: 700; }
+.header-title span { font-size: 0.65rem; color: #9ac4e4; }
 
 .top-bar {
     display: flex;
@@ -175,134 +150,8 @@ body.light-mode .header-title .owner-name {
     border-radius: 50px;
 }
 
-/* ===== NEW BACK BUTTON STYLES ===== */
-.btn-back {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 40px;
-    font-weight: 600;
-    font-size: 0.85rem;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    backdrop-filter: blur(8px);
-    color: var(--text-primary);
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2));
-    border: 1px solid rgba(59, 130, 246, 0.5);
-    position: relative;
-    overflow: hidden;
-}
-
-.btn-back::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(59, 130, 246, 0.4);
-    transform: translate(-50%, -50%);
-    transition: width 0.4s, height 0.4s;
-}
-
-.btn-back:hover::before {
-    width: 200px;
-    height: 200px;
-}
-
-.btn-back:hover {
-    transform: translateX(-3px);
-    border-color: rgba(59, 130, 246, 0.8);
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(139, 92, 246, 0.3));
-}
-
-.btn-back i {
-    font-size: 1rem;
-    transition: transform 0.3s ease;
-}
-
-.btn-back:hover i {
-    transform: translateX(-3px);
-}
-
-.btn-back span {
-    position: relative;
-    z-index: 1;
-}
-
-/* ===== NEW THEME TOGGLE BUTTON STYLES ===== */
-.theme-toggle {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 40px;
-    font-weight: 600;
-    font-size: 0.85rem;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    backdrop-filter: blur(8px);
-    color: var(--text-primary);
-    background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(236, 72, 153, 0.2));
-    border: 1px solid rgba(168, 85, 247, 0.5);
-    position: relative;
-    overflow: hidden;
-}
-
-.theme-toggle::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(168, 85, 247, 0.4);
-    transform: translate(-50%, -50%);
-    transition: width 0.4s, height 0.4s;
-}
-
-.theme-toggle:hover::before {
-    width: 200px;
-    height: 200px;
-}
-
-.theme-toggle:hover {
-    transform: scale(1.05);
-    border-color: rgba(168, 85, 247, 0.8);
-    background: linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(236, 72, 153, 0.3));
-}
-
-.theme-toggle i {
-    font-size: 1rem;
-    transition: transform 0.3s ease;
-}
-
-.theme-toggle:hover i {
-    transform: rotate(15deg);
-}
-
-.theme-toggle span {
-    position: relative;
-    z-index: 1;
-}
-
-/* Light mode specific styles for buttons */
-body.light-mode .btn-back {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(139, 92, 246, 0.3));
-    border-color: rgba(59, 130, 246, 0.6);
-}
-
-body.light-mode .theme-toggle {
-    background: linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(236, 72, 153, 0.3));
-    border-color: rgba(168, 85, 247, 0.6);
-}
-
-.btn-upload {
+/* Compact buttons for action bar */
+.btn-back, .btn-upload, .theme-toggle, .btn-backup, .btn-restore {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -314,15 +163,14 @@ body.light-mode .theme-toggle {
     cursor: pointer;
     transition: all 0.2s ease;
     backdrop-filter: blur(8px);
-    color: white;
-    background: linear-gradient(135deg, #3b82f6, #7c3aed);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    color: var(--text-primary);
 }
 
-.btn-upload:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(59,130,246,0.4);
-}
+.btn-back { background: rgba(30, 55, 80, 0.8); }
+.btn-upload { background: linear-gradient(135deg, #3b82f6, #7c3aed); color: white; }
+.theme-toggle { background: rgba(30, 55, 80, 0.8); }
+.btn-backup { background: rgba(16, 185, 129, 0.8); color: white; }
+.btn-restore { background: rgba(245, 158, 11, 0.8); color: white; }
 
 .search-container {
     flex: 1;
@@ -337,6 +185,7 @@ body.light-mode .theme-toggle {
     transform: translateY(-50%);
     color: #bbd9ff;
     font-size: 0.9rem;
+    z-index: 1;
 }
 
 #searchInput {
@@ -361,6 +210,7 @@ body.light-mode .theme-toggle {
     color: var(--text-secondary);
     cursor: pointer;
     font-size: 1rem;
+    z-index: 1;
 }
 
 .hidden { display: none !important; }
@@ -384,6 +234,7 @@ body.light-mode .theme-toggle {
 .stat-item span { font-size: 1.3rem; font-weight: 700; }
 .stat-item label { font-size: 0.7rem; color: var(--text-secondary); margin-left: auto; }
 
+/* ACTION BAR - MORE COMPACT */
 .action-bar {
     display: flex;
     gap: 10px;
@@ -410,16 +261,18 @@ body.light-mode .theme-toggle {
     transition: 0.2s;
 }
 
+.action-btn i { font-size: 0.85rem; }
 .action-btn:hover { transform: translateY(-1px); background: rgba(59,130,246,0.8); }
 
 .departments-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
-.dept-card { display: flex; align-items: center; gap: 14px; cursor: pointer; padding: 4px 0; transition: transform 0.1s ease; }
+.dept-card { display: flex; align-items: center; gap: 14px; cursor: pointer; padding: 4px 0; }
 .dept-card:hover { transform: translateX(5px); }
 .dept-oval { padding: 10px 24px; border-radius: 50px; background: linear-gradient(145deg, #2c6285, #1c4468); border: 1px solid rgba(255,255,255,0.25); }
 .dept-oval span { font-size: 14px; font-weight: 600; color: white; }
 .dept-arrow { color: rgba(100, 180, 250, 0.9); font-size: 14px; }
 .dept-info { margin-left: auto; font-size: 11px; background: rgba(0, 0, 0, 0.35); padding: 4px 10px; border-radius: 25px; }
 
+/* Department colors */
 .dept-card[data-dept="REMELT"] .dept-oval { background: linear-gradient(145deg, #d45a2b, #a53f15); }
 .dept-card[data-dept="CASTER"] .dept-oval { background: linear-gradient(145deg, #1f8a7c, #146b60); }
 .dept-card[data-dept="HRM"] .dept-oval { background: linear-gradient(145deg, #6b6bd6, #4a4ab0); }
@@ -431,6 +284,7 @@ body.light-mode .theme-toggle {
 
 .content { display: flex; flex-direction: column; gap: 8px; }
 
+/* CARD - FIXED OVERLAPPING ISSUE */
 .card {
     background: var(--card-bg);
     backdrop-filter: blur(14px);
@@ -445,9 +299,12 @@ body.light-mode .theme-toggle {
     transition: all 0.2s;
 }
 
-.card:hover { background: rgba(59, 130, 246, 0.2); transform: translateY(-1px); }
+.card:hover { background: rgba(59, 130, 246, 0.2); }
 
-.card-icon { width: 32px; flex-shrink: 0; }
+.card-icon {
+    width: 32px;
+    flex-shrink: 0;
+}
 .card-icon i { font-size: 1.2rem; color: #60a5fa; }
 
 .card-filename {
@@ -501,12 +358,11 @@ body.light-mode .theme-toggle {
     z-index: 1100;
     backdrop-filter: blur(12px);
     font-size: 0.85rem;
-    white-space: nowrap;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
 .empty-state { text-align: center; padding: 40px 20px; background: var(--card-bg); border-radius: 28px; }
 .empty-state i { font-size: 2.5rem; margin-bottom: 12px; opacity: 0.7; }
+.empty-state p { font-size: 0.9rem; }
 
 .breadcrumb {
     display: flex;
@@ -528,8 +384,20 @@ body.light-mode .theme-toggle {
     border-radius: 25px;
 }
 
+.recent-section {
+    margin-bottom: 16px;
+    padding: 12px 16px;
+    border-radius: 24px;
+}
+
+.recent-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.recent-title { font-size: 0.8rem; display: flex; align-items: center; gap: 6px; font-weight: 600; }
+.clear-recent { background: rgba(239, 68, 68, 0.25); border: 1px solid rgba(239, 68, 68, 0.4); color: #fca5a5; padding: 4px 10px; border-radius: 25px; cursor: pointer; font-size: 0.65rem; }
+.recent-list { display: flex; gap: 8px; flex-wrap: wrap; }
+.recent-item { background: rgba(59, 130, 246, 0.25); padding: 5px 12px; border-radius: 25px; font-size: 0.75rem; cursor: pointer; }
+
 .section-title { font-size: 0.9rem; font-weight: 600; margin: 0 0 12px 0; display: flex; align-items: center; gap: 8px; }
-#fileInput { display: none; }
+#fileInput, #restoreInput { display: none; }
 
 .search-result-info {
     margin: 8px 0;
@@ -540,19 +408,144 @@ body.light-mode .theme-toggle {
     display: inline-block;
 }
 
+/* PDF Viewer with zoom support - OPTIMIZED FOR NO CRASHING */
+.pdf-viewer-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2000;
+    background: #1a1a1a;
+}
+
+.pdf-viewer-modal.hidden {
+    display: none;
+}
+
+.pdf-viewer-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: #1a1a1a;
+    overflow: hidden;
+}
+
+.pdf-canvas-wrapper {
+    flex: 1;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    background: #525659;
+}
+
+#pdfCanvas {
+    display: block;
+    margin: 0 auto;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    background: white;
+    max-width: 100%;
+    height: auto;
+}
+
+/* Memory optimization for mobile */
+@media (max-width: 768px) {
+    .pdf-canvas-wrapper {
+        overflow: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    #pdfCanvas {
+        max-width: 200%;
+        max-height: 200%;
+    }
+}
+
+.pdf-zoom-controls {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding: 12px 20px;
+    background: rgba(0,0,0,0.9);
+    border-top: 1px solid rgba(255,255,255,0.1);
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+}
+
+.zoom-btn {
+    background: rgba(255,255,255,0.15);
+    border: none;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 40px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    touch-action: manipulation;
+    min-width: 80px;
+    justify-content: center;
+}
+
+.zoom-btn:active {
+    transform: scale(0.96);
+    background: #6366f1;
+}
+
+.zoom-level {
+    color: white;
+    font-size: 14px;
+    background: rgba(0,0,0,0.5);
+    padding: 8px 16px;
+    border-radius: 30px;
+    font-weight: 500;
+}
+
+/* Mobile zoom hint */
+.zoom-hint {
+    position: absolute;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.7);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 30px;
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 20;
+    white-space: nowrap;
+    backdrop-filter: blur(10px);
+    animation: fadeOut 3s forwards;
+}
+
+@keyframes fadeOut {
+    0% { opacity: 1; }
+    70% { opacity: 1; }
+    100% { opacity: 0; visibility: hidden; }
+}
+
+/* Mobile adjustments */
 @media (max-width: 640px) {
     .app { padding: 12px; }
-    .btn-back span, .btn-upload span, .theme-toggle span { display: inline-block; }
-    .btn-back, .btn-upload, .theme-toggle { padding: 8px 16px; }
+    .btn-back span, .btn-upload span, .theme-toggle span, .btn-backup span, .btn-restore span { display: none; }
+    .btn-back, .btn-upload, .theme-toggle, .btn-backup, .btn-restore { padding: 10px 14px; }
     .action-btn { padding: 6px 14px; font-size: 0.75rem; }
+    .action-btn i { font-size: 0.75rem; }
     .card { padding: 10px 12px; }
     .card-filename { font-size: 0.8rem; }
+    .card-buttons button { padding: 4px 10px; font-size: 0.65rem; }
     .dept-oval { padding: 8px 18px; }
+    .dept-oval span { font-size: 12px; }
     .stat-item span { font-size: 1.1rem; }
-    .toast { white-space: nowrap; font-size: 0.75rem; bottom: 20px; }
-    .header-title h1 { font-size: 1.2rem; }
-    .header-title .doc-tag { font-size: 0.6rem; }
-    .header-title .owner-name { font-size: 0.6rem; }
+    .stat-item i { font-size: 1.1rem; }
+    .zoom-btn { padding: 8px 16px; font-size: 14px; min-width: 60px; }
 }
 </style>
 </head>
@@ -563,13 +556,7 @@ body.light-mode .theme-toggle {
 <div class="app">
   <div class="header">
     <div class="logo"><i class="fas fa-folder-open"></i></div>
-    <div class="header-title">
-      <div class="main-line">
-        <h1>OARCEL</h1>
-        <span class="doc-tag"><i class="fas fa-file-alt"></i> Document Manager</span>
-      </div>
-      <div class="owner-name">𝓐𝓫𝓲𝓼𝓱 𝓡𝓪𝓳𝓪𝓷</div>
-    </div>
+    <div class="header-title"><h1>OARCEL</h1><span>Document Manager</span></div>
   </div>
 
   <div class="top-bar">
@@ -580,324 +567,312 @@ body.light-mode .theme-toggle {
       <button id="clearSearchBtn" class="clear-search hidden"><i class="fas fa-times-circle"></i></button>
     </div>
     <button id="themeToggle" class="theme-toggle"><i class="fas fa-moon"></i><span>Theme</span></button>
+    <button id="backupBtn" class="btn-backup" onclick="exportBackup()"><i class="fas fa-download"></i><span>Backup</span></button>
+    <button id="restoreBtn" class="btn-restore" onclick="triggerRestore()"><i class="fas fa-upload"></i><span>Restore</span></button>
     <button id="uploadBtn" class="btn-upload hidden" onclick="triggerUpload()"><i class="fas fa-cloud-upload-alt"></i><span>Upload</span></button>
     <input type="file" id="fileInput" accept="application/pdf" multiple>
+    <input type="file" id="restoreInput" accept=".json" onchange="importBackup(this)">
   </div>
 
   <div class="stats-bar">
     <div class="stat-item"><i class="fas fa-folder"></i><span id="folderCount">0</span><label>Folders</label></div>
     <div class="stat-item"><i class="fas fa-file-pdf"></i><span id="fileCount">0</span><label>Documents</label></div>
+    <div class="stat-item"><i class="fas fa-history"></i><span id="recentCount">0</span><label>Recent</label></div>
   </div>
 
   <div id="breadcrumb" class="breadcrumb"></div>
   <div id="departmentsSection"></div>
+  <div id="recentSection" class="recent-section hidden">
+    <div class="recent-header"><div class="recent-title"><i class="fas fa-history"></i> Recently Viewed</div><button class="clear-recent" onclick="clearAllRecent()"><i class="fas fa-trash-alt"></i> Clear</button></div>
+    <div id="recentList" class="recent-list"></div>
+  </div>
   <div id="searchInfo" class="search-result-info hidden"></div>
   <div id="content" class="content"></div>
+</div>
+
+<!-- PDF Viewer Modal -->
+<div id="pdfViewerModal" class="pdf-viewer-modal hidden">
+  <div class="pdf-viewer-container">
+    <div class="pdf-canvas-wrapper" id="pdfCanvasWrapper">
+      <canvas id="pdfCanvas"></canvas>
+    </div>
+    <div class="pdf-zoom-controls">
+      <button class="zoom-btn" id="zoomOutBtn"><i class="fas fa-search-minus"></i> -</button>
+      <span class="zoom-level" id="zoomLevel">100%</span>
+      <button class="zoom-btn" id="zoomInBtn"><i class="fas fa-search-plus"></i> +</button>
+      <button class="zoom-btn" id="closePdfBtn"><i class="fas fa-times"></i> Close</button>
+    </div>
+  </div>
 </div>
 
 <div id="toast" class="toast hidden"><i class="fas fa-check-circle"></i><span></span></div>
 
 <script>
-// ==================== INDEXEDDB CORE ====================
+// ==================== INDEXEDDB STORAGE ====================
 const DB_NAME = 'OarcelDB';
-const DB_VERSION = 3;
+const DB_VERSION = 2;
 let db = null;
 let allFiles = {};
 let fileSystem = {};
+let recentFiles = [];
 let currentPath = [];
 let isSearchMode = false;
 
+// PDF Viewer variables - OPTIMIZED
+let pdfDoc = null;
+let currentPage = 1;
+let currentScale = 1.0;
+let pdfCanvas = null;
+let ctx = null;
+let renderTask = null;
+let zoomTimeout = null;
+
+// Initialize IndexedDB
 function initDB() {
     return new Promise((resolve, reject) => {
         const request = indexedDB.open(DB_NAME, DB_VERSION);
         request.onerror = () => reject(request.error);
-        request.onsuccess = () => { db = request.result; resolve(); };
-        request.onupgradeneeded = (e) => {
-            const db = e.target.result;
+        request.onsuccess = () => {
+            db = request.result;
+            resolve();
+        };
+        request.onupgradeneeded = (event) => {
+            const db = event.target.result;
             if (!db.objectStoreNames.contains('files')) db.createObjectStore('files', { keyPath: 'id' });
             if (!db.objectStoreNames.contains('folderStructure')) db.createObjectStore('folderStructure', { keyPath: 'key' });
+            if (!db.objectStoreNames.contains('recent')) db.createObjectStore('recent', { keyPath: 'id' });
         };
     });
 }
 
-function saveFolderStructure() {
-    const tx = db.transaction('folderStructure', 'readwrite');
-    tx.objectStore('folderStructure').put({ key: 'structure', value: fileSystem });
-    tx.commit();
-}
-function saveAllFilesToDB() {
-    const tx = db.transaction('files', 'readwrite');
-    const store = tx.objectStore('files');
-    store.clear();
-    for (const folderPath in allFiles) store.put({ id: folderPath, folderPath, files: allFiles[folderPath] });
-    tx.commit();
+// Convert dataURL to Blob
+function dataURLToBlob(dataUrl) {
+    const arr = dataUrl.split(',');
+    const mime = arr[0].match(/:(.*?);/)[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) u8arr[n] = bstr.charCodeAt(n);
+    return new Blob([u8arr], { type: mime });
 }
 
-async function loadFromIndexedDB() {
-    const folderReq = db.transaction('folderStructure', 'readonly').objectStore('folderStructure').get('structure');
-    folderReq.onsuccess = () => {
-        if (folderReq.result) fileSystem = folderReq.result.value;
-        else {
-            fileSystem = {
-                "REMELT":{"A":{},"B":{},"C":{},"D":{},"E":{},"F":{},"G":{},"H":{},"I":{},"J":{},"K":{},"L":{},"M":{},"N":{},"O":{},"P":{},"Q":{},"R":{},"S":{},"T":{},"U":{},"V":{},"W":{},"X":{},"Y":{},"Z":{}},
-                "CASTER":{"Quality Reports":{},"Mechanical":{},"Maintenance":{},"Production Data":{},"Testing":{},"Checklists":{},"Safety":{},"Training":{}},
-                "HRM":{"Employee Records":{},"Attendance":{},"Performance":{},"Training Logs":{},"Safety Compliance":{},"Policies":{},"Reports":{},"Certifications":{}},
-                "CRM":{"PLC Programs":{},"CAD Drawings":{},"Electrical":{},"SCADA":{},"Automation":{},"Reports":{},"Configurations":{},"Manuals":{}},
-                "ANNEALING":{"Temperature Control":{},"Process Parameters":{},"Quality Assurance":{},"Maintenance":{},"Safety":{},"Production Logs":{},"Testing":{},"SOP Documents":{}},
-                "TLL":{"PLC Programs":{},"CAD Drawings":{},"Maintenance":{},"Production Logs":{},"Process Optimization":{},"Quality Reports":{},"Manuals":{},"Safety":{}},
-                "SLITTER":{"Blade Maintenance":{},"Quality Control":{},"Production Reports":{},"Mechanical":{},"Safety":{},"Checklists":{},"Training":{},"Testing":{}},
-                "UTILITY":{"Power Supply":{},"Water System":{},"Compressed Air":{},"HVAC":{},"Reports":{},"Safety":{},"Manuals":{},"Testing":{}}
-            };
-            saveFolderStructure();
+// ============ OPTIMIZED PDF VIEWER (NO CRASHING) ============
+async function openPDF(dataUrl, fileName) {
+    try {
+        const folderPath = currentPath.join("/");
+        addToRecent(fileName, folderPath, dataUrl);
+        
+        const modal = document.getElementById('pdfViewerModal');
+        if (!modal) {
+            window.open(dataUrl, '_blank');
+            showToast(`Opening ${fileName}...`);
+            return;
         }
-        const fileReq = db.transaction('files', 'readonly').objectStore('files').getAll();
-        fileReq.onsuccess = () => {
-            allFiles = {};
-            for (let item of fileReq.result) allFiles[item.folderPath] = item.files;
-            render();
-        };
-    };
-}
-
-function getCurrentFolderObject() { return currentPath.reduce((o,p) => o?.[p], fileSystem); }
-function getFilesForCurrentFolder() { return allFiles[currentPath.join('/')] || []; }
-
-async function addFileToCurrentFolder(file) {
-    const folderPath = currentPath.join('/');
-    if (!allFiles[folderPath]) allFiles[folderPath] = [];
-    const base64 = await new Promise(r => { const rd = new FileReader(); rd.onload = e => r(e.target.result); rd.readAsDataURL(file); });
-    allFiles[folderPath].push({ name: file.name, dataUrl: base64 });
-    await saveAllFilesToDB();
-}
-
-function deleteFileFromFolder(folderPath, fileName) {
-    if (allFiles[folderPath]) {
-        allFiles[folderPath] = allFiles[folderPath].filter(f => f.name !== fileName);
-        if (allFiles[folderPath].length === 0) delete allFiles[folderPath];
-        saveAllFilesToDB();
-        render();
-        showToast(`✅ Deleted "${fileName}"`);
-    }
-}
-
-function renameFileInFolder(folderPath, oldName, newName) {
-    if (allFiles[folderPath]) {
-        const idx = allFiles[folderPath].findIndex(f => f.name === oldName);
-        if (idx !== -1) {
-            if (!newName.toLowerCase().endsWith('.pdf')) newName += '.pdf';
-            allFiles[folderPath][idx].name = newName;
-            saveAllFilesToDB();
-            render();
-            showToast(`✅ Renamed to "${newName}"`);
+        
+        modal.classList.remove('hidden');
+        pdfCanvas = document.getElementById('pdfCanvas');
+        ctx = pdfCanvas.getContext('2d');
+        
+        showToast(`Loading ${fileName}...`);
+        
+        // Clean up previous PDF document
+        if (pdfDoc) {
+            pdfDoc.destroy();
+            pdfDoc = null;
+        }
+        
+        const loadingTask = pdfjsLib.getDocument(dataUrl);
+        pdfDoc = await loadingTask.promise;
+        currentPage = 1;
+        currentScale = 1.0;
+        
+        await renderPageOptimized(currentPage);
+        updateZoomDisplay();
+        showZoomHint();
+        showToast(`Loaded: ${fileName}`);
+        
+        // Warn if PDF has many pages
+        if (pdfDoc.numPages > 50) {
+            showToast(`Large PDF (${pdfDoc.numPages} pages). Zoom carefully.`, true);
+        }
+        
+    } catch (err) {
+        console.error('Error opening PDF:', err);
+        showToast('Failed to open PDF', true);
+        try {
+            window.open(dataUrl, '_blank');
+        } catch (e) {
+            showToast('Cannot open PDF', true);
         }
     }
 }
 
-// FIXED PDF OPENING - Using blob URL and window.open
-function openPDF(dataUrl, fileName) {
-    showToast(`Opening ${fileName}...`);
+async function renderPageOptimized(pageNum) {
+    if (!pdfDoc) return;
     
-    // Convert data URL to blob and open in new tab
-    fetch(dataUrl)
-        .then(response => response.blob())
-        .then(blob => {
-            const blobUrl = URL.createObjectURL(blob);
-            // Open in new tab/window
-            const newWindow = window.open(blobUrl, '_blank');
-            
-            // Fallback if popup blocked
-            if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-                // Try alternative method
-                const link = document.createElement('a');
-                link.href = blobUrl;
-                link.target = '_blank';
-                link.download = fileName;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            }
-            
-            // Clean up blob URL after a delay
-            setTimeout(() => {
-                URL.revokeObjectURL(blobUrl);
-            }, 60000);
-        })
-        .catch(err => {
-            console.error('PDF error:', err);
-            showToast(`Failed to open PDF: ${err.message}`, true);
-        });
-}
-
-function selectDepartment(d) { currentPath = [d]; render(); }
-function goBack() { if(currentPath.length && !isSearchMode) { currentPath.pop(); render(); } else if(isSearchMode) clearSearch(); }
-function triggerUpload() { document.getElementById('fileInput').click(); }
-function clearSearch() { document.getElementById('searchInput').value = ''; isSearchMode = false; document.getElementById('searchInfo').classList.add('hidden'); document.getElementById('clearSearchBtn').classList.add('hidden'); render(); }
-
-function searchFiles(q) {
-    if(!q.trim()) return [];
-    const all = [];
-    for(const path in allFiles) allFiles[path].forEach(f => all.push({...f, folder:path}));
-    return all.filter(f => f.name.toLowerCase().includes(q.toLowerCase()));
-}
-
-function createCard(title, onClick, isFolder=false, showDel=false, delPath=null, delName=null, showRename=false) {
-    const div = document.createElement('div'); div.className = 'card';
-    div.innerHTML = `
-        <div class="card-icon"><i class="fas ${isFolder ? 'fa-folder' : 'fa-file-pdf'}" style="color:${isFolder ? '#fbbf24' : '#60a5fa'}"></i></div>
-        <div class="card-filename">${escapeHtml(title)}</div>
-        <div class="card-buttons">
-            ${showRename ? `<button class="rename-file-btn" onclick="event.stopPropagation(); window.renameFile('${delPath}','${escapeHtml(delName)}')"><i class="fas fa-edit"></i> Rename</button>` : ''}
-            ${showDel ? `<button class="delete-btn" onclick="event.stopPropagation(); window.deleteFile('${delPath}','${escapeHtml(delName)}')"><i class="fas fa-trash"></i> Delete</button>` : ''}
-        </div>
-    `;
-    div.onclick = onClick; return div;
-}
-
-function render() {
-    const query = document.getElementById('searchInput').value.trim().toLowerCase();
-    if(query) {
-        isSearchMode = true;
-        document.getElementById('clearSearchBtn').classList.remove('hidden');
-        const results = searchFiles(query);
-        document.getElementById('searchInfo').classList.remove('hidden');
-        document.getElementById('searchInfo').innerHTML = `<i class="fas fa-search"></i> Found ${results.length} result(s) for "${escapeHtml(query)}" <button onclick="clearSearch()" style="background:none;border:none;color:#60a5fa;cursor:pointer;margin-left:10px;">Clear</button>`;
-        const contentDiv = document.getElementById('content'); contentDiv.innerHTML = '';
-        document.getElementById('backBtn').classList.remove('hidden');
-        document.getElementById('uploadBtn').classList.add('hidden');
-        document.getElementById('departmentsSection').innerHTML = '';
-        document.getElementById('breadcrumb').innerHTML = '';
-        if(!results.length) contentDiv.innerHTML = '<div class="empty-state"><i class="fas fa-search"></i><p>No PDFs found.</p></div>';
-        else results.forEach(f => contentDiv.appendChild(createCard(f.name, () => openPDF(f.dataUrl, f.name), false)));
-        updateStats(); return;
+    // Cancel any ongoing render to prevent memory buildup
+    if (renderTask) {
+        renderTask.cancel();
+        renderTask = null;
     }
-    isSearchMode = false;
-    document.getElementById('clearSearchBtn').classList.add('hidden');
-    document.getElementById('searchInfo').classList.add('hidden');
-    document.getElementById('content').innerHTML = '';
-    const folder = getCurrentFolderObject();
-    if(!folder) { currentPath = []; render(); return; }
-    document.getElementById('backBtn').classList.toggle('hidden', currentPath.length === 0);
-    
-    const bcDiv = document.getElementById('breadcrumb');
-    bcDiv.innerHTML = `<div class="breadcrumb-item" onclick="navigateToBreadcrumb(-1)"><i class="fas fa-home"></i> Home</div>`;
-    currentPath.forEach((f,i) => { bcDiv.innerHTML += `<span class="breadcrumb-separator">/</span><div class="breadcrumb-item" onclick="navigateToBreadcrumb(${i})">${escapeHtml(f)}</div>`; });
-    
-    if(currentPath.length === 0){
-        let html = '<div class="section-title"><i class="fas fa-building"></i> Departments</div><div class="departments-grid">';
-        for(let dept in fileSystem){
-            const sub = Object.keys(fileSystem[dept]).length;
-            const fcount = allFiles[dept] ? allFiles[dept].length : 0;
-            html += `<div class="dept-card" data-dept="${dept}" onclick="selectDepartment('${dept}')"><div class="dept-oval"><span>${dept}</span></div><div class="dept-arrow"><i class="fas fa-chevron-right"></i></div><div class="dept-info">${sub+fcount} items</div></div>`;
-        }
-        html += '</div>';
-        document.getElementById('departmentsSection').innerHTML = html;
-    } else document.getElementById('departmentsSection').innerHTML = '';
-    
-    const isLeaf = Object.keys(folder).length === 0;
-    const isRoot = currentPath.length === 0;
-    document.getElementById('uploadBtn').classList.toggle('hidden', !(isLeaf && !isRoot));
-    
-    const actionDiv = document.createElement('div');
-    actionDiv.className = 'action-bar';
-    if(!isRoot) actionDiv.innerHTML = `<button class="action-btn" onclick="renameCurrentFolder()"><i class="fas fa-edit"></i> Rename Folder</button><button class="action-btn" onclick="deleteCurrentFolder()"><i class="fas fa-trash-alt"></i> Delete Folder</button><button class="action-btn" onclick="addNewFolder()"><i class="fas fa-plus"></i> Add Subfolder</button>`;
-    else actionDiv.innerHTML = `<button class="action-btn" onclick="addNewDepartment()"><i class="fas fa-building"></i> Add Department</button>`;
-    document.getElementById('content').appendChild(actionDiv);
-    
-    if(!isRoot && !isLeaf) for(let key in folder) document.getElementById('content').appendChild(createCard(key, () => { currentPath.push(key); render(); }, true));
-    if(isLeaf && !isRoot){
-        const files = getFilesForCurrentFolder();
-        const path = currentPath.join('/');
-        if(!files.length) document.getElementById('content').innerHTML += '<div class="empty-state"><i class="fas fa-cloud-upload-alt"></i><p>No PDFs yet. Click Upload to add files.</p></div>';
-        else files.forEach(f => document.getElementById('content').appendChild(createCard(f.name, () => openPDF(f.dataUrl, f.name), false, true, path, f.name, true)));
-    }
-    updateStats();
-}
-
-function navigateToBreadcrumb(idx) { if(idx === -1) currentPath = []; else currentPath = currentPath.slice(0, idx+1); render(); }
-function renameCurrentFolder() { 
-    if(!currentPath.length) return;
-    const old = currentPath[currentPath.length-1], newName = prompt("New folder name:", old);
-    if(newName && newName !== old && newName.trim()){
-        const parent = currentPath.slice(0,-1).reduce((o,p)=>o[p], fileSystem);
-        parent[newName] = parent[old]; delete parent[old];
-        const oldPath = currentPath.join('/'), newPath = [...currentPath.slice(0,-1), newName].join('/');
-        if(allFiles[oldPath]){ allFiles[newPath] = allFiles[oldPath]; delete allFiles[oldPath]; }
-        currentPath[currentPath.length-1] = newName;
-        saveFolderStructure(); saveAllFilesToDB(); render(); showToast(`✅ Renamed to "${newName}"`);
-    }
-}
-function deleteCurrentFolder() {
-    if(!currentPath.length) return;
-    const name = currentPath[currentPath.length-1];
-    if(confirm(`Delete "${name}" and all contents?`)){
-        const path = currentPath.join('/');
-        delete allFiles[path];
-        const parent = currentPath.slice(0,-1).reduce((o,p)=>o[p], fileSystem);
-        delete parent[name];
-        currentPath.pop();
-        saveFolderStructure(); saveAllFilesToDB(); render(); showToast(`🗑️ Folder "${name}" deleted`);
-    }
-}
-function addNewFolder() {
-    const name = prompt("Folder name:");
-    if(name && name.trim()){
-        const cur = getCurrentFolderObject();
-        if(cur && !cur[name]){ cur[name] = {}; saveFolderStructure(); render(); showToast(`✅ Folder "${name}" created`); }
-        else showToast("Exists", true);
-    }
-}
-function addNewDepartment() {
-    const name = prompt("Department name:");
-    if(name && name.trim() && !fileSystem[name]){ fileSystem[name] = {}; saveFolderStructure(); render(); showToast(`✅ Department "${name}" created`); }
-    else if(fileSystem[name]) showToast("Department exists", true);
-}
-function updateStats() {
-    let folderCount = 0, fileCount = 0;
-    function countFolders(obj) { for(let k in obj) { if(typeof obj[k] === 'object') { folderCount++; countFolders(obj[k]); } } }
-    countFolders(fileSystem);
-    for(let k in allFiles) fileCount += allFiles[k].length;
-    document.getElementById('folderCount').textContent = folderCount;
-    document.getElementById('fileCount').textContent = fileCount;
-}
-function showToast(msg, isErr = false) {
-    const toast = document.getElementById('toast');
-    toast.querySelector('span').textContent = msg;
-    toast.style.background = isErr ? "linear-gradient(135deg,#ef4444,#dc2626)" : "linear-gradient(135deg,#10b981,#059669)";
-    toast.classList.remove('hidden');
-    setTimeout(() => toast.classList.add('hidden'), 3000);
-}
-function escapeHtml(str) { const div = document.createElement('div'); div.textContent = str; return div.innerHTML; }
-
-function toggleTheme() { document.body.classList.toggle('light-mode'); localStorage.setItem('oarcel_theme', document.body.classList.contains('light-mode') ? 'light-mode' : ''); updateThemeIcon(); }
-function updateThemeIcon() { const isDark = !document.body.classList.contains('light-mode'); document.getElementById('themeToggle').innerHTML = isDark ? '<i class="fas fa-sun"></i><span>Light</span>' : '<i class="fas fa-moon"></i><span>Dark</span>'; }
-
-// Initialize
-document.addEventListener('DOMContentLoaded', async () => {
-    document.getElementById('themeToggle').onclick = toggleTheme;
-    if(localStorage.getItem('oarcel_theme') === 'light-mode') document.body.classList.add('light-mode');
-    updateThemeIcon();
-    document.getElementById('fileInput').addEventListener('change', async(e) => {
-        const files = Array.from(e.target.files);
-        for(let f of files) if(f.type === 'application/pdf') await addFileToCurrentFolder(f);
-        showToast(`${files.length} PDF(s) saved!`); render(); e.target.value = '';
-    });
-    document.getElementById('searchInput').addEventListener('input', () => render());
-    document.getElementById('clearSearchBtn').addEventListener('click', clearSearch);
-    window.deleteFile = (p,n) => { if(confirm(`Delete "${n}"?`)) deleteFileFromFolder(p,n); };
-    window.renameFile = (p,old) => { const nu = prompt("New name:", old.replace('.pdf','')); if(nu?.trim()) renameFileInFolder(p, old, nu.trim()); };
     
     try {
-        await initDB();
-        await loadFromIndexedDB();
-    } catch(e) {
-        console.error(e);
-        showToast('Database error', true);
+        const page = await pdfDoc.getPage(pageNum);
+        
+        // Calculate optimal scale - limit to 2.0x max for stability
+        let optimizedScale = Math.min(currentScale, 2.0);
+        
+        const viewport = page.getViewport({ scale: optimizedScale });
+        
+        // Set canvas dimensions
+        pdfCanvas.width = viewport.width;
+        pdfCanvas.height = viewport.height;
+        pdfCanvas.style.width = `${viewport.width}px`;
+        pdfCanvas.style.height = `${viewport.height}px`;
+        
+        // Clear canvas before rendering new content
+        ctx.clearRect(0, 0, pdfCanvas.width, pdfCanvas.height);
+        
+        const renderContext = {
+            canvasContext: ctx,
+            viewport: viewport,
+            enableWebGL: false,
+            renderInteractiveForms: false,
+        };
+        
+        renderTask = page.render(renderContext);
+        await renderTask.promise;
+        renderTask = null;
+        
+    } catch (err) {
+        if (err.name === 'RenderingCancelledException') {
+            console.log('Rendering cancelled');
+        } else {
+            console.error('Render error:', err);
+        }
     }
-});
+}
 
-window.goBack = goBack; window.triggerUpload = triggerUpload; window.selectDepartment = selectDepartment; window.navigateToBreadcrumb = navigateToBreadcrumb;
-window.renameCurrentFolder = renameCurrentFolder; window.deleteCurrentFolder = deleteCurrentFolder; window.addNewFolder = addNewFolder; window.addNewDepartment = addNewDepartment;
-window.openPDF = openPDF;
-</script>
-</body>
-</html>
+function zoomIn() {
+    if (!pdfDoc) return;
+    // Limit max zoom to 2.0x to prevent crashes
+    if (currentScale < 2.0) {
+        currentScale = Math.min(2.0, currentScale + 0.25);
+        
+        // Debounce zoom to prevent rapid re-renders
+        if (zoomTimeout) clearTimeout(zoomTimeout);
+        zoomTimeout = setTimeout(() => {
+            renderPageOptimized(currentPage);
+            updateZoomDisplay();
+        }, 50);
+    } else {
+        showToast('Maximum zoom reached (200%)', true);
+    }
+}
+
+function zoomOut() {
+    if (!pdfDoc) return;
+    if (currentScale > 0.5) {
+        currentScale = Math.max(0.5, currentScale - 0.25);
+        
+        if (zoomTimeout) clearTimeout(zoomTimeout);
+        zoomTimeout = setTimeout(() => {
+            renderPageOptimized(currentPage);
+            updateZoomDisplay();
+        }, 50);
+    }
+}
+
+function updateZoomDisplay() {
+    const zoomLevel = document.getElementById('zoomLevel');
+    if (zoomLevel) {
+        let displayPercent = Math.round(currentScale * 100);
+        if (displayPercent > 200) displayPercent = 200;
+        zoomLevel.textContent = `${displayPercent}%`;
+    }
+}
+
+function closePDFViewer() {
+    const modal = document.getElementById('pdfViewerModal');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+    
+    // Clean up properly
+    if (pdfDoc) {
+        pdfDoc.destroy();
+        pdfDoc = null;
+    }
+    
+    if (renderTask) {
+        renderTask.cancel();
+        renderTask = null;
+    }
+    
+    // Clear canvas
+    if (pdfCanvas && ctx) {
+        ctx.clearRect(0, 0, pdfCanvas.width, pdfCanvas.height);
+        pdfCanvas.width = 0;
+        pdfCanvas.height = 0;
+    }
+    
+    if (zoomTimeout) {
+        clearTimeout(zoomTimeout);
+        zoomTimeout = null;
+    }
+}
+
+function showZoomHint() {
+    const existingHint = document.querySelector('.zoom-hint');
+    if (existingHint) existingHint.remove();
+    
+    const hint = document.createElement('div');
+    hint.className = 'zoom-hint';
+    hint.innerHTML = '<i class="fas fa-hand-peace"></i> Pinch or use buttons to zoom (max 200%)';
+    document.querySelector('.pdf-viewer-container').appendChild(hint);
+    
+    setTimeout(() => {
+        if (hint) hint.remove();
+    }, 3000);
+}
+
+// Setup pinch-to-zoom for mobile with 2.0x limit
+function setupPinchZoom() {
+    let initialDistance = 0;
+    let initialScale = 1;
+    
+    const wrapper = document.getElementById('pdfCanvasWrapper');
+    if (!wrapper) return;
+    
+    wrapper.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 2) {
+            e.preventDefault();
+            initialDistance = Math.hypot(
+                e.touches[0].pageX - e.touches[1].pageX,
+                e.touches[0].pageY - e.touches[1].pageY
+            );
+            initialScale = currentScale;
+        }
+    });
+    
+    wrapper.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 2 && initialDistance > 0) {
+            e.preventDefault();
+            const currentDistance = Math.hypot(
+                e.touches[0].pageX - e.touches[1].pageX,
+                e.touches[0].pageY - e.touches[1].pageY
+            );
+            let scale = (currentDistance / initialDistance) * initialScale;
+            // Limit zoom to between 0.5 and 2.0
+            currentScale = Math.min(2.0, Math.max(0.5, scale));
+            renderPageOptimized(currentPage);
+            updateZoomDisplay();
+        }
+    });
+    
+    wrapper.addEventListener('touchend', () => {
+        initialDistance = 0;
+    });
+}
+
+async function loadFrom
