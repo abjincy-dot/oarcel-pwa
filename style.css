@@ -16,8 +16,8 @@
 }
 
 body.light-mode {
-    --bg-gradient: linear-gradient(165deg, #d4e6f1 0%, #b8d4e8 45%, #9bc0d4 100%);
-    --glass-bg: rgba(255, 255, 255, 0.7);
+    --bg-gradient: linear-gradient(165deg, #151b1f 0%, #b8d4e8 45%, #9bc0d4 100%);
+    --glass-bg: rgba(255, 255, 255, 0.014);
     --glass-border: rgba(0, 0, 0, 0.1);
     --text-primary: #1a2a3a;
     --text-secondary: #2c3e50;
@@ -42,7 +42,7 @@ body::before {
     left: -10%;
     width: 120%;
     height: 70%;
-    background: radial-gradient(ellipse at 30% 20%, rgba(255, 210, 140, 0.25) 0%, rgba(255, 160, 80, 0.1) 40%, transparent 70%);
+    background: radial-gradient(ellipse at 30% 20%, rgba(20, 16, 8, 0.25) 0%, rgba(255, 160, 80, 0.1) 40%, transparent 70%);
     pointer-events: none;
     z-index: 0;
     animation: softGlow 12s ease-in-out infinite alternate;
