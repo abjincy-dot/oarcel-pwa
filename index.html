@@ -11,7 +11,7 @@
 <meta name="theme-color" content="#0a1128">
 <link rel="apple-touch-icon" href="https://img.icons8.com/fluency/192/folder-invoices.png">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div>
@@ -30,14 +30,14 @@
   </div>
 
   <div class="top-bar">
-    <button id="backBtn" class="btn-back hidden" onclick="goBack()"><i class="fas fa-arrow-left"></i><span>Back</span></button>
+    <button id="backBtn" class="btn-back hidden"><i class="fas fa-arrow-left"></i><span>Back</span></button>
     <div class="search-container">
       <i class="fas fa-search"></i>
       <input type="text" id="searchInput" placeholder="Search PDFs...">
       <button id="clearSearchBtn" class="clear-search hidden"><i class="fas fa-times-circle"></i></button>
     </div>
     <button id="themeToggle" class="theme-toggle"><i class="fas fa-moon"></i><span>Theme</span></button>
-    <button id="uploadBtn" class="btn-upload hidden" onclick="triggerUpload()"><i class="fas fa-cloud-upload-alt"></i><span>Upload</span></button>
+    <button id="uploadBtn" class="btn-upload hidden"><i class="fas fa-cloud-upload-alt"></i><span>Upload</span></button>
     <input type="file" id="fileInput" accept="application/pdf" multiple>
   </div>
 
