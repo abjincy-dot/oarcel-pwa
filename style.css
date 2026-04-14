@@ -161,7 +161,6 @@ body.light-mode .header-title .owner-name {
     border-radius: 50px;
 }
 
-/* BACK BUTTON STYLES */
 .btn-back {
     display: flex;
     align-items: center;
@@ -214,12 +213,6 @@ body.light-mode .header-title .owner-name {
     transform: translateX(-3px);
 }
 
-.btn-back span {
-    position: relative;
-    z-index: 1;
-}
-
-/* THEME TOGGLE BUTTON STYLES */
 .theme-toggle {
     display: flex;
     align-items: center;
@@ -272,12 +265,6 @@ body.light-mode .header-title .owner-name {
     transform: rotate(15deg);
 }
 
-.theme-toggle span {
-    position: relative;
-    z-index: 1;
-}
-
-/* Light mode specific styles for buttons */
 body.light-mode .btn-back {
     background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(139, 92, 246, 0.3));
     border-color: rgba(59, 130, 246, 0.6);
