@@ -1,3 +1,4 @@
+/* ========== GLOBAL & VARIABLES ========== */
 * {
     margin: 0;
     padding: 0;
@@ -76,6 +77,7 @@ body::before {
 .particle:nth-child(7) { width: 5px; height: 5px; top: 30%; left: 92%; animation-duration: 19s; animation-delay: 1.5s; }
 .particle:nth-child(8) { width: 2.5px; height: 2.5px; top: 20%; left: 10%; animation-duration: 15s; animation-delay: 2.5s; }
 
+/* ========== APP LAYOUT ========== */
 .app {
     position: relative;
     z-index: 2;
@@ -161,131 +163,7 @@ body.light-mode .header-title .owner-name {
     border-radius: 50px;
 }
 
-.btn-back {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 40px;
-    font-weight: 600;
-    font-size: 0.85rem;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    backdrop-filter: blur(8px);
-    color: var(--text-primary);
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2));
-    border: 1px solid rgba(59, 130, 246, 0.5);
-    position: relative;
-    overflow: hidden;
-}
-
-.btn-back::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(59, 130, 246, 0.4);
-    transform: translate(-50%, -50%);
-    transition: width 0.4s, height 0.4s;
-}
-
-.btn-back:hover::before {
-    width: 200px;
-    height: 200px;
-}
-
-.btn-back:hover {
-    transform: translateX(-3px);
-    border-color: rgba(59, 130, 246, 0.8);
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(139, 92, 246, 0.3));
-}
-
-.btn-back i {
-    font-size: 1rem;
-    transition: transform 0.3s ease;
-}
-
-.btn-back:hover i {
-    transform: translateX(-3px);
-}
-
-.btn-back span {
-    position: relative;
-    z-index: 1;
-}
-
-.theme-toggle {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 40px;
-    font-weight: 600;
-    font-size: 0.85rem;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    backdrop-filter: blur(8px);
-    color: var(--text-primary);
-    background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(236, 72, 153, 0.2));
-    border: 1px solid rgba(168, 85, 247, 0.5);
-    position: relative;
-    overflow: hidden;
-}
-
-.theme-toggle::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(168, 85, 247, 0.4);
-    transform: translate(-50%, -50%);
-    transition: width 0.4s, height 0.4s;
-}
-
-.theme-toggle:hover::before {
-    width: 200px;
-    height: 200px;
-}
-
-.theme-toggle:hover {
-    transform: scale(1.05);
-    border-color: rgba(168, 85, 247, 0.8);
-    background: linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(236, 72, 153, 0.3));
-}
-
-.theme-toggle i {
-    font-size: 1rem;
-    transition: transform 0.3s ease;
-}
-
-.theme-toggle:hover i {
-    transform: rotate(15deg);
-}
-
-.theme-toggle span {
-    position: relative;
-    z-index: 1;
-}
-
-body.light-mode .btn-back {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(139, 92, 246, 0.3));
-    border-color: rgba(59, 130, 246, 0.6);
-}
-
-body.light-mode .theme-toggle {
-    background: linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(236, 72, 153, 0.3));
-    border-color: rgba(168, 85, 247, 0.6);
-}
-
-.btn-upload {
+.btn-back, .btn-upload, .theme-toggle {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -297,15 +175,12 @@ body.light-mode .theme-toggle {
     cursor: pointer;
     transition: all 0.2s ease;
     backdrop-filter: blur(8px);
-    color: white;
-    background: linear-gradient(135deg, #3b82f6, #7c3aed);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    color: var(--text-primary);
 }
 
-.btn-upload:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(59,130,246,0.4);
-}
+.btn-back { background: rgba(30, 55, 80, 0.8); }
+.btn-upload { background: linear-gradient(135deg, #3b82f6, #7c3aed); color: white; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+.theme-toggle { background: rgba(30, 55, 80, 0.8); }
 
 .search-container {
     flex: 1;
@@ -403,7 +278,7 @@ body.light-mode .theme-toggle {
 .dept-arrow { color: rgba(100, 180, 250, 0.9); font-size: 14px; }
 .dept-info { margin-left: auto; font-size: 11px; background: rgba(0, 0, 0, 0.35); padding: 4px 10px; border-radius: 25px; }
 
-.dept-card[data-dept="REMELT"] .dept-oval { background: linear-gradient(145deg, #d45a2b, #a53f15); }
+.dept-card[data-dept="REMELT"] .dept-oval { background: linear-gradient(145deg, #f11540, #a53f15); }
 .dept-card[data-dept="CASTER"] .dept-oval { background: linear-gradient(145deg, #1f8a7c, #146b60); }
 .dept-card[data-dept="HRM"] .dept-oval { background: linear-gradient(145deg, #6b6bd6, #4a4ab0); }
 .dept-card[data-dept="CRM"] .dept-oval { background: linear-gradient(145deg, #e68a2e, #c0681a); }
@@ -525,8 +400,8 @@ body.light-mode .theme-toggle {
 
 @media (max-width: 640px) {
     .app { padding: 12px; }
-    .btn-back span, .btn-upload span, .theme-toggle span { display: inline-block; }
-    .btn-back, .btn-upload, .theme-toggle { padding: 8px 16px; }
+    .btn-back span, .btn-upload span, .theme-toggle span { display: none; }
+    .btn-back, .btn-upload, .theme-toggle { padding: 10px 14px; }
     .action-btn { padding: 6px 14px; font-size: 0.75rem; }
     .card { padding: 10px 12px; }
     .card-filename { font-size: 0.8rem; }
