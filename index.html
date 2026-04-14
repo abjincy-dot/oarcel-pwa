@@ -1,4 +1,4 @@
-my file is in the github  and i will paste my index html here         <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -11,11 +11,6 @@ my file is in the github  and i will paste my index html here         <!DOCTYPE 
 <meta name="theme-color" content="#0a1128">
 <link rel="apple-touch-icon" href="https://img.icons8.com/fluency/192/folder-invoices.png">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<!-- PDF.js library -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-<script>
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-</script>
 <style>
 * {
     margin: 0;
@@ -23,9 +18,8 @@ my file is in the github  and i will paste my index html here         <!DOCTYPE 
     box-sizing: border-box;
 }
 
-/* Light Mode Variables */
 :root {
-    --bg-gradient: linear-gradient(165deg, #0a1f3e 0%, #0c2d5e 45%, #14487a 100%);
+    --bg-gradient: url("https://raw.githubusercontent.com/abjincy-dot/oarcel-pwa/main/images/wallpaper.jpg");
     --glass-bg: rgba(15, 35, 55, 0.45);
     --glass-border: rgba(255, 255, 255, 0.2);
     --text-primary: #ffffff;
@@ -54,7 +48,6 @@ body {
     transition: background 0.3s ease;
 }
 
-/* Animated light rays */
 body::before {
     content: '';
     position: fixed;
@@ -73,7 +66,6 @@ body::before {
     100% { opacity: 1; transform: scale(1.05); }
 }
 
-/* Floating particles */
 @keyframes floatUp {
     0% { transform: translateY(0) translateX(0); opacity: 0.2; }
     50% { transform: translateY(-40px) translateX(20px); opacity: 0.6; }
@@ -106,8 +98,7 @@ body::before {
     padding: 16px;
 }
 
-/* Glassmorphic elements */
-.header, .stats-bar, .card, .dept-oval, .action-bar, .top-bar, .recent-section, .breadcrumb, .search-container input, .empty-state {
+.header, .stats-bar, .card, .dept-oval, .action-bar, .top-bar, .breadcrumb, .search-container input, .empty-state {
     backdrop-filter: blur(16px);
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
@@ -135,8 +126,42 @@ body::before {
     font-size: 1.4rem;
 }
 
-.header-title h1 { font-size: 1.4rem; font-weight: 700; }
-.header-title span { font-size: 0.65rem; color: #9ac4e4; }
+.header-title {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.header-title .main-line {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 8px;
+    row-gap: 4px;
+}
+.header-title h1 { 
+    font-size: 1.4rem; 
+    font-weight: 700; 
+    letter-spacing: -0.3px;
+    margin: 0;
+}
+.header-title .doc-tag { 
+    font-size: 0.7rem; 
+    color: #9ac4e4;
+    background: rgba(255,255,255,0.1);
+    padding: 2px 8px;
+    border-radius: 20px;
+    display: inline-block;
+}
+.header-title .owner-name {
+    font-size: 0.7rem;
+    font-weight: 400;
+    color: #cde4ff;
+    margin-top: 2px;
+    word-spacing: -0.15em;
+}
+body.light-mode .header-title .owner-name {
+    color: #2c5282;
+}
 
 .top-bar {
     display: flex;
@@ -150,8 +175,134 @@ body::before {
     border-radius: 50px;
 }
 
-/* Compact buttons for action bar */
-.btn-back, .btn-upload, .theme-toggle, .btn-backup, .btn-restore {
+/* ===== NEW BACK BUTTON STYLES ===== */
+.btn-back {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 40px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(8px);
+    color: var(--text-primary);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2));
+    border: 1px solid rgba(59, 130, 246, 0.5);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-back::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(59, 130, 246, 0.4);
+    transform: translate(-50%, -50%);
+    transition: width 0.4s, height 0.4s;
+}
+
+.btn-back:hover::before {
+    width: 200px;
+    height: 200px;
+}
+
+.btn-back:hover {
+    transform: translateX(-3px);
+    border-color: rgba(59, 130, 246, 0.8);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(139, 92, 246, 0.3));
+}
+
+.btn-back i {
+    font-size: 1rem;
+    transition: transform 0.3s ease;
+}
+
+.btn-back:hover i {
+    transform: translateX(-3px);
+}
+
+.btn-back span {
+    position: relative;
+    z-index: 1;
+}
+
+/* ===== NEW THEME TOGGLE BUTTON STYLES ===== */
+.theme-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 40px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(8px);
+    color: var(--text-primary);
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(236, 72, 153, 0.2));
+    border: 1px solid rgba(168, 85, 247, 0.5);
+    position: relative;
+    overflow: hidden;
+}
+
+.theme-toggle::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(168, 85, 247, 0.4);
+    transform: translate(-50%, -50%);
+    transition: width 0.4s, height 0.4s;
+}
+
+.theme-toggle:hover::before {
+    width: 200px;
+    height: 200px;
+}
+
+.theme-toggle:hover {
+    transform: scale(1.05);
+    border-color: rgba(168, 85, 247, 0.8);
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(236, 72, 153, 0.3));
+}
+
+.theme-toggle i {
+    font-size: 1rem;
+    transition: transform 0.3s ease;
+}
+
+.theme-toggle:hover i {
+    transform: rotate(15deg);
+}
+
+.theme-toggle span {
+    position: relative;
+    z-index: 1;
+}
+
+/* Light mode specific styles for buttons */
+body.light-mode .btn-back {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(139, 92, 246, 0.3));
+    border-color: rgba(59, 130, 246, 0.6);
+}
+
+body.light-mode .theme-toggle {
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(236, 72, 153, 0.3));
+    border-color: rgba(168, 85, 247, 0.6);
+}
+
+.btn-upload {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -163,14 +314,15 @@ body::before {
     cursor: pointer;
     transition: all 0.2s ease;
     backdrop-filter: blur(8px);
-    color: var(--text-primary);
+    color: white;
+    background: linear-gradient(135deg, #3b82f6, #7c3aed);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 
-.btn-back { background: rgba(30, 55, 80, 0.8); }
-.btn-upload { background: linear-gradient(135deg, #3b82f6, #7c3aed); color: white; }
-.theme-toggle { background: rgba(30, 55, 80, 0.8); }
-.btn-backup { background: rgba(16, 185, 129, 0.8); color: white; }
-.btn-restore { background: rgba(245, 158, 11, 0.8); color: white; }
+.btn-upload:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(59,130,246,0.4);
+}
 
 .search-container {
     flex: 1;
@@ -185,7 +337,6 @@ body::before {
     transform: translateY(-50%);
     color: #bbd9ff;
     font-size: 0.9rem;
-    z-index: 1;
 }
 
 #searchInput {
@@ -210,7 +361,6 @@ body::before {
     color: var(--text-secondary);
     cursor: pointer;
     font-size: 1rem;
-    z-index: 1;
 }
 
 .hidden { display: none !important; }
@@ -234,7 +384,6 @@ body::before {
 .stat-item span { font-size: 1.3rem; font-weight: 700; }
 .stat-item label { font-size: 0.7rem; color: var(--text-secondary); margin-left: auto; }
 
-/* ACTION BAR - MORE COMPACT */
 .action-bar {
     display: flex;
     gap: 10px;
@@ -261,18 +410,16 @@ body::before {
     transition: 0.2s;
 }
 
-.action-btn i { font-size: 0.85rem; }
 .action-btn:hover { transform: translateY(-1px); background: rgba(59,130,246,0.8); }
 
 .departments-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
-.dept-card { display: flex; align-items: center; gap: 14px; cursor: pointer; padding: 4px 0; }
+.dept-card { display: flex; align-items: center; gap: 14px; cursor: pointer; padding: 4px 0; transition: transform 0.1s ease; }
 .dept-card:hover { transform: translateX(5px); }
 .dept-oval { padding: 10px 24px; border-radius: 50px; background: linear-gradient(145deg, #2c6285, #1c4468); border: 1px solid rgba(255,255,255,0.25); }
 .dept-oval span { font-size: 14px; font-weight: 600; color: white; }
 .dept-arrow { color: rgba(100, 180, 250, 0.9); font-size: 14px; }
 .dept-info { margin-left: auto; font-size: 11px; background: rgba(0, 0, 0, 0.35); padding: 4px 10px; border-radius: 25px; }
 
-/* Department colors */
 .dept-card[data-dept="REMELT"] .dept-oval { background: linear-gradient(145deg, #d45a2b, #a53f15); }
 .dept-card[data-dept="CASTER"] .dept-oval { background: linear-gradient(145deg, #1f8a7c, #146b60); }
 .dept-card[data-dept="HRM"] .dept-oval { background: linear-gradient(145deg, #6b6bd6, #4a4ab0); }
@@ -284,7 +431,6 @@ body::before {
 
 .content { display: flex; flex-direction: column; gap: 8px; }
 
-/* CARD - FIXED OVERLAPPING ISSUE */
 .card {
     background: var(--card-bg);
     backdrop-filter: blur(14px);
@@ -299,12 +445,9 @@ body::before {
     transition: all 0.2s;
 }
 
-.card:hover { background: rgba(59, 130, 246, 0.2); }
+.card:hover { background: rgba(59, 130, 246, 0.2); transform: translateY(-1px); }
 
-.card-icon {
-    width: 32px;
-    flex-shrink: 0;
-}
+.card-icon { width: 32px; flex-shrink: 0; }
 .card-icon i { font-size: 1.2rem; color: #60a5fa; }
 
 .card-filename {
@@ -358,11 +501,12 @@ body::before {
     z-index: 1100;
     backdrop-filter: blur(12px);
     font-size: 0.85rem;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
 .empty-state { text-align: center; padding: 40px 20px; background: var(--card-bg); border-radius: 28px; }
 .empty-state i { font-size: 2.5rem; margin-bottom: 12px; opacity: 0.7; }
-.empty-state p { font-size: 0.9rem; }
 
 .breadcrumb {
     display: flex;
@@ -384,20 +528,8 @@ body::before {
     border-radius: 25px;
 }
 
-.recent-section {
-    margin-bottom: 16px;
-    padding: 12px 16px;
-    border-radius: 24px;
-}
-
-.recent-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-.recent-title { font-size: 0.8rem; display: flex; align-items: center; gap: 6px; font-weight: 600; }
-.clear-recent { background: rgba(239, 68, 68, 0.25); border: 1px solid rgba(239, 68, 68, 0.4); color: #fca5a5; padding: 4px 10px; border-radius: 25px; cursor: pointer; font-size: 0.65rem; }
-.recent-list { display: flex; gap: 8px; flex-wrap: wrap; }
-.recent-item { background: rgba(59, 130, 246, 0.25); padding: 5px 12px; border-radius: 25px; font-size: 0.75rem; cursor: pointer; }
-
 .section-title { font-size: 0.9rem; font-weight: 600; margin: 0 0 12px 0; display: flex; align-items: center; gap: 8px; }
-#fileInput, #restoreInput { display: none; }
+#fileInput { display: none; }
 
 .search-result-info {
     margin: 8px 0;
@@ -408,130 +540,19 @@ body::before {
     display: inline-block;
 }
 
-/* PDF Viewer with zoom support */
-.pdf-viewer-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 2000;
-    background: #1a1a1a;
-}
-
-.pdf-viewer-modal.hidden {
-    display: none;
-}
-
-.pdf-viewer-container {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    background: #1a1a1a;
-    overflow: hidden;
-}
-
-.pdf-canvas-wrapper {
-    flex: 1;
-    overflow: auto;
-    -webkit-overflow-scrolling: touch;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    background: #525659;
-}
-
-#pdfCanvas {
-    display: block;
-    margin: 0 auto;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-    background: white;
-    transition: transform 0.1s ease;
-}
-
-.pdf-zoom-controls {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    padding: 12px 20px;
-    background: rgba(0,0,0,0.9);
-    border-top: 1px solid rgba(255,255,255,0.1);
-    position: sticky;
-    bottom: 0;
-    z-index: 10;
-}
-
-.zoom-btn {
-    background: rgba(255,255,255,0.15);
-    border: none;
-    color: white;
-    padding: 12px 24px;
-    border-radius: 40px;
-    font-size: 18px;
-    font-weight: bold;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    touch-action: manipulation;
-    min-width: 80px;
-    justify-content: center;
-}
-
-.zoom-btn:active {
-    transform: scale(0.96);
-    background: #6366f1;
-}
-
-.zoom-level {
-    color: white;
-    font-size: 14px;
-    background: rgba(0,0,0,0.5);
-    padding: 8px 16px;
-    border-radius: 30px;
-    font-weight: 500;
-}
-
-/* Mobile zoom hint */
-.zoom-hint {
-    position: absolute;
-    bottom: 80px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0,0,0,0.7);
-    color: white;
-    padding: 8px 16px;
-    border-radius: 30px;
-    font-size: 12px;
-    pointer-events: none;
-    z-index: 20;
-    white-space: nowrap;
-    backdrop-filter: blur(10px);
-    animation: fadeOut 3s forwards;
-}
-
-@keyframes fadeOut {
-    0% { opacity: 1; }
-    70% { opacity: 1; }
-    100% { opacity: 0; visibility: hidden; }
-}
-
-/* Mobile adjustments */
 @media (max-width: 640px) {
     .app { padding: 12px; }
-    .btn-back span, .btn-upload span, .theme-toggle span, .btn-backup span, .btn-restore span { display: none; }
-    .btn-back, .btn-upload, .theme-toggle, .btn-backup, .btn-restore { padding: 10px 14px; }
+    .btn-back span, .btn-upload span, .theme-toggle span { display: inline-block; }
+    .btn-back, .btn-upload, .theme-toggle { padding: 8px 16px; }
     .action-btn { padding: 6px 14px; font-size: 0.75rem; }
-    .action-btn i { font-size: 0.75rem; }
     .card { padding: 10px 12px; }
     .card-filename { font-size: 0.8rem; }
-    .card-buttons button { padding: 4px 10px; font-size: 0.65rem; }
     .dept-oval { padding: 8px 18px; }
-    .dept-oval span { font-size: 12px; }
     .stat-item span { font-size: 1.1rem; }
-    .stat-item i { font-size: 1.1rem; }
-    .zoom-btn { padding: 8px 16px; font-size: 14px; min-width: 60px; }
+    .toast { white-space: nowrap; font-size: 0.75rem; bottom: 20px; }
+    .header-title h1 { font-size: 1.2rem; }
+    .header-title .doc-tag { font-size: 0.6rem; }
+    .header-title .owner-name { font-size: 0.6rem; }
 }
 </style>
 </head>
@@ -542,7 +563,13 @@ body::before {
 <div class="app">
   <div class="header">
     <div class="logo"><i class="fas fa-folder-open"></i></div>
-    <div class="header-title"><h1>OARCEL</h1><span>Document Manager</span></div>
+    <div class="header-title">
+      <div class="main-line">
+        <h1>OARCEL</h1>
+        <span class="doc-tag"><i class="fas fa-file-alt"></i> Document Manager</span>
+      </div>
+      <div class="owner-name">𝓐𝓫𝓲𝓼𝓱 𝓡𝓪𝓳𝓪𝓷</div>
+    </div>
   </div>
 
   <div class="top-bar">
@@ -553,265 +580,64 @@ body::before {
       <button id="clearSearchBtn" class="clear-search hidden"><i class="fas fa-times-circle"></i></button>
     </div>
     <button id="themeToggle" class="theme-toggle"><i class="fas fa-moon"></i><span>Theme</span></button>
-    <button id="backupBtn" class="btn-backup" onclick="exportBackup()"><i class="fas fa-download"></i><span>Backup</span></button>
-    <button id="restoreBtn" class="btn-restore" onclick="triggerRestore()"><i class="fas fa-upload"></i><span>Restore</span></button>
     <button id="uploadBtn" class="btn-upload hidden" onclick="triggerUpload()"><i class="fas fa-cloud-upload-alt"></i><span>Upload</span></button>
     <input type="file" id="fileInput" accept="application/pdf" multiple>
-    <input type="file" id="restoreInput" accept=".json" onchange="importBackup(this)">
   </div>
 
   <div class="stats-bar">
     <div class="stat-item"><i class="fas fa-folder"></i><span id="folderCount">0</span><label>Folders</label></div>
     <div class="stat-item"><i class="fas fa-file-pdf"></i><span id="fileCount">0</span><label>Documents</label></div>
-    <div class="stat-item"><i class="fas fa-history"></i><span id="recentCount">0</span><label>Recent</label></div>
   </div>
 
   <div id="breadcrumb" class="breadcrumb"></div>
   <div id="departmentsSection"></div>
-  <div id="recentSection" class="recent-section hidden">
-    <div class="recent-header"><div class="recent-title"><i class="fas fa-history"></i> Recently Viewed</div><button class="clear-recent" onclick="clearAllRecent()"><i class="fas fa-trash-alt"></i> Clear</button></div>
-    <div id="recentList" class="recent-list"></div>
-  </div>
   <div id="searchInfo" class="search-result-info hidden"></div>
   <div id="content" class="content"></div>
-</div>
-
-<!-- PDF Viewer Modal -->
-<div id="pdfViewerModal" class="pdf-viewer-modal hidden">
-  <div class="pdf-viewer-container">
-    <div class="pdf-canvas-wrapper" id="pdfCanvasWrapper">
-      <canvas id="pdfCanvas"></canvas>
-    </div>
-    <div class="pdf-zoom-controls">
-      <button class="zoom-btn" id="zoomOutBtn"><i class="fas fa-search-minus"></i> -</button>
-      <span class="zoom-level" id="zoomLevel">100%</span>
-      <button class="zoom-btn" id="zoomInBtn"><i class="fas fa-search-plus"></i> +</button>
-      <button class="zoom-btn" id="closePdfBtn"><i class="fas fa-times"></i> Close</button>
-    </div>
-  </div>
 </div>
 
 <div id="toast" class="toast hidden"><i class="fas fa-check-circle"></i><span></span></div>
 
 <script>
-// ==================== INDEXEDDB STORAGE ====================
+// ==================== INDEXEDDB CORE ====================
 const DB_NAME = 'OarcelDB';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 let db = null;
 let allFiles = {};
 let fileSystem = {};
-let recentFiles = [];
 let currentPath = [];
 let isSearchMode = false;
 
-// PDF Viewer variables
-let pdfDoc = null;
-let currentPage = 1;
-let currentScale = 1.0;
-let pdfCanvas = null;
-let ctx = null;
-
-// Initialize IndexedDB
 function initDB() {
     return new Promise((resolve, reject) => {
         const request = indexedDB.open(DB_NAME, DB_VERSION);
         request.onerror = () => reject(request.error);
-        request.onsuccess = () => {
-            db = request.result;
-            resolve();
-        };
-        request.onupgradeneeded = (event) => {
-            const db = event.target.result;
+        request.onsuccess = () => { db = request.result; resolve(); };
+        request.onupgradeneeded = (e) => {
+            const db = e.target.result;
             if (!db.objectStoreNames.contains('files')) db.createObjectStore('files', { keyPath: 'id' });
             if (!db.objectStoreNames.contains('folderStructure')) db.createObjectStore('folderStructure', { keyPath: 'key' });
-            if (!db.objectStoreNames.contains('recent')) db.createObjectStore('recent', { keyPath: 'id' });
         };
     });
 }
 
-// Convert dataURL to Blob
-function dataURLToBlob(dataUrl) {
-    const arr = dataUrl.split(',');
-    const mime = arr[0].match(/:(.*?);/)[1];
-    const bstr = atob(arr[1]);
-    let n = bstr.length;
-    const u8arr = new Uint8Array(n);
-    while (n--) u8arr[n] = bstr.charCodeAt(n);
-    return new Blob([u8arr], { type: mime });
+function saveFolderStructure() {
+    const tx = db.transaction('folderStructure', 'readwrite');
+    tx.objectStore('folderStructure').put({ key: 'structure', value: fileSystem });
+    tx.commit();
 }
-
-// PDF Viewer Functions
-async function openPDF(dataUrl, fileName) {
-    try {
-        const folderPath = currentPath.join("/");
-        addToRecent(fileName, folderPath, dataUrl);
-        
-        // Show the PDF viewer modal
-        const modal = document.getElementById('pdfViewerModal');
-        if (!modal) {
-            // Fallback to window.open if modal doesn't exist
-            window.open(dataUrl, '_blank');
-            showToast(`Opening ${fileName}...`);
-            return;
-        }
-        
-        modal.classList.remove('hidden');
-        
-        // Initialize canvas
-        pdfCanvas = document.getElementById('pdfCanvas');
-        ctx = pdfCanvas.getContext('2d');
-        
-        // Show loading toast
-        showToast(`Loading ${fileName}...`);
-        
-        // Load PDF document
-        const loadingTask = pdfjsLib.getDocument(dataUrl);
-        pdfDoc = await loadingTask.promise;
-        currentPage = 1;
-        currentScale = 1.0;
-        
-        await renderPage(currentPage);
-        updateZoomDisplay();
-        
-        // Show zoom hint on first open
-        showZoomHint();
-        
-        showToast(`Loaded: ${fileName}`);
-        
-    } catch (err) {
-        console.error('Error opening PDF:', err);
-        showToast('Failed to open PDF', true);
-        
-        // Fallback: try opening in new tab
-        try {
-            window.open(dataUrl, '_blank');
-        } catch (e) {
-            showToast('Cannot open PDF', true);
-        }
-    }
-}
-
-async function renderPage(pageNum) {
-    if (!pdfDoc) return;
-    
-    try {
-        const page = await pdfDoc.getPage(pageNum);
-        const viewport = page.getViewport({ scale: currentScale });
-        
-        pdfCanvas.width = viewport.width;
-        pdfCanvas.height = viewport.height;
-        pdfCanvas.style.width = `${viewport.width}px`;
-        pdfCanvas.style.height = `${viewport.height}px`;
-        
-        const renderContext = {
-            canvasContext: ctx,
-            viewport: viewport
-        };
-        
-        await page.render(renderContext).promise;
-    } catch (err) {
-        console.error('Render error:', err);
-    }
-}
-
-function zoomIn() {
-    if (!pdfDoc) return;
-    if (currentScale < 3.0) {
-        currentScale += 0.25;
-        renderPage(currentPage);
-        updateZoomDisplay();
-    }
-}
-
-function zoomOut() {
-    if (!pdfDoc) return;
-    if (currentScale > 0.5) {
-        currentScale -= 0.25;
-        renderPage(currentPage);
-        updateZoomDisplay();
-    }
-}
-
-function updateZoomDisplay() {
-    const zoomLevel = document.getElementById('zoomLevel');
-    if (zoomLevel) {
-        zoomLevel.textContent = `${Math.round(currentScale * 100)}%`;
-    }
-}
-
-function closePDFViewer() {
-    const modal = document.getElementById('pdfViewerModal');
-    if (modal) {
-        modal.classList.add('hidden');
-    }
-    pdfDoc = null;
-    // Clear canvas
-    if (pdfCanvas && ctx) {
-        ctx.clearRect(0, 0, pdfCanvas.width, pdfCanvas.height);
-    }
-}
-
-function showZoomHint() {
-    // Remove existing hint
-    const existingHint = document.querySelector('.zoom-hint');
-    if (existingHint) existingHint.remove();
-    
-    // Create new hint
-    const hint = document.createElement('div');
-    hint.className = 'zoom-hint';
-    hint.innerHTML = '<i class="fas fa-hand-peace"></i> Pinch or use buttons to zoom';
-    document.querySelector('.pdf-viewer-container').appendChild(hint);
-    
-    // Auto remove after animation
-    setTimeout(() => {
-        if (hint) hint.remove();
-    }, 3000);
-}
-
-// Setup pinch-to-zoom for mobile
-function setupPinchZoom() {
-    let initialDistance = 0;
-    let initialScale = 1;
-    
-    const wrapper = document.getElementById('pdfCanvasWrapper');
-    if (!wrapper) return;
-    
-    wrapper.addEventListener('touchstart', (e) => {
-        if (e.touches.length === 2) {
-            e.preventDefault();
-            initialDistance = Math.hypot(
-                e.touches[0].pageX - e.touches[1].pageX,
-                e.touches[0].pageY - e.touches[1].pageY
-            );
-            initialScale = currentScale;
-        }
-    });
-    
-    wrapper.addEventListener('touchmove', (e) => {
-        if (e.touches.length === 2 && initialDistance > 0) {
-            e.preventDefault();
-            const currentDistance = Math.hypot(
-                e.touches[0].pageX - e.touches[1].pageX,
-                e.touches[0].pageY - e.touches[1].pageY
-            );
-            const scale = (currentDistance / initialDistance) * initialScale;
-            currentScale = Math.min(3.0, Math.max(0.5, scale));
-            renderPage(currentPage);
-            updateZoomDisplay();
-        }
-    });
-    
-    wrapper.addEventListener('touchend', () => {
-        initialDistance = 0;
-    });
+function saveAllFilesToDB() {
+    const tx = db.transaction('files', 'readwrite');
+    const store = tx.objectStore('files');
+    store.clear();
+    for (const folderPath in allFiles) store.put({ id: folderPath, folderPath, files: allFiles[folderPath] });
+    tx.commit();
 }
 
 async function loadFromIndexedDB() {
     const folderReq = db.transaction('folderStructure', 'readonly').objectStore('folderStructure').get('structure');
     folderReq.onsuccess = () => {
-        if (folderReq.result) {
-            fileSystem = folderReq.result.value;
-        } else {
+        if (folderReq.result) fileSystem = folderReq.result.value;
+        else {
             fileSystem = {
                 "REMELT":{"A":{},"B":{},"C":{},"D":{},"E":{},"F":{},"G":{},"H":{},"I":{},"J":{},"K":{},"L":{},"M":{},"N":{},"O":{},"P":{},"Q":{},"R":{},"S":{},"T":{},"U":{},"V":{},"W":{},"X":{},"Y":{},"Z":{}},
                 "CASTER":{"Quality Reports":{},"Mechanical":{},"Maintenance":{},"Production Data":{},"Testing":{},"Checklists":{},"Safety":{},"Training":{}},
@@ -822,68 +648,18 @@ async function loadFromIndexedDB() {
                 "SLITTER":{"Blade Maintenance":{},"Quality Control":{},"Production Reports":{},"Mechanical":{},"Safety":{},"Checklists":{},"Training":{},"Testing":{}},
                 "UTILITY":{"Power Supply":{},"Water System":{},"Compressed Air":{},"HVAC":{},"Reports":{},"Safety":{},"Manuals":{},"Testing":{}}
             };
-            saveFolderStructureToDB();
+            saveFolderStructure();
         }
         const fileReq = db.transaction('files', 'readonly').objectStore('files').getAll();
         fileReq.onsuccess = () => {
             allFiles = {};
             for (let item of fileReq.result) allFiles[item.folderPath] = item.files;
-            const recentReq = db.transaction('recent', 'readonly').objectStore('recent').get('recentList');
-            recentReq.onsuccess = () => {
-                if (recentReq.result) recentFiles = recentReq.result.value;
-                else recentFiles = [];
-                updateRecentUI();
-                render();
-            };
+            render();
         };
     };
 }
 
-function saveFolderStructureToDB() {
-    const tx = db.transaction('folderStructure', 'readwrite');
-    tx.objectStore('folderStructure').put({ key: 'structure', value: fileSystem });
-    tx.oncomplete = () => {};
-    tx.onerror = (e) => console.error('Save error', e);
-}
-
-function saveAllFilesToDB() {
-    const tx = db.transaction('files', 'readwrite');
-    const store = tx.objectStore('files');
-    store.clear();
-    for (const folderPath in allFiles) store.put({ id: folderPath, folderPath: folderPath, files: allFiles[folderPath] });
-    tx.oncomplete = () => {};
-    tx.onerror = (e) => console.error('Save error', e);
-}
-
-function saveRecentToDB() {
-    const tx = db.transaction('recent', 'readwrite');
-    tx.objectStore('recent').put({ id: 'recentList', value: recentFiles });
-    tx.oncomplete = () => {};
-    tx.onerror = (e) => console.error('Save error', e);
-}
-
-function showToast(msg, isErr = false) {
-    const toastEl = document.getElementById('toast');
-    toastEl.querySelector('span').textContent = msg;
-    toastEl.style.background = isErr ? "linear-gradient(135deg,#ef4444,#dc2626)" : "linear-gradient(135deg,#10b981,#059669)";
-    toastEl.classList.remove('hidden');
-    setTimeout(() => toastEl.classList.add('hidden'), 3000);
-}
-
-function escapeHtml(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
-
-function updateStats() {
-    let folderCount = 0, fileCount = 0;
-    function countRecursive(obj) { for (let k in obj) { if (typeof obj[k] === 'object' && obj[k] !== null && !Array.isArray(obj[k])) { folderCount++; countRecursive(obj[k]); } } }
-    countRecursive(fileSystem);
-    for (let k in allFiles) fileCount += allFiles[k].length;
-    document.getElementById('folderCount').textContent = folderCount;
-    document.getElementById('fileCount').textContent = fileCount;
-    document.getElementById('recentCount').textContent = recentFiles.length;
-}
-
-function getCurrentFolder() { let f = fileSystem; for (let p of currentPath) { if (f[p]) f = f[p]; else return null; } return f; }
-function getCurrentFolderObject() { return currentPath.reduce((o,p)=>o?.[p], fileSystem); }
+function getCurrentFolderObject() { return currentPath.reduce((o,p) => o?.[p], fileSystem); }
 function getFilesForCurrentFolder() { return allFiles[currentPath.join('/')] || []; }
 
 async function addFileToCurrentFolder(file) {
@@ -899,9 +675,6 @@ function deleteFileFromFolder(folderPath, fileName) {
         allFiles[folderPath] = allFiles[folderPath].filter(f => f.name !== fileName);
         if (allFiles[folderPath].length === 0) delete allFiles[folderPath];
         saveAllFilesToDB();
-        recentFiles = recentFiles.filter(f => !(f.name === fileName && f.path === folderPath));
-        saveRecentToDB();
-        updateRecentUI();
         render();
         showToast(`✅ Deleted "${fileName}"`);
     }
@@ -914,80 +687,45 @@ function renameFileInFolder(folderPath, oldName, newName) {
             if (!newName.toLowerCase().endsWith('.pdf')) newName += '.pdf';
             allFiles[folderPath][idx].name = newName;
             saveAllFilesToDB();
-            recentFiles = recentFiles.map(f => (f.name === oldName && f.path === folderPath) ? { ...f, name: newName } : f);
-            saveRecentToDB();
-            updateRecentUI();
             render();
             showToast(`✅ Renamed to "${newName}"`);
         }
     }
 }
 
-function addToRecent(fileName, filePath, dataUrl) {
-    recentFiles = recentFiles.filter(f => !(f.name === fileName && f.path === filePath));
-    recentFiles.unshift({ name: fileName, path: filePath, dataUrl, timestamp: Date.now() });
-    if (recentFiles.length > 10) recentFiles.pop();
-    saveRecentToDB();
-    updateRecentUI();
-}
-
-function updateRecentUI() {
-    const sec = document.getElementById('recentSection');
-    const list = document.getElementById('recentList');
-    if (recentFiles.length) {
-        sec.classList.remove('hidden');
-        list.innerHTML = recentFiles.map(f => `<div class="recent-item" onclick="openRecentFile('${escapeHtml(f.path)}','${escapeHtml(f.name)}')"><i class="fas fa-file-pdf"></i> ${escapeHtml(f.name.length > 25 ? f.name.substring(0,25)+'...' : f.name)}</div>`).join('');
-    } else { sec.classList.add('hidden'); }
-}
-
-function openRecentFile(path, name) {
-    const file = allFiles[path]?.find(f => f.name === name);
-    if (file) { currentPath = path.split('/'); render(); setTimeout(() => openPDF(file.dataUrl, name), 100); } 
-    else showToast('File not found', true);
-}
-
-function renameCurrentFolder() { 
-    if (!currentPath.length) return showToast("Cannot rename root", true); 
-    const old = currentPath[currentPath.length-1], newName = prompt("New folder name:", old); 
-    if(newName && newName !== old && newName.trim()){
-        const parent = currentPath.slice(0,-1).reduce((o,p)=>o[p], fileSystem); 
-        parent[newName] = parent[old]; 
-        delete parent[old]; 
-        const oldPath = currentPath.join('/'), newPath = [...currentPath.slice(0,-1), newName].join('/'); 
-        if(allFiles[oldPath]){ allFiles[newPath] = allFiles[oldPath]; delete allFiles[oldPath]; } 
-        currentPath[currentPath.length-1] = newName; 
-        saveFolderStructureToDB(); saveAllFilesToDB(); render(); 
-        showToast(`✅ Renamed to "${newName}"`);
-    } 
-}
-
-function addNewFolder() { 
-    const name = prompt("Folder name:"); 
-    if(name && name.trim()){ 
-        const cur = getCurrentFolderObject(); 
-        if(cur && !cur[name]){ cur[name] = {}; saveFolderStructureToDB(); render(); showToast(`✅ Folder "${name}" created`); } 
-        else showToast("Exists", true); 
-    } 
-}
-
-function addNewDepartment() { 
-    const name = prompt("Department name:"); 
-    if(name && name.trim() && !fileSystem[name]){ fileSystem[name] = {}; saveFolderStructureToDB(); render(); showToast(`✅ Department "${name}" created`); } 
-    else if(fileSystem[name]) showToast("Department exists", true); 
-}
-
-function deleteCurrentFolder() { 
-    if(!currentPath.length) return; 
-    const name = currentPath[currentPath.length-1]; 
-    if(confirm(`Delete "${name}" and all contents?`)){ 
-        const path = currentPath.join('/'); 
-        delete allFiles[path]; 
-        const parent = currentPath.slice(0,-1).reduce((o,p)=>o[p], fileSystem); 
-        delete parent[name]; 
-        currentPath.pop(); 
-        saveFolderStructureToDB(); saveAllFilesToDB(); render(); 
-        showToast(`🗑️ Folder "${name}" deleted`);
-    } 
+// FIXED PDF OPENING - Using blob URL and window.open
+function openPDF(dataUrl, fileName) {
+    showToast(`Opening ${fileName}...`);
+    
+    // Convert data URL to blob and open in new tab
+    fetch(dataUrl)
+        .then(response => response.blob())
+        .then(blob => {
+            const blobUrl = URL.createObjectURL(blob);
+            // Open in new tab/window
+            const newWindow = window.open(blobUrl, '_blank');
+            
+            // Fallback if popup blocked
+            if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+                // Try alternative method
+                const link = document.createElement('a');
+                link.href = blobUrl;
+                link.target = '_blank';
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+            
+            // Clean up blob URL after a delay
+            setTimeout(() => {
+                URL.revokeObjectURL(blobUrl);
+            }, 60000);
+        })
+        .catch(err => {
+            console.error('PDF error:', err);
+            showToast(`Failed to open PDF: ${err.message}`, true);
+        });
 }
 
 function selectDepartment(d) { currentPath = [d]; render(); }
@@ -995,11 +733,11 @@ function goBack() { if(currentPath.length && !isSearchMode) { currentPath.pop();
 function triggerUpload() { document.getElementById('fileInput').click(); }
 function clearSearch() { document.getElementById('searchInput').value = ''; isSearchMode = false; document.getElementById('searchInfo').classList.add('hidden'); document.getElementById('clearSearchBtn').classList.add('hidden'); render(); }
 
-function searchFiles(q) { 
-    if(!q.trim()) return []; 
-    const all = []; 
-    for(const path in allFiles) allFiles[path].forEach(f => all.push({...f, folder:path})); 
-    return all.filter(f => f.name.toLowerCase().includes(q.toLowerCase())); 
+function searchFiles(q) {
+    if(!q.trim()) return [];
+    const all = [];
+    for(const path in allFiles) allFiles[path].forEach(f => all.push({...f, folder:path}));
+    return all.filter(f => f.name.toLowerCase().includes(q.toLowerCase()));
 }
 
 function createCard(title, onClick, isFolder=false, showDel=false, delPath=null, delName=null, showRename=false) {
@@ -1012,8 +750,7 @@ function createCard(title, onClick, isFolder=false, showDel=false, delPath=null,
             ${showDel ? `<button class="delete-btn" onclick="event.stopPropagation(); window.deleteFile('${delPath}','${escapeHtml(delName)}')"><i class="fas fa-trash"></i> Delete</button>` : ''}
         </div>
     `;
-    div.onclick = onClick; 
-    return div;
+    div.onclick = onClick; return div;
 }
 
 function render() {
@@ -1024,26 +761,26 @@ function render() {
         const results = searchFiles(query);
         document.getElementById('searchInfo').classList.remove('hidden');
         document.getElementById('searchInfo').innerHTML = `<i class="fas fa-search"></i> Found ${results.length} result(s) for "${escapeHtml(query)}" <button onclick="clearSearch()" style="background:none;border:none;color:#60a5fa;cursor:pointer;margin-left:10px;">Clear</button>`;
-        const content = document.getElementById('content'); content.innerHTML = '';
+        const contentDiv = document.getElementById('content'); contentDiv.innerHTML = '';
         document.getElementById('backBtn').classList.remove('hidden');
         document.getElementById('uploadBtn').classList.add('hidden');
         document.getElementById('departmentsSection').innerHTML = '';
         document.getElementById('breadcrumb').innerHTML = '';
-        if(!results.length) content.innerHTML = '<div class="empty-state"><i class="fas fa-search"></i><p>No PDFs found.</p></div>';
-        else results.forEach(f => content.appendChild(createCard(f.name, () => openPDF(f.dataUrl, f.name), false)));
+        if(!results.length) contentDiv.innerHTML = '<div class="empty-state"><i class="fas fa-search"></i><p>No PDFs found.</p></div>';
+        else results.forEach(f => contentDiv.appendChild(createCard(f.name, () => openPDF(f.dataUrl, f.name), false)));
         updateStats(); return;
     }
     isSearchMode = false;
     document.getElementById('clearSearchBtn').classList.add('hidden');
     document.getElementById('searchInfo').classList.add('hidden');
     document.getElementById('content').innerHTML = '';
-    const folder = getCurrentFolder();
+    const folder = getCurrentFolderObject();
     if(!folder) { currentPath = []; render(); return; }
     document.getElementById('backBtn').classList.toggle('hidden', currentPath.length === 0);
     
-    const bc = document.getElementById('breadcrumb');
-    bc.innerHTML = `<div class="breadcrumb-item" onclick="navigateToBreadcrumb(-1)"><i class="fas fa-home"></i> Home</div>`;
-    currentPath.forEach((f,i) => { bc.innerHTML += `<span class="breadcrumb-separator">/</span><div class="breadcrumb-item" onclick="navigateToBreadcrumb(${i})">${escapeHtml(f)}</div>`; });
+    const bcDiv = document.getElementById('breadcrumb');
+    bcDiv.innerHTML = `<div class="breadcrumb-item" onclick="navigateToBreadcrumb(-1)"><i class="fas fa-home"></i> Home</div>`;
+    currentPath.forEach((f,i) => { bcDiv.innerHTML += `<span class="breadcrumb-separator">/</span><div class="breadcrumb-item" onclick="navigateToBreadcrumb(${i})">${escapeHtml(f)}</div>`; });
     
     if(currentPath.length === 0){
         let html = '<div class="section-title"><i class="fas fa-building"></i> Departments</div><div class="departments-grid">';
@@ -1054,7 +791,7 @@ function render() {
         }
         html += '</div>';
         document.getElementById('departmentsSection').innerHTML = html;
-    } else { document.getElementById('departmentsSection').innerHTML = ''; }
+    } else document.getElementById('departmentsSection').innerHTML = '';
     
     const isLeaf = Object.keys(folder).length === 0;
     const isRoot = currentPath.length === 0;
@@ -1062,8 +799,8 @@ function render() {
     
     const actionDiv = document.createElement('div');
     actionDiv.className = 'action-bar';
-    if(!isRoot) actionDiv.innerHTML = `<button class="action-btn rename-btn" onclick="renameCurrentFolder()"><i class="fas fa-edit"></i> Rename Folder</button><button class="action-btn delete-folder-btn" onclick="deleteCurrentFolder()"><i class="fas fa-trash-alt"></i> Delete Folder</button><button class="action-btn add-folder-btn" onclick="addNewFolder()"><i class="fas fa-plus"></i> Add Subfolder</button>`;
-    else actionDiv.innerHTML = `<button class="action-btn add-folder-btn" onclick="addNewDepartment()"><i class="fas fa-building"></i> Add Department</button>`;
+    if(!isRoot) actionDiv.innerHTML = `<button class="action-btn" onclick="renameCurrentFolder()"><i class="fas fa-edit"></i> Rename Folder</button><button class="action-btn" onclick="deleteCurrentFolder()"><i class="fas fa-trash-alt"></i> Delete Folder</button><button class="action-btn" onclick="addNewFolder()"><i class="fas fa-plus"></i> Add Subfolder</button>`;
+    else actionDiv.innerHTML = `<button class="action-btn" onclick="addNewDepartment()"><i class="fas fa-building"></i> Add Department</button>`;
     document.getElementById('content').appendChild(actionDiv);
     
     if(!isRoot && !isLeaf) for(let key in folder) document.getElementById('content').appendChild(createCard(key, () => { currentPath.push(key); render(); }, true));
@@ -1076,204 +813,91 @@ function render() {
     updateStats();
 }
 
-async function exportBackup() {
-    const backupData = { version: 2, timestamp: Date.now(), folderStructure: fileSystem, allFiles: allFiles, recentFiles: recentFiles };
-    const jsonStr = JSON.stringify(backupData);
-    const blob = new Blob([jsonStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `oarcel_backup_${new Date().toISOString().slice(0,19)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    showToast('✅ Backup exported');
-}
-
-function triggerRestore() { document.getElementById('restoreInput').click(); }
-async function importBackup(input) {
-    if (!input.files.length) return;
-    try {
-        const text = await input.files[0].text();
-        const data = JSON.parse(text);
-        if (data.folderStructure) fileSystem = data.folderStructure;
-        if (data.allFiles) allFiles = data.allFiles;
-        if (data.recentFiles) recentFiles = data.recentFiles;
-        await saveFolderStructureToDB();
-        await saveAllFilesToDB();
-        await saveRecentToDB();
-        currentPath = [];
-        showToast('✅ Restore completed! Reloading...');
-        setTimeout(() => location.reload(), 1000);
-    } catch (e) { showToast('❌ Invalid backup file', true); }
-    input.value = '';
-}
-
 function navigateToBreadcrumb(idx) { if(idx === -1) currentPath = []; else currentPath = currentPath.slice(0, idx+1); render(); }
-function clearAllRecent() { if(confirm("Clear recent history?")){ recentFiles = []; saveRecentToDB(); updateRecentUI(); showToast("Cleared"); } }
-
-// Theme Toggle
-function toggleTheme() { 
-    document.body.classList.toggle('light-mode'); 
-    localStorage.setItem('oarcel_theme', document.body.classList.contains('light-mode') ? 'light-mode' : ''); 
-    updateThemeIcon(); 
+function renameCurrentFolder() { 
+    if(!currentPath.length) return;
+    const old = currentPath[currentPath.length-1], newName = prompt("New folder name:", old);
+    if(newName && newName !== old && newName.trim()){
+        const parent = currentPath.slice(0,-1).reduce((o,p)=>o[p], fileSystem);
+        parent[newName] = parent[old]; delete parent[old];
+        const oldPath = currentPath.join('/'), newPath = [...currentPath.slice(0,-1), newName].join('/');
+        if(allFiles[oldPath]){ allFiles[newPath] = allFiles[oldPath]; delete allFiles[oldPath]; }
+        currentPath[currentPath.length-1] = newName;
+        saveFolderStructure(); saveAllFilesToDB(); render(); showToast(`✅ Renamed to "${newName}"`);
+    }
 }
-function updateThemeIcon() { 
-    const isDark = !document.body.classList.contains('light-mode'); 
-    document.getElementById('themeToggle').innerHTML = isDark ? '<i class="fas fa-sun"></i><span>Light</span>' : '<i class="fas fa-moon"></i><span>Dark</span>'; 
+function deleteCurrentFolder() {
+    if(!currentPath.length) return;
+    const name = currentPath[currentPath.length-1];
+    if(confirm(`Delete "${name}" and all contents?`)){
+        const path = currentPath.join('/');
+        delete allFiles[path];
+        const parent = currentPath.slice(0,-1).reduce((o,p)=>o[p], fileSystem);
+        delete parent[name];
+        currentPath.pop();
+        saveFolderStructure(); saveAllFilesToDB(); render(); showToast(`🗑️ Folder "${name}" deleted`);
+    }
 }
+function addNewFolder() {
+    const name = prompt("Folder name:");
+    if(name && name.trim()){
+        const cur = getCurrentFolderObject();
+        if(cur && !cur[name]){ cur[name] = {}; saveFolderStructure(); render(); showToast(`✅ Folder "${name}" created`); }
+        else showToast("Exists", true);
+    }
+}
+function addNewDepartment() {
+    const name = prompt("Department name:");
+    if(name && name.trim() && !fileSystem[name]){ fileSystem[name] = {}; saveFolderStructure(); render(); showToast(`✅ Department "${name}" created`); }
+    else if(fileSystem[name]) showToast("Department exists", true);
+}
+function updateStats() {
+    let folderCount = 0, fileCount = 0;
+    function countFolders(obj) { for(let k in obj) { if(typeof obj[k] === 'object') { folderCount++; countFolders(obj[k]); } } }
+    countFolders(fileSystem);
+    for(let k in allFiles) fileCount += allFiles[k].length;
+    document.getElementById('folderCount').textContent = folderCount;
+    document.getElementById('fileCount').textContent = fileCount;
+}
+function showToast(msg, isErr = false) {
+    const toast = document.getElementById('toast');
+    toast.querySelector('span').textContent = msg;
+    toast.style.background = isErr ? "linear-gradient(135deg,#ef4444,#dc2626)" : "linear-gradient(135deg,#10b981,#059669)";
+    toast.classList.remove('hidden');
+    setTimeout(() => toast.classList.add('hidden'), 3000);
+}
+function escapeHtml(str) { const div = document.createElement('div'); div.textContent = str; return div.innerHTML; }
 
-// Initialize event listeners
-document.addEventListener('DOMContentLoaded', () => {
-    const zoomInBtn = document.getElementById('zoomInBtn');
-    const zoomOutBtn = document.getElementById('zoomOutBtn');
-    const closeBtn = document.getElementById('closePdfBtn');
+function toggleTheme() { document.body.classList.toggle('light-mode'); localStorage.setItem('oarcel_theme', document.body.classList.contains('light-mode') ? 'light-mode' : ''); updateThemeIcon(); }
+function updateThemeIcon() { const isDark = !document.body.classList.contains('light-mode'); document.getElementById('themeToggle').innerHTML = isDark ? '<i class="fas fa-sun"></i><span>Light</span>' : '<i class="fas fa-moon"></i><span>Dark</span>'; }
+
+// Initialize
+document.addEventListener('DOMContentLoaded', async () => {
+    document.getElementById('themeToggle').onclick = toggleTheme;
+    if(localStorage.getItem('oarcel_theme') === 'light-mode') document.body.classList.add('light-mode');
+    updateThemeIcon();
+    document.getElementById('fileInput').addEventListener('change', async(e) => {
+        const files = Array.from(e.target.files);
+        for(let f of files) if(f.type === 'application/pdf') await addFileToCurrentFolder(f);
+        showToast(`${files.length} PDF(s) saved!`); render(); e.target.value = '';
+    });
+    document.getElementById('searchInput').addEventListener('input', () => render());
+    document.getElementById('clearSearchBtn').addEventListener('click', clearSearch);
+    window.deleteFile = (p,n) => { if(confirm(`Delete "${n}"?`)) deleteFileFromFolder(p,n); };
+    window.renameFile = (p,old) => { const nu = prompt("New name:", old.replace('.pdf','')); if(nu?.trim()) renameFileInFolder(p, old, nu.trim()); };
     
-    if (zoomInBtn) zoomInBtn.addEventListener('click', zoomIn);
-    if (zoomOutBtn) zoomOutBtn.addEventListener('click', zoomOut);
-    if (closeBtn) closeBtn.addEventListener('click', closePDFViewer);
-    
-    setupPinchZoom();
+    try {
+        await initDB();
+        await loadFromIndexedDB();
+    } catch(e) {
+        console.error(e);
+        showToast('Database error', true);
+    }
 });
 
-document.getElementById('themeToggle').onclick = toggleTheme;
-const savedTheme = localStorage.getItem('oarcel_theme'); 
-if(savedTheme === 'light-mode') document.body.classList.add('light-mode'); 
-updateThemeIcon();
-
-// Event Listeners
-document.getElementById('fileInput').addEventListener('change', async(e) => { 
-    const files = Array.from(e.target.files); 
-    for(let f of files) if(f.type === 'application/pdf') await addFileToCurrentFolder(f); 
-    showToast(`${files.length} PDF(s) saved!`); 
-    render(); 
-    e.target.value = ''; 
-});
-document.getElementById('searchInput').addEventListener('input', () => render());
-document.getElementById('clearSearchBtn').addEventListener('click', clearSearch);
-
-window.deleteFile = (p, n) => { if(confirm(`Delete "${n}"?`)) deleteFileFromFolder(p, n); };
-window.renameFile = (p, old) => { const nu = prompt("New name:", old.replace('.pdf','')); if(nu && nu.trim()) renameFileInFolder(p, old, nu.trim()); };
-window.goBack = goBack; window.triggerUpload = triggerUpload; window.selectDepartment = selectDepartment; 
-window.openRecentFile = openRecentFile; window.clearAllRecent = clearAllRecent; window.renameCurrentFolder = renameCurrentFolder;
-window.deleteCurrentFolder = deleteCurrentFolder; window.addNewFolder = addNewFolder; window.addNewDepartment = addNewDepartment;
-window.navigateToBreadcrumb = navigateToBreadcrumb; window.exportBackup = exportBackup; window.triggerRestore = triggerRestore;
-window.importBackup = importBackup; window.openPDF = openPDF;
-
-initDB().then(() => loadFromIndexedDB()).catch(e => console.error('DB error', e));
+window.goBack = goBack; window.triggerUpload = triggerUpload; window.selectDepartment = selectDepartment; window.navigateToBreadcrumb = navigateToBreadcrumb;
+window.renameCurrentFolder = renameCurrentFolder; window.deleteCurrentFolder = deleteCurrentFolder; window.addNewFolder = addNewFolder; window.addNewDepartment = addNewDepartment;
+window.openPDF = openPDF;
 </script>
 </body>
-</html>.  My HTML.  /* PDF Viewer with zoom support */
-.pdf-viewer-container {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    background: #1a1a1a;
-    overflow: hidden;
-}
-
-.pdf-canvas-wrapper {
-    flex: 1;
-    overflow: auto;
-    -webkit-overflow-scrolling: touch;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    background: #525659;
-}
-
-#pdfCanvas {
-    display: block;
-    margin: 0 auto;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-    background: white;
-    transition: transform 0.1s ease;
-}
-
-.pdf-zoom-controls {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    padding: 12px 20px;
-    background: rgba(0,0,0,0.9);
-    border-top: 1px solid rgba(255,255,255,0.1);
-    position: sticky;
-    bottom: 0;
-    z-index: 10;
-}
-
-.zoom-btn {
-    background: rgba(255,255,255,0.15);
-    border: none;
-    color: white;
-    padding: 12px 24px;
-    border-radius: 40px;
-    font-size: 18px;
-    font-weight: bold;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    touch-action: manipulation;
-    min-width: 80px;
-    justify-content: center;
-}
-
-.zoom-btn:active {
-    transform: scale(0.96);
-    background: #6366f1;
-}
-
-.zoom-level {
-    color: white;
-    font-size: 14px;
-    background: rgba(0,0,0,0.5);
-    padding: 8px 16px;
-    border-radius: 30px;
-    font-weight: 500;
-}
-
-/* Mobile zoom hint */
-.zoom-hint {
-    position: absolute;
-    bottom: 80px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0,0,0,0.7);
-    color: white;
-    padding: 8px 16px;
-    border-radius: 30px;
-    font-size: 12px;
-    pointer-events: none;
-    z-index: 20;
-    white-space: nowrap;
-    backdrop-filter: blur(10px);
-    animation: fadeOut 3s forwards;
-}
-
-@keyframes fadeOut {
-    0% { opacity: 1; }
-    70% { opacity: 1; }
-    100% { opacity: 0; visibility: hidden; }
-}.   My CSS.  function openPDF(dataUrl, fileName) {
-    try {
-        // Fetch the blob from data URL properly
-        fetch(dataUrl)
-            .then(res => res.blob())
-            .then(blob => {
-                const blobUrl = URL.createObjectURL(blob);
-                const folderPath = currentPath.join("/");
-                addToRecent(fileName, folderPath, dataUrl);
-                window.open(blobUrl, '_blank');
-                setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
-                showToast(`Opening ${fileName}...`);
-            })
-            .catch(err => {
-                console.error('Fetch error:', err);
-                showToast('Failed to open PDF', true);
-            });
-    } catch (err) {
-        console.error('Error opening PDF:', err);
-        showToast('Failed to open PDF', true);
-    }
-}. My app Js
+</html>
