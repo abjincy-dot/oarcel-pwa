@@ -7,7 +7,7 @@ let fileSystem = {};
 let currentPath = [];
 let isSearchMode = false;
 
-// ==================== PDF.JS EMBEDDED VIEWER ====================
+// ==================== PDF.JS VERTICAL SCROLLING VIEWER ====================
 // Load PDF.js library dynamically
 function loadPDFJS() {
     return new Promise((resolve, reject) => {
@@ -58,17 +58,10 @@ async function openPDFEmbedded(dataUrl, fileName) {
         border-bottom: 1px solid rgba(255,255,255,0.1);
         flex-wrap: wrap;
         gap: 10px;
+        flex-shrink: 0;
     `;
     
-    // File name and page info
-    const leftSection = document.createElement('div');
-    leftSection.style.cssText = `
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        flex-wrap: wrap;
-    `;
-    
+    // File name
     const fileNameSpan = document.createElement('span');
     fileNameSpan.style.cssText = `
         font-size: 0.9rem;
@@ -80,6 +73,7 @@ async function openPDFEmbedded(dataUrl, fileName) {
     `;
     fileNameSpan.innerHTML = `<i class="fas fa-file-pdf" style="color: #ef4444; margin-right: 8px;"></i>${escapeHtml(fileName)}`;
     
+    // Page info
     const pageInfo = document.createElement('span');
     pageInfo.style.cssText = `
         font-size: 0.8rem;
@@ -88,66 +82,6 @@ async function openPDFEmbedded(dataUrl, fileName) {
         border-radius: 20px;
     `;
     pageInfo.innerHTML = 'Loading...';
-    
-    leftSection.appendChild(fileNameSpan);
-    leftSection.appendChild(pageInfo);
-    
-    // Navigation controls
-    const navControls = document.createElement('div');
-    navControls.style.cssText = `
-        display: flex;
-        gap: 8px;
-        align-items: center;
-    `;
-    
-    const prevBtn = document.createElement('button');
-    prevBtn.innerHTML = '<i class="fas fa-chevron-left"></i> Prev';
-    prevBtn.style.cssText = `
-        padding: 6px 12px;
-        background: rgba(59, 130, 246, 0.8);
-        border: none;
-        border-radius: 20px;
-        color: white;
-        cursor: pointer;
-        font-size: 0.8rem;
-        transition: all 0.2s;
-    `;
-    
-    const nextBtn = document.createElement('button');
-    nextBtn.innerHTML = 'Next <i class="fas fa-chevron-right"></i>';
-    nextBtn.style.cssText = `
-        padding: 6px 12px;
-        background: rgba(59, 130, 246, 0.8);
-        border: none;
-        border-radius: 20px;
-        color: white;
-        cursor: pointer;
-        font-size: 0.8rem;
-        transition: all 0.2s;
-    `;
-    
-    const pageInput = document.createElement('input');
-    pageInput.type = 'number';
-    pageInput.style.cssText = `
-        width: 60px;
-        padding: 6px;
-        border-radius: 20px;
-        border: 1px solid rgba(255,255,255,0.2);
-        background: rgba(0,0,0,0.5);
-        color: white;
-        text-align: center;
-        font-size: 0.8rem;
-    `;
-    pageInput.value = '1';
-    
-    const totalPagesSpan = document.createElement('span');
-    totalPagesSpan.style.cssText = `font-size: 0.8rem;`;
-    totalPagesSpan.innerHTML = '/ ?';
-    
-    navControls.appendChild(prevBtn);
-    navControls.appendChild(pageInput);
-    navControls.appendChild(totalPagesSpan);
-    navControls.appendChild(nextBtn);
     
     // Zoom controls
     const zoomControls = document.createElement('div');
@@ -170,6 +104,14 @@ async function openPDFEmbedded(dataUrl, fileName) {
         transition: all 0.2s;
     `;
     
+    const zoomLevel = document.createElement('span');
+    zoomLevel.style.cssText = `
+        font-size: 0.8rem;
+        min-width: 45px;
+        text-align: center;
+    `;
+    zoomLevel.innerHTML = '100%';
+    
     const zoomInBtn = document.createElement('button');
     zoomInBtn.innerHTML = '<i class="fas fa-search-plus"></i>';
     zoomInBtn.style.cssText = `
@@ -183,17 +125,24 @@ async function openPDFEmbedded(dataUrl, fileName) {
         transition: all 0.2s;
     `;
     
-    const zoomLevel = document.createElement('span');
-    zoomLevel.style.cssText = `
+    const resetZoomBtn = document.createElement('button');
+    resetZoomBtn.innerHTML = '<i class="fas fa-sync-alt"></i>';
+    resetZoomBtn.style.cssText = `
+        padding: 6px 10px;
+        background: rgba(255,255,255,0.1);
+        border: none;
+        border-radius: 20px;
+        color: white;
+        cursor: pointer;
         font-size: 0.8rem;
-        min-width: 45px;
-        text-align: center;
+        transition: all 0.2s;
     `;
-    zoomLevel.innerHTML = '100%';
+    resetZoomBtn.title = 'Reset Zoom';
     
     zoomControls.appendChild(zoomOutBtn);
     zoomControls.appendChild(zoomLevel);
     zoomControls.appendChild(zoomInBtn);
+    zoomControls.appendChild(resetZoomBtn);
     
     // Right section buttons
     const rightSection = document.createElement('div');
@@ -231,110 +180,127 @@ async function openPDFEmbedded(dataUrl, fileName) {
     rightSection.appendChild(downloadBtn);
     rightSection.appendChild(closeBtn);
     
-    toolbar.appendChild(leftSection);
-    toolbar.appendChild(navControls);
+    toolbar.appendChild(fileNameSpan);
+    toolbar.appendChild(pageInfo);
     toolbar.appendChild(zoomControls);
     toolbar.appendChild(rightSection);
     
-    // Canvas container for PDF rendering
-    const canvasContainer = document.createElement('div');
-    canvasContainer.style.cssText = `
+    // Scrollable container for all pages
+    const scrollContainer = document.createElement('div');
+    scrollContainer.style.cssText = `
         flex: 1;
-        overflow: auto;
-        display: flex;
-        justify-content: center;
+        overflow-y: auto;
+        overflow-x: auto;
         padding: 20px;
         background: #1a1a2e;
+        -webkit-overflow-scrolling: touch;
     `;
     
-    const canvas = document.createElement('canvas');
-    canvas.style.cssText = `
-        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-        background: white;
+    // Container for canvas elements
+    const pagesContainer = document.createElement('div');
+    pagesContainer.style.cssText = `
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+        min-height: 100%;
     `;
-    canvasContainer.appendChild(canvas);
+    scrollContainer.appendChild(pagesContainer);
     
     modal.appendChild(toolbar);
-    modal.appendChild(canvasContainer);
+    modal.appendChild(scrollContainer);
     document.body.appendChild(modal);
     
     // PDF rendering variables
     let pdfDoc = null;
-    let currentPage = 1;
+    let canvases = [];
     let currentScale = 1.0;
     let totalPages = 0;
     
-    // Function to render page
-    async function renderPage(pageNumber, scale) {
+    // Function to render all pages
+    async function renderAllPages(scale) {
         if (!pdfDoc) return;
         
-        try {
-            const page = await pdfDoc.getPage(pageNumber);
-            const viewport = page.getViewport({ scale: scale });
-            
-            canvas.width = viewport.width;
-            canvas.height = viewport.height;
-            canvas.style.width = viewport.width + 'px';
-            canvas.style.height = viewport.height + 'px';
-            
-            const renderContext = {
-                canvasContext: canvas.getContext('2d'),
-                viewport: viewport
-            };
-            
-            await page.render(renderContext).promise;
-            
-            // Update page info
-            pageInfo.innerHTML = `Page ${pageNumber} of ${totalPages}`;
-            pageInput.value = pageNumber;
-            totalPagesSpan.innerHTML = `/ ${totalPages}`;
-            zoomLevel.innerHTML = Math.round(scale * 100) + '%';
-        } catch (err) {
-            console.error('Render error:', err);
-            showToast('Error rendering page', true);
+        pagesContainer.innerHTML = '';
+        canvases = [];
+        
+        for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+            try {
+                const page = await pdfDoc.getPage(pageNum);
+                const viewport = page.getViewport({ scale: scale });
+                
+                // Create wrapper for each page
+                const pageWrapper = document.createElement('div');
+                pageWrapper.style.cssText = `
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    margin-bottom: 20px;
+                `;
+                
+                // Add page number label
+                const pageLabel = document.createElement('div');
+                pageLabel.style.cssText = `
+                    font-size: 0.7rem;
+                    color: #888;
+                    margin-bottom: 8px;
+                `;
+                pageLabel.innerHTML = `Page ${pageNum} of ${totalPages}`;
+                
+                // Create canvas
+                const canvas = document.createElement('canvas');
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+                canvas.style.width = viewport.width + 'px';
+                canvas.style.height = viewport.height + 'px';
+                canvas.style.boxShadow = '0 4px 20px rgba(0,0,0,0.3)';
+                canvas.style.backgroundColor = 'white';
+                canvas.style.display = 'block';
+                
+                const renderContext = {
+                    canvasContext: canvas.getContext('2d'),
+                    viewport: viewport
+                };
+                
+                await page.render(renderContext).promise;
+                
+                pageWrapper.appendChild(pageLabel);
+                pageWrapper.appendChild(canvas);
+                pagesContainer.appendChild(pageWrapper);
+                
+                canvases.push({ canvas, pageNum, wrapper: pageWrapper });
+                
+            } catch (err) {
+                console.error(`Error rendering page ${pageNum}:`, err);
+            }
         }
+        
+        // Update zoom display
+        zoomLevel.innerHTML = Math.round(scale * 100) + '%';
+        pageInfo.innerHTML = `${totalPages} page${totalPages > 1 ? 's' : ''}`;
     }
     
-    // Navigation functions
-    function goPrevPage() {
-        if (currentPage > 1) {
-            currentPage--;
-            renderPage(currentPage, currentScale);
-        }
-    }
-    
-    function goNextPage() {
-        if (currentPage < totalPages) {
-            currentPage++;
-            renderPage(currentPage, currentScale);
-        }
-    }
-    
-    function zoomIn() {
+    // Zoom functions
+    async function zoomIn() {
         currentScale = Math.min(currentScale + 0.25, 3.0);
-        renderPage(currentPage, currentScale);
+        await renderAllPages(currentScale);
     }
     
-    function zoomOut() {
+    async function zoomOut() {
         currentScale = Math.max(currentScale - 0.25, 0.5);
-        renderPage(currentPage, currentScale);
+        await renderAllPages(currentScale);
+    }
+    
+    async function resetZoom() {
+        currentScale = 1.0;
+        await renderAllPages(currentScale);
+        scrollContainer.scrollTop = 0;
     }
     
     // Attach event listeners
-    prevBtn.onclick = goPrevPage;
-    nextBtn.onclick = goNextPage;
     zoomInBtn.onclick = zoomIn;
     zoomOutBtn.onclick = zoomOut;
-    
-    pageInput.onchange = () => {
-        let pageNum = parseInt(pageInput.value);
-        if (pageNum >= 1 && pageNum <= totalPages) {
-            currentPage = pageNum;
-            renderPage(currentPage, currentScale);
-        } else {
-            pageInput.value = currentPage;
-        }
-    };
+    resetZoomBtn.onclick = resetZoom;
     
     downloadBtn.onclick = () => {
         const link = document.createElement('a');
@@ -348,6 +314,52 @@ async function openPDFEmbedded(dataUrl, fileName) {
         document.body.removeChild(modal);
         if (modal.blobUrl) URL.revokeObjectURL(modal.blobUrl);
     };
+    
+    // Touch pinch zoom support
+    let initialDistance = 0;
+    let initialScale = 1;
+    
+    scrollContainer.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 2) {
+            e.preventDefault();
+            const dx = e.touches[0].clientX - e.touches[1].clientX;
+            const dy = e.touches[0].clientY - e.touches[1].clientY;
+            initialDistance = Math.hypot(dx, dy);
+            initialScale = currentScale;
+        }
+    });
+    
+    scrollContainer.addEventListener('touchmove', async (e) => {
+        if (e.touches.length === 2) {
+            e.preventDefault();
+            const dx = e.touches[0].clientX - e.touches[1].clientX;
+            const dy = e.touches[0].clientY - e.touches[1].clientY;
+            const distance = Math.hypot(dx, dy);
+            
+            if (initialDistance > 0) {
+                const scaleFactor = distance / initialDistance;
+                let newScale = initialScale * scaleFactor;
+                newScale = Math.min(Math.max(newScale, 0.5), 3.0);
+                
+                if (Math.abs(newScale - currentScale) > 0.05) {
+                    currentScale = newScale;
+                    await renderAllPages(currentScale);
+                }
+            }
+        }
+    });
+    
+    // Mouse wheel zoom with Ctrl key
+    scrollContainer.addEventListener('wheel', async (e) => {
+        if (e.ctrlKey) {
+            e.preventDefault();
+            if (e.deltaY < 0) {
+                await zoomIn();
+            } else {
+                await zoomOut();
+            }
+        }
+    });
     
     // ESC key handler
     const escHandler = (e) => {
@@ -371,9 +383,8 @@ async function openPDFEmbedded(dataUrl, fileName) {
         pdfDoc = await loadingTask.promise;
         totalPages = pdfDoc.numPages;
         
-        // Render first page
-        currentScale = 1.0;
-        await renderPage(1, currentScale);
+        // Render all pages
+        await renderAllPages(1.0);
         
         showToast(`Loaded ${fileName} (${totalPages} pages)`);
     } catch (err) {
