@@ -213,6 +213,11 @@ body.light-mode .header-title .owner-name {
     transform: translateX(-3px);
 }
 
+.btn-back span {
+    position: relative;
+    z-index: 1;
+}
+
 .theme-toggle {
     display: flex;
     align-items: center;
@@ -263,6 +268,11 @@ body.light-mode .header-title .owner-name {
 
 .theme-toggle:hover i {
     transform: rotate(15deg);
+}
+
+.theme-toggle span {
+    position: relative;
+    z-index: 1;
 }
 
 body.light-mode .btn-back {
