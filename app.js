@@ -25,7 +25,6 @@ function saveFolderStructure() {
     tx.objectStore('folderStructure').put({ key: 'structure', value: fileSystem });
     tx.commit();
 }
-
 function saveAllFilesToDB() {
     const tx = db.transaction('files', 'readwrite');
     const store = tx.objectStore('files');
@@ -94,7 +93,6 @@ function renameFileInFolder(folderPath, oldName, newName) {
     }
 }
 
-// PDF OPENING - Using blob URL and window.open
 function openPDF(dataUrl, fileName) {
     showToast(`Opening ${fileName}...`);
     
@@ -291,16 +289,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-// Make functions globally accessible for inline onclick handlers
-window.goBack = goBack;
-window.triggerUpload = triggerUpload;
-window.selectDepartment = selectDepartment;
+window.goBack = goBack; 
+window.triggerUpload = triggerUpload; 
+window.selectDepartment = selectDepartment; 
 window.navigateToBreadcrumb = navigateToBreadcrumb;
-window.renameCurrentFolder = renameCurrentFolder;
-window.deleteCurrentFolder = deleteCurrentFolder;
-window.addNewFolder = addNewFolder;
+window.renameCurrentFolder = renameCurrentFolder; 
+window.deleteCurrentFolder = deleteCurrentFolder; 
+window.addNewFolder = addNewFolder; 
 window.addNewDepartment = addNewDepartment;
 window.openPDF = openPDF;
 window.clearSearch = clearSearch;
-window.renameFile = (p,old) => { const nu = prompt("New name:", old.replace('.pdf','')); if(nu?.trim()) renameFileInFolder(p, old, nu.trim()); };
-window.deleteFile = (p,n) => { if(confirm(`Delete "${n}"?`)) deleteFileFromFolder(p,n); };
