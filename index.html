@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+my file is in the github  and i will paste my index html here         <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -408,7 +408,7 @@ body::before {
     display: inline-block;
 }
 
-/* PDF Viewer with zoom support - OPTIMIZED FOR NO CRASHING */
+/* PDF Viewer with zoom support */
 .pdf-viewer-modal {
     position: fixed;
     top: 0;
@@ -447,21 +447,7 @@ body::before {
     margin: 0 auto;
     box-shadow: 0 2px 8px rgba(0,0,0,0.3);
     background: white;
-    max-width: 100%;
-    height: auto;
-}
-
-/* Memory optimization for mobile */
-@media (max-width: 768px) {
-    .pdf-canvas-wrapper {
-        overflow: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-    
-    #pdfCanvas {
-        max-width: 200%;
-        max-height: 200%;
-    }
+    transition: transform 0.1s ease;
 }
 
 .pdf-zoom-controls {
@@ -618,14 +604,12 @@ let recentFiles = [];
 let currentPath = [];
 let isSearchMode = false;
 
-// PDF Viewer variables - OPTIMIZED
+// PDF Viewer variables
 let pdfDoc = null;
 let currentPage = 1;
 let currentScale = 1.0;
 let pdfCanvas = null;
 let ctx = null;
-let renderTask = null;
-let zoomTimeout = null;
 
 // Initialize IndexedDB
 function initDB() {
@@ -656,49 +640,49 @@ function dataURLToBlob(dataUrl) {
     return new Blob([u8arr], { type: mime });
 }
 
-// ============ OPTIMIZED PDF VIEWER (NO CRASHING) ============
+// PDF Viewer Functions
 async function openPDF(dataUrl, fileName) {
     try {
         const folderPath = currentPath.join("/");
         addToRecent(fileName, folderPath, dataUrl);
         
+        // Show the PDF viewer modal
         const modal = document.getElementById('pdfViewerModal');
         if (!modal) {
+            // Fallback to window.open if modal doesn't exist
             window.open(dataUrl, '_blank');
             showToast(`Opening ${fileName}...`);
             return;
         }
         
         modal.classList.remove('hidden');
+        
+        // Initialize canvas
         pdfCanvas = document.getElementById('pdfCanvas');
         ctx = pdfCanvas.getContext('2d');
         
+        // Show loading toast
         showToast(`Loading ${fileName}...`);
         
-        // Clean up previous PDF document
-        if (pdfDoc) {
-            pdfDoc.destroy();
-            pdfDoc = null;
-        }
-        
+        // Load PDF document
         const loadingTask = pdfjsLib.getDocument(dataUrl);
         pdfDoc = await loadingTask.promise;
         currentPage = 1;
         currentScale = 1.0;
         
-        await renderPageOptimized(currentPage);
+        await renderPage(currentPage);
         updateZoomDisplay();
-        showZoomHint();
-        showToast(`Loaded: ${fileName}`);
         
-        // Warn if PDF has many pages
-        if (pdfDoc.numPages > 50) {
-            showToast(`Large PDF (${pdfDoc.numPages} pages). Zoom carefully.`, true);
-        }
+        // Show zoom hint on first open
+        showZoomHint();
+        
+        showToast(`Loaded: ${fileName}`);
         
     } catch (err) {
         console.error('Error opening PDF:', err);
         showToast('Failed to open PDF', true);
+        
+        // Fallback: try opening in new tab
         try {
             window.open(dataUrl, '_blank');
         } catch (e) {
@@ -707,88 +691,51 @@ async function openPDF(dataUrl, fileName) {
     }
 }
 
-async function renderPageOptimized(pageNum) {
+async function renderPage(pageNum) {
     if (!pdfDoc) return;
-    
-    // Cancel any ongoing render to prevent memory buildup
-    if (renderTask) {
-        renderTask.cancel();
-        renderTask = null;
-    }
     
     try {
         const page = await pdfDoc.getPage(pageNum);
+        const viewport = page.getViewport({ scale: currentScale });
         
-        // Calculate optimal scale - limit to 2.0x max for stability
-        let optimizedScale = Math.min(currentScale, 2.0);
-        
-        const viewport = page.getViewport({ scale: optimizedScale });
-        
-        // Set canvas dimensions
         pdfCanvas.width = viewport.width;
         pdfCanvas.height = viewport.height;
         pdfCanvas.style.width = `${viewport.width}px`;
         pdfCanvas.style.height = `${viewport.height}px`;
         
-        // Clear canvas before rendering new content
-        ctx.clearRect(0, 0, pdfCanvas.width, pdfCanvas.height);
-        
         const renderContext = {
             canvasContext: ctx,
-            viewport: viewport,
-            enableWebGL: false,
-            renderInteractiveForms: false,
+            viewport: viewport
         };
         
-        renderTask = page.render(renderContext);
-        await renderTask.promise;
-        renderTask = null;
-        
+        await page.render(renderContext).promise;
     } catch (err) {
-        if (err.name === 'RenderingCancelledException') {
-            console.log('Rendering cancelled');
-        } else {
-            console.error('Render error:', err);
-        }
+        console.error('Render error:', err);
     }
 }
 
 function zoomIn() {
     if (!pdfDoc) return;
-    // Limit max zoom to 2.0x to prevent crashes
-    if (currentScale < 2.0) {
-        currentScale = Math.min(2.0, currentScale + 0.25);
-        
-        // Debounce zoom to prevent rapid re-renders
-        if (zoomTimeout) clearTimeout(zoomTimeout);
-        zoomTimeout = setTimeout(() => {
-            renderPageOptimized(currentPage);
-            updateZoomDisplay();
-        }, 50);
-    } else {
-        showToast('Maximum zoom reached (200%)', true);
+    if (currentScale < 3.0) {
+        currentScale += 0.25;
+        renderPage(currentPage);
+        updateZoomDisplay();
     }
 }
 
 function zoomOut() {
     if (!pdfDoc) return;
     if (currentScale > 0.5) {
-        currentScale = Math.max(0.5, currentScale - 0.25);
-        
-        if (zoomTimeout) clearTimeout(zoomTimeout);
-        zoomTimeout = setTimeout(() => {
-            renderPageOptimized(currentPage);
-            updateZoomDisplay();
-        }, 50);
+        currentScale -= 0.25;
+        renderPage(currentPage);
+        updateZoomDisplay();
     }
 }
 
 function updateZoomDisplay() {
     const zoomLevel = document.getElementById('zoomLevel');
     if (zoomLevel) {
-        let displayPercent = Math.round(currentScale * 100);
-        if (displayPercent > 200) displayPercent = 200;
-        zoomLevel.textContent = `${displayPercent}%`;
+        zoomLevel.textContent = `${Math.round(currentScale * 100)}%`;
     }
 }
 
@@ -797,46 +744,31 @@ function closePDFViewer() {
     if (modal) {
         modal.classList.add('hidden');
     }
-    
-    // Clean up properly
-    if (pdfDoc) {
-        pdfDoc.destroy();
-        pdfDoc = null;
-    }
-    
-    if (renderTask) {
-        renderTask.cancel();
-        renderTask = null;
-    }
-    
+    pdfDoc = null;
     // Clear canvas
     if (pdfCanvas && ctx) {
         ctx.clearRect(0, 0, pdfCanvas.width, pdfCanvas.height);
-        pdfCanvas.width = 0;
-        pdfCanvas.height = 0;
-    }
-    
-    if (zoomTimeout) {
-        clearTimeout(zoomTimeout);
-        zoomTimeout = null;
     }
 }
 
 function showZoomHint() {
+    // Remove existing hint
     const existingHint = document.querySelector('.zoom-hint');
     if (existingHint) existingHint.remove();
     
+    // Create new hint
     const hint = document.createElement('div');
     hint.className = 'zoom-hint';
-    hint.innerHTML = '<i class="fas fa-hand-peace"></i> Pinch or use buttons to zoom (max 200%)';
+    hint.innerHTML = '<i class="fas fa-hand-peace"></i> Pinch or use buttons to zoom';
     document.querySelector('.pdf-viewer-container').appendChild(hint);
     
+    // Auto remove after animation
     setTimeout(() => {
         if (hint) hint.remove();
     }, 3000);
 }
 
-// Setup pinch-to-zoom for mobile with 2.0x limit
+// Setup pinch-to-zoom for mobile
 function setupPinchZoom() {
     let initialDistance = 0;
     let initialScale = 1;
@@ -862,10 +794,9 @@ function setupPinchZoom() {
                 e.touches[0].pageX - e.touches[1].pageX,
                 e.touches[0].pageY - e.touches[1].pageY
             );
-            let scale = (currentDistance / initialDistance) * initialScale;
-            // Limit zoom to between 0.5 and 2.0
-            currentScale = Math.min(2.0, Math.max(0.5, scale));
-            renderPageOptimized(currentPage);
+            const scale = (currentDistance / initialDistance) * initialScale;
+            currentScale = Math.min(3.0, Math.max(0.5, scale));
+            renderPage(currentPage);
             updateZoomDisplay();
         }
     });
@@ -1231,4 +1162,118 @@ window.importBackup = importBackup; window.openPDF = openPDF;
 initDB().then(() => loadFromIndexedDB()).catch(e => console.error('DB error', e));
 </script>
 </body>
-</html>
+</html>.  My HTML.  /* PDF Viewer with zoom support */
+.pdf-viewer-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: #1a1a1a;
+    overflow: hidden;
+}
+
+.pdf-canvas-wrapper {
+    flex: 1;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    background: #525659;
+}
+
+#pdfCanvas {
+    display: block;
+    margin: 0 auto;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    background: white;
+    transition: transform 0.1s ease;
+}
+
+.pdf-zoom-controls {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding: 12px 20px;
+    background: rgba(0,0,0,0.9);
+    border-top: 1px solid rgba(255,255,255,0.1);
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+}
+
+.zoom-btn {
+    background: rgba(255,255,255,0.15);
+    border: none;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 40px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    touch-action: manipulation;
+    min-width: 80px;
+    justify-content: center;
+}
+
+.zoom-btn:active {
+    transform: scale(0.96);
+    background: #6366f1;
+}
+
+.zoom-level {
+    color: white;
+    font-size: 14px;
+    background: rgba(0,0,0,0.5);
+    padding: 8px 16px;
+    border-radius: 30px;
+    font-weight: 500;
+}
+
+/* Mobile zoom hint */
+.zoom-hint {
+    position: absolute;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.7);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 30px;
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 20;
+    white-space: nowrap;
+    backdrop-filter: blur(10px);
+    animation: fadeOut 3s forwards;
+}
+
+@keyframes fadeOut {
+    0% { opacity: 1; }
+    70% { opacity: 1; }
+    100% { opacity: 0; visibility: hidden; }
+}.   My CSS.  function openPDF(dataUrl, fileName) {
+    try {
+        // Fetch the blob from data URL properly
+        fetch(dataUrl)
+            .then(res => res.blob())
+            .then(blob => {
+                const blobUrl = URL.createObjectURL(blob);
+                const folderPath = currentPath.join("/");
+                addToRecent(fileName, folderPath, dataUrl);
+                window.open(blobUrl, '_blank');
+                setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+                showToast(`Opening ${fileName}...`);
+            })
+            .catch(err => {
+                console.error('Fetch error:', err);
+                showToast('Failed to open PDF', true);
+            });
+    } catch (err) {
+        console.error('Error opening PDF:', err);
+        showToast('Failed to open PDF', true);
+    }
+}. My app Js
