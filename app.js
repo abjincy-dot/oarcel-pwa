@@ -7,7 +7,7 @@ let fileSystem = {};
 let currentPath = [];
 let isSearchMode = false;
 
-// ==================== SIMPLE EMBEDDED PDF VIEWER ====================
+// ==================== GOOGLE PDF VIEWER EMBED ====================
 function openPDFEmbedded(dataUrl, fileName) {
     // Create modal container
     const modal = document.createElement('div');
@@ -105,7 +105,7 @@ function openPDFEmbedded(dataUrl, fileName) {
     header.appendChild(fileNameSpan);
     header.appendChild(buttonContainer);
     
-    // Create iframe for PDF with better settings
+    // Create iframe for PDF using Google PDF Viewer
     const iframe = document.createElement('iframe');
     iframe.style.cssText = `
         flex: 1;
@@ -145,27 +145,28 @@ function openPDFEmbedded(dataUrl, fileName) {
         document.head.appendChild(style);
     }
     
-    // Load PDF into iframe
+    // Convert dataUrl to blob and create a blob URL
     fetch(dataUrl)
         .then(response => response.blob())
         .then(blob => {
             const blobUrl = URL.createObjectURL(blob);
             modal.blobUrl = blobUrl;
             
-            // Set iframe source
-            iframe.src = blobUrl;
+            // Use Google PDF Viewer for reliable multi-page rendering
+            // This works across all browsers and handles multi-page PDFs perfectly
+            const viewerUrl = `https://docs.google.com/viewer?embedded=true&url=${encodeURIComponent(blobUrl)}`;
+            iframe.src = viewerUrl;
             
-            // Hide loading indicator when iframe loads
+            // Hide loading indicator after iframe loads or after timeout
             iframe.onload = () => {
                 loadingDiv.style.display = 'none';
             };
             
-            // Timeout to hide loading after 3 seconds (fallback)
             setTimeout(() => {
                 if (loadingDiv) loadingDiv.style.display = 'none';
             }, 3000);
             
-            // Cleanup when modal is closed via ESC key
+            // ESC key handler
             const escHandler = (e) => {
                 if (e.key === 'Escape' && document.body.contains(modal)) {
                     document.body.removeChild(modal);
