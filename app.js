@@ -7,7 +7,7 @@ let fileSystem = {};
 let currentPath = [];
 let isSearchMode = false;
 
-// ==================== GOOGLE PDF VIEWER EMBED ====================
+// ==================== EMBEDDED PDF VIEWER (Works with local blobs) ====================
 function openPDFEmbedded(dataUrl, fileName) {
     // Create modal container
     const modal = document.createElement('div');
@@ -36,6 +36,8 @@ function openPDFEmbedded(dataUrl, fileName) {
         color: white;
         border-bottom: 1px solid rgba(255,255,255,0.1);
         flex-shrink: 0;
+        flex-wrap: wrap;
+        gap: 10px;
     `;
     
     // File name display
@@ -46,9 +48,70 @@ function openPDFEmbedded(dataUrl, fileName) {
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        max-width: 50%;
+        max-width: 300px;
     `;
     fileNameSpan.innerHTML = `<i class="fas fa-file-pdf" style="color: #ef4444; margin-right: 8px;"></i>${escapeHtml(fileName)}`;
+    
+    // Zoom controls
+    const zoomControls = document.createElement('div');
+    zoomControls.style.cssText = `
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    `;
+    
+    const zoomOutBtn = document.createElement('button');
+    zoomOutBtn.innerHTML = '<i class="fas fa-search-minus"></i>';
+    zoomOutBtn.style.cssText = `
+        padding: 6px 10px;
+        background: rgba(255,255,255,0.1);
+        border: none;
+        border-radius: 20px;
+        color: white;
+        cursor: pointer;
+        font-size: 0.8rem;
+        transition: all 0.2s;
+    `;
+    
+    const zoomLevel = document.createElement('span');
+    zoomLevel.style.cssText = `
+        font-size: 0.8rem;
+        min-width: 45px;
+        text-align: center;
+    `;
+    zoomLevel.innerHTML = '100%';
+    
+    const zoomInBtn = document.createElement('button');
+    zoomInBtn.innerHTML = '<i class="fas fa-search-plus"></i>';
+    zoomInBtn.style.cssText = `
+        padding: 6px 10px;
+        background: rgba(255,255,255,0.1);
+        border: none;
+        border-radius: 20px;
+        color: white;
+        cursor: pointer;
+        font-size: 0.8rem;
+        transition: all 0.2s;
+    `;
+    
+    const resetZoomBtn = document.createElement('button');
+    resetZoomBtn.innerHTML = '<i class="fas fa-sync-alt"></i>';
+    resetZoomBtn.style.cssText = `
+        padding: 6px 10px;
+        background: rgba(255,255,255,0.1);
+        border: none;
+        border-radius: 20px;
+        color: white;
+        cursor: pointer;
+        font-size: 0.8rem;
+        transition: all 0.2s;
+    `;
+    resetZoomBtn.title = 'Reset Zoom';
+    
+    zoomControls.appendChild(zoomOutBtn);
+    zoomControls.appendChild(zoomLevel);
+    zoomControls.appendChild(zoomInBtn);
+    zoomControls.appendChild(resetZoomBtn);
     
     // Button container
     const buttonContainer = document.createElement('div');
@@ -103,15 +166,24 @@ function openPDFEmbedded(dataUrl, fileName) {
     buttonContainer.appendChild(downloadBtn);
     buttonContainer.appendChild(closeBtn);
     header.appendChild(fileNameSpan);
+    header.appendChild(zoomControls);
     header.appendChild(buttonContainer);
     
-    // Create iframe for PDF using Google PDF Viewer
-    const iframe = document.createElement('iframe');
-    iframe.style.cssText = `
+    // Create object element for PDF (better than iframe for local blobs)
+    const pdfContainer = document.createElement('div');
+    pdfContainer.style.cssText = `
         flex: 1;
         width: 100%;
-        border: none;
+        overflow: auto;
         background: #525659;
+        position: relative;
+    `;
+    
+    const pdfObject = document.createElement('object');
+    pdfObject.style.cssText = `
+        width: 100%;
+        height: 100%;
+        border: none;
     `;
     
     // Add loading indicator
@@ -127,9 +199,10 @@ function openPDFEmbedded(dataUrl, fileName) {
     `;
     loadingDiv.innerHTML = '<i class="fas fa-spinner fa-pulse fa-2x"></i><p style="margin-top: 10px;">Loading PDF...</p>';
     
+    pdfContainer.appendChild(pdfObject);
+    pdfContainer.appendChild(loadingDiv);
     modal.appendChild(header);
-    modal.appendChild(iframe);
-    modal.appendChild(loadingDiv);
+    modal.appendChild(pdfContainer);
     document.body.appendChild(modal);
     
     // Add animation keyframes if not exists
@@ -145,23 +218,53 @@ function openPDFEmbedded(dataUrl, fileName) {
         document.head.appendChild(style);
     }
     
-    // Convert dataUrl to blob and create a blob URL
+    // Zoom functionality
+    let currentZoom = 1;
+    
+    function updateZoom() {
+        pdfObject.style.transform = `scale(${currentZoom})`;
+        pdfObject.style.transformOrigin = 'top left';
+        pdfObject.style.width = `${100 / currentZoom}%`;
+        pdfObject.style.height = `${100 / currentZoom}%`;
+        zoomLevel.innerHTML = Math.round(currentZoom * 100) + '%';
+    }
+    
+    zoomInBtn.onclick = () => {
+        if (currentZoom < 2.5) {
+            currentZoom += 0.25;
+            updateZoom();
+        }
+    };
+    
+    zoomOutBtn.onclick = () => {
+        if (currentZoom > 0.5) {
+            currentZoom -= 0.25;
+            updateZoom();
+        }
+    };
+    
+    resetZoomBtn.onclick = () => {
+        currentZoom = 1;
+        updateZoom();
+    };
+    
+    // Load PDF into object element
     fetch(dataUrl)
         .then(response => response.blob())
         .then(blob => {
             const blobUrl = URL.createObjectURL(blob);
             modal.blobUrl = blobUrl;
             
-            // Use Google PDF Viewer for reliable multi-page rendering
-            // This works across all browsers and handles multi-page PDFs perfectly
-            const viewerUrl = `https://docs.google.com/viewer?embedded=true&url=${encodeURIComponent(blobUrl)}`;
-            iframe.src = viewerUrl;
+            // Set object data
+            pdfObject.data = blobUrl;
+            pdfObject.type = 'application/pdf';
             
-            // Hide loading indicator after iframe loads or after timeout
-            iframe.onload = () => {
+            // Hide loading indicator when loaded
+            pdfObject.onload = () => {
                 loadingDiv.style.display = 'none';
             };
             
+            // Fallback timeout
             setTimeout(() => {
                 if (loadingDiv) loadingDiv.style.display = 'none';
             }, 3000);
