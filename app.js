@@ -7,6 +7,187 @@ let fileSystem = {};
 let currentPath = [];
 let isSearchMode = false;
 
+// ==================== SIMPLE EMBEDDED PDF VIEWER ====================
+function openPDFEmbedded(dataUrl, fileName) {
+    // Create modal container
+    const modal = document.createElement('div');
+    modal.id = 'pdfModal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.95);
+        z-index: 10000;
+        display: flex;
+        flex-direction: column;
+        animation: fadeIn 0.3s ease;
+    `;
+    
+    // Create header bar
+    const header = document.createElement('div');
+    header.style.cssText = `
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 20px;
+        background: #0f0f1a;
+        color: white;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        flex-shrink: 0;
+    `;
+    
+    // File name display
+    const fileNameSpan = document.createElement('span');
+    fileNameSpan.style.cssText = `
+        font-size: 0.9rem;
+        font-weight: 500;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 50%;
+    `;
+    fileNameSpan.innerHTML = `<i class="fas fa-file-pdf" style="color: #ef4444; margin-right: 8px;"></i>${escapeHtml(fileName)}`;
+    
+    // Button container
+    const buttonContainer = document.createElement('div');
+    buttonContainer.style.cssText = `
+        display: flex;
+        gap: 12px;
+    `;
+    
+    // Download button
+    const downloadBtn = document.createElement('button');
+    downloadBtn.innerHTML = '<i class="fas fa-download"></i> Download';
+    downloadBtn.style.cssText = `
+        padding: 6px 14px;
+        background: rgba(59, 130, 246, 0.8);
+        border: none;
+        border-radius: 20px;
+        color: white;
+        cursor: pointer;
+        font-size: 0.8rem;
+        transition: all 0.2s;
+    `;
+    downloadBtn.onmouseover = () => downloadBtn.style.background = 'rgba(59, 130, 246, 1)';
+    downloadBtn.onmouseout = () => downloadBtn.style.background = 'rgba(59, 130, 246, 0.8)';
+    downloadBtn.onclick = () => {
+        const link = document.createElement('a');
+        link.href = dataUrl;
+        link.download = fileName;
+        link.click();
+        showToast(`Downloading ${fileName}`);
+    };
+    
+    // Close button
+    const closeBtn = document.createElement('button');
+    closeBtn.innerHTML = '<i class="fas fa-times"></i> Close';
+    closeBtn.style.cssText = `
+        padding: 6px 14px;
+        background: rgba(239, 68, 68, 0.8);
+        border: none;
+        border-radius: 20px;
+        color: white;
+        cursor: pointer;
+        font-size: 0.8rem;
+        transition: all 0.2s;
+    `;
+    closeBtn.onmouseover = () => closeBtn.style.background = 'rgba(239, 68, 68, 1)';
+    closeBtn.onmouseout = () => closeBtn.style.background = 'rgba(239, 68, 68, 0.8)';
+    closeBtn.onclick = () => {
+        document.body.removeChild(modal);
+        if (modal.blobUrl) URL.revokeObjectURL(modal.blobUrl);
+    };
+    
+    buttonContainer.appendChild(downloadBtn);
+    buttonContainer.appendChild(closeBtn);
+    header.appendChild(fileNameSpan);
+    header.appendChild(buttonContainer);
+    
+    // Create iframe for PDF with better settings
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = `
+        flex: 1;
+        width: 100%;
+        border: none;
+        background: #525659;
+    `;
+    
+    // Add loading indicator
+    const loadingDiv = document.createElement('div');
+    loadingDiv.style.cssText = `
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        text-align: center;
+        z-index: 10001;
+    `;
+    loadingDiv.innerHTML = '<i class="fas fa-spinner fa-pulse fa-2x"></i><p style="margin-top: 10px;">Loading PDF...</p>';
+    
+    modal.appendChild(header);
+    modal.appendChild(iframe);
+    modal.appendChild(loadingDiv);
+    document.body.appendChild(modal);
+    
+    // Add animation keyframes if not exists
+    if (!document.querySelector('#pdfViewerStyles')) {
+        const style = document.createElement('style');
+        style.id = 'pdfViewerStyles';
+        style.textContent = `
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    // Load PDF into iframe
+    fetch(dataUrl)
+        .then(response => response.blob())
+        .then(blob => {
+            const blobUrl = URL.createObjectURL(blob);
+            modal.blobUrl = blobUrl;
+            
+            // Set iframe source
+            iframe.src = blobUrl;
+            
+            // Hide loading indicator when iframe loads
+            iframe.onload = () => {
+                loadingDiv.style.display = 'none';
+            };
+            
+            // Timeout to hide loading after 3 seconds (fallback)
+            setTimeout(() => {
+                if (loadingDiv) loadingDiv.style.display = 'none';
+            }, 3000);
+            
+            // Cleanup when modal is closed via ESC key
+            const escHandler = (e) => {
+                if (e.key === 'Escape' && document.body.contains(modal)) {
+                    document.body.removeChild(modal);
+                    URL.revokeObjectURL(blobUrl);
+                    document.removeEventListener('keydown', escHandler);
+                }
+            };
+            document.addEventListener('keydown', escHandler);
+        })
+        .catch(err => {
+            console.error('PDF error:', err);
+            showToast(`Failed to open PDF: ${err.message}`, true);
+            document.body.removeChild(modal);
+        });
+}
+
+// Open PDF function
+function openPDF(dataUrl, fileName) {
+    openPDFEmbedded(dataUrl, fileName);
+}
+
+// ==================== INDEXEDDB FUNCTIONS ====================
 function initDB() {
     return new Promise((resolve, reject) => {
         const request = indexedDB.open(DB_NAME, DB_VERSION);
@@ -25,7 +206,6 @@ function saveFolderStructure() {
     tx.objectStore('folderStructure').put({ key: 'structure', value: fileSystem });
     tx.commit();
 }
-
 function saveAllFilesToDB() {
     const tx = db.transaction('files', 'readwrite');
     const store = tx.objectStore('files');
@@ -94,50 +274,46 @@ function renameFileInFolder(folderPath, oldName, newName) {
     }
 }
 
-// PDF OPENING - Using blob URL and window.open
-function openPDF(dataUrl, fileName) {
-    showToast(`Opening ${fileName}...`);
-    
-    fetch(dataUrl)
-        .then(response => response.blob())
-        .then(blob => {
-            const blobUrl = URL.createObjectURL(blob);
-            const newWindow = window.open(blobUrl, '_blank');
-            
-            if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-                const link = document.createElement('a');
-                link.href = blobUrl;
-                link.target = '_blank';
-                link.download = fileName;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            }
-            
-            setTimeout(() => {
-                URL.revokeObjectURL(blobUrl);
-            }, 60000);
-        })
-        .catch(err => {
-            console.error('PDF error:', err);
-            showToast(`Failed to open PDF: ${err.message}`, true);
-        });
+function selectDepartment(d) { 
+    currentPath = [d]; 
+    render(); 
 }
 
-function selectDepartment(d) { currentPath = [d]; render(); }
-function goBack() { if(currentPath.length && !isSearchMode) { currentPath.pop(); render(); } else if(isSearchMode) clearSearch(); }
-function triggerUpload() { document.getElementById('fileInput').click(); }
-function clearSearch() { document.getElementById('searchInput').value = ''; isSearchMode = false; document.getElementById('searchInfo').classList.add('hidden'); document.getElementById('clearSearchBtn').classList.add('hidden'); render(); }
+function goBack() { 
+    if(currentPath.length && !isSearchMode) { 
+        currentPath.pop(); 
+        render(); 
+    } else if(isSearchMode) { 
+        clearSearch(); 
+    } 
+}
+
+function triggerUpload() { 
+    document.getElementById('fileInput').click(); 
+}
+
+function clearSearch() { 
+    document.getElementById('searchInput').value = ''; 
+    isSearchMode = false; 
+    document.getElementById('searchInfo').classList.add('hidden'); 
+    document.getElementById('clearSearchBtn').classList.add('hidden'); 
+    render(); 
+}
 
 function searchFiles(q) {
     if(!q.trim()) return [];
     const all = [];
-    for(const path in allFiles) allFiles[path].forEach(f => all.push({...f, folder:path}));
+    for(const path in allFiles) {
+        if(allFiles[path]) {
+            allFiles[path].forEach(f => all.push({...f, folder:path}));
+        }
+    }
     return all.filter(f => f.name.toLowerCase().includes(q.toLowerCase()));
 }
 
 function createCard(title, onClick, isFolder=false, showDel=false, delPath=null, delName=null, showRename=false) {
-    const div = document.createElement('div'); div.className = 'card';
+    const div = document.createElement('div'); 
+    div.className = 'card';
     div.innerHTML = `
         <div class="card-icon"><i class="fas ${isFolder ? 'fa-folder' : 'fa-file-pdf'}" style="color:${isFolder ? '#fbbf24' : '#60a5fa'}"></i></div>
         <div class="card-filename">${escapeHtml(title)}</div>
@@ -146,7 +322,8 @@ function createCard(title, onClick, isFolder=false, showDel=false, delPath=null,
             ${showDel ? `<button class="delete-btn" onclick="event.stopPropagation(); window.deleteFile('${delPath}','${escapeHtml(delName)}')"><i class="fas fa-trash"></i> Delete</button>` : ''}
         </div>
     `;
-    div.onclick = onClick; return div;
+    div.onclick = onClick; 
+    return div;
 }
 
 function render() {
@@ -157,26 +334,37 @@ function render() {
         const results = searchFiles(query);
         document.getElementById('searchInfo').classList.remove('hidden');
         document.getElementById('searchInfo').innerHTML = `<i class="fas fa-search"></i> Found ${results.length} result(s) for "${escapeHtml(query)}" <button onclick="clearSearch()" style="background:none;border:none;color:#60a5fa;cursor:pointer;margin-left:10px;">Clear</button>`;
-        const contentDiv = document.getElementById('content'); contentDiv.innerHTML = '';
+        const contentDiv = document.getElementById('content'); 
+        contentDiv.innerHTML = '';
         document.getElementById('backBtn').classList.remove('hidden');
         document.getElementById('uploadBtn').classList.add('hidden');
         document.getElementById('departmentsSection').innerHTML = '';
         document.getElementById('breadcrumb').innerHTML = '';
-        if(!results.length) contentDiv.innerHTML = '<div class="empty-state"><i class="fas fa-search"></i><p>No PDFs found.</p></div>';
-        else results.forEach(f => contentDiv.appendChild(createCard(f.name, () => openPDF(f.dataUrl, f.name), false)));
-        updateStats(); return;
+        if(!results.length) {
+            contentDiv.innerHTML = '<div class="empty-state"><i class="fas fa-search"></i><p>No PDFs found.</p></div>';
+        } else {
+            results.forEach(f => contentDiv.appendChild(createCard(f.name, () => openPDF(f.dataUrl, f.name), false)));
+        }
+        updateStats(); 
+        return;
     }
     isSearchMode = false;
     document.getElementById('clearSearchBtn').classList.add('hidden');
     document.getElementById('searchInfo').classList.add('hidden');
     document.getElementById('content').innerHTML = '';
     const folder = getCurrentFolderObject();
-    if(!folder) { currentPath = []; render(); return; }
+    if(!folder) { 
+        currentPath = []; 
+        render(); 
+        return; 
+    }
     document.getElementById('backBtn').classList.toggle('hidden', currentPath.length === 0);
     
     const bcDiv = document.getElementById('breadcrumb');
     bcDiv.innerHTML = `<div class="breadcrumb-item" onclick="navigateToBreadcrumb(-1)"><i class="fas fa-home"></i> Home</div>`;
-    currentPath.forEach((f,i) => { bcDiv.innerHTML += `<span class="breadcrumb-separator">/</span><div class="breadcrumb-item" onclick="navigateToBreadcrumb(${i})">${escapeHtml(f)}</div>`; });
+    currentPath.forEach((f,i) => { 
+        bcDiv.innerHTML += `<span class="breadcrumb-separator">/</span><div class="breadcrumb-item" onclick="navigateToBreadcrumb(${i})">${escapeHtml(f)}</div>`; 
+    });
     
     if(currentPath.length === 0){
         let html = '<div class="section-title"><i class="fas fa-building"></i> Departments</div><div class="departments-grid">';
@@ -187,7 +375,9 @@ function render() {
         }
         html += '</div>';
         document.getElementById('departmentsSection').innerHTML = html;
-    } else document.getElementById('departmentsSection').innerHTML = '';
+    } else {
+        document.getElementById('departmentsSection').innerHTML = '';
+    }
     
     const isLeaf = Object.keys(folder).length === 0;
     const isRoot = currentPath.length === 0;
@@ -195,33 +385,61 @@ function render() {
     
     const actionDiv = document.createElement('div');
     actionDiv.className = 'action-bar';
-    if(!isRoot) actionDiv.innerHTML = `<button class="action-btn" onclick="renameCurrentFolder()"><i class="fas fa-edit"></i> Rename Folder</button><button class="action-btn" onclick="deleteCurrentFolder()"><i class="fas fa-trash-alt"></i> Delete Folder</button><button class="action-btn" onclick="addNewFolder()"><i class="fas fa-plus"></i> Add Subfolder</button>`;
-    else actionDiv.innerHTML = `<button class="action-btn" onclick="addNewDepartment()"><i class="fas fa-building"></i> Add Department</button>`;
+    if(!isRoot) {
+        actionDiv.innerHTML = `<button class="action-btn" onclick="renameCurrentFolder()"><i class="fas fa-edit"></i> Rename Folder</button><button class="action-btn" onclick="deleteCurrentFolder()"><i class="fas fa-trash-alt"></i> Delete Folder</button><button class="action-btn" onclick="addNewFolder()"><i class="fas fa-plus"></i> Add Subfolder</button>`;
+    } else {
+        actionDiv.innerHTML = `<button class="action-btn" onclick="addNewDepartment()"><i class="fas fa-building"></i> Add Department</button>`;
+    }
     document.getElementById('content').appendChild(actionDiv);
     
-    if(!isRoot && !isLeaf) for(let key in folder) document.getElementById('content').appendChild(createCard(key, () => { currentPath.push(key); render(); }, true));
+    if(!isRoot && !isLeaf) {
+        for(let key in folder) {
+            document.getElementById('content').appendChild(createCard(key, () => { currentPath.push(key); render(); }, true));
+        }
+    }
     if(isLeaf && !isRoot){
         const files = getFilesForCurrentFolder();
         const path = currentPath.join('/');
-        if(!files.length) document.getElementById('content').innerHTML += '<div class="empty-state"><i class="fas fa-cloud-upload-alt"></i><p>No PDFs yet. Click Upload to add files.</p></div>';
-        else files.forEach(f => document.getElementById('content').appendChild(createCard(f.name, () => openPDF(f.dataUrl, f.name), false, true, path, f.name, true)));
+        if(!files.length) {
+            document.getElementById('content').innerHTML += '<div class="empty-state"><i class="fas fa-cloud-upload-alt"></i><p>No PDFs yet. Click Upload to add files.</p></div>';
+        } else {
+            files.forEach(f => document.getElementById('content').appendChild(createCard(f.name, () => openPDF(f.dataUrl, f.name), false, true, path, f.name, true)));
+        }
     }
     updateStats();
 }
 
-function navigateToBreadcrumb(idx) { if(idx === -1) currentPath = []; else currentPath = currentPath.slice(0, idx+1); render(); }
+function navigateToBreadcrumb(idx) { 
+    if(idx === -1) {
+        currentPath = []; 
+    } else {
+        currentPath = currentPath.slice(0, idx+1); 
+    }
+    render(); 
+}
+
 function renameCurrentFolder() { 
     if(!currentPath.length) return;
-    const old = currentPath[currentPath.length-1], newName = prompt("New folder name:", old);
+    const old = currentPath[currentPath.length-1];
+    const newName = prompt("New folder name:", old);
     if(newName && newName !== old && newName.trim()){
         const parent = currentPath.slice(0,-1).reduce((o,p)=>o[p], fileSystem);
-        parent[newName] = parent[old]; delete parent[old];
-        const oldPath = currentPath.join('/'), newPath = [...currentPath.slice(0,-1), newName].join('/');
-        if(allFiles[oldPath]){ allFiles[newPath] = allFiles[oldPath]; delete allFiles[oldPath]; }
+        parent[newName] = parent[old];
+        delete parent[old];
+        const oldPath = currentPath.join('/');
+        const newPath = [...currentPath.slice(0,-1), newName].join('/');
+        if(allFiles[oldPath]){ 
+            allFiles[newPath] = allFiles[oldPath]; 
+            delete allFiles[oldPath]; 
+        }
         currentPath[currentPath.length-1] = newName;
-        saveFolderStructure(); saveAllFilesToDB(); render(); showToast(`✅ Renamed to "${newName}"`);
+        saveFolderStructure(); 
+        saveAllFilesToDB(); 
+        render(); 
+        showToast(`✅ Renamed to "${newName}"`);
     }
 }
+
 function deleteCurrentFolder() {
     if(!currentPath.length) return;
     const name = currentPath[currentPath.length-1];
@@ -231,30 +449,60 @@ function deleteCurrentFolder() {
         const parent = currentPath.slice(0,-1).reduce((o,p)=>o[p], fileSystem);
         delete parent[name];
         currentPath.pop();
-        saveFolderStructure(); saveAllFilesToDB(); render(); showToast(`🗑️ Folder "${name}" deleted`);
+        saveFolderStructure(); 
+        saveAllFilesToDB(); 
+        render(); 
+        showToast(`🗑️ Folder "${name}" deleted`);
     }
 }
+
 function addNewFolder() {
     const name = prompt("Folder name:");
     if(name && name.trim()){
         const cur = getCurrentFolderObject();
-        if(cur && !cur[name]){ cur[name] = {}; saveFolderStructure(); render(); showToast(`✅ Folder "${name}" created`); }
-        else showToast("Exists", true);
+        if(cur && !cur[name]){ 
+            cur[name] = {}; 
+            saveFolderStructure(); 
+            render(); 
+            showToast(`✅ Folder "${name}" created`); 
+        } else {
+            showToast("Exists", true);
+        }
     }
 }
+
 function addNewDepartment() {
     const name = prompt("Department name:");
-    if(name && name.trim() && !fileSystem[name]){ fileSystem[name] = {}; saveFolderStructure(); render(); showToast(`✅ Department "${name}" created`); }
-    else if(fileSystem[name]) showToast("Department exists", true);
+    if(name && name.trim() && !fileSystem[name]){ 
+        fileSystem[name] = {}; 
+        saveFolderStructure(); 
+        render(); 
+        showToast(`✅ Department "${name}" created`); 
+    } else if(fileSystem[name]) {
+        showToast("Department exists", true);
+    }
 }
+
 function updateStats() {
     let folderCount = 0, fileCount = 0;
-    function countFolders(obj) { for(let k in obj) { if(typeof obj[k] === 'object') { folderCount++; countFolders(obj[k]); } } }
+    function countFolders(obj) { 
+        for(let k in obj) { 
+            if(typeof obj[k] === 'object') { 
+                folderCount++; 
+                countFolders(obj[k]); 
+            } 
+        } 
+    }
     countFolders(fileSystem);
-    for(let k in allFiles) fileCount += allFiles[k].length;
+    for(let k in allFiles) {
+        if(allFiles[k]) {
+            fileCount += allFiles[k].length;
+        }
+    }
     document.getElementById('folderCount').textContent = folderCount;
     document.getElementById('fileCount').textContent = fileCount;
 }
+
 function showToast(msg, isErr = false) {
     const toast = document.getElementById('toast');
     toast.querySelector('span').textContent = msg;
@@ -262,25 +510,98 @@ function showToast(msg, isErr = false) {
     toast.classList.remove('hidden');
     setTimeout(() => toast.classList.add('hidden'), 3000);
 }
-function escapeHtml(str) { const div = document.createElement('div'); div.textContent = str; return div.innerHTML; }
 
-function toggleTheme() { document.body.classList.toggle('light-mode'); localStorage.setItem('oarcel_theme', document.body.classList.contains('light-mode') ? 'light-mode' : ''); updateThemeIcon(); }
-function updateThemeIcon() { const isDark = !document.body.classList.contains('light-mode'); document.getElementById('themeToggle').innerHTML = isDark ? '<i class="fas fa-sun"></i><span>Light</span>' : '<i class="fas fa-moon"></i><span>Dark</span>'; }
+function escapeHtml(str) { 
+    const div = document.createElement('div'); 
+    div.textContent = str; 
+    return div.innerHTML; 
+}
+
+function toggleTheme() { 
+    document.body.classList.toggle('light-mode'); 
+    localStorage.setItem('oarcel_theme', document.body.classList.contains('light-mode') ? 'light-mode' : ''); 
+    updateThemeIcon(); 
+}
+
+function updateThemeIcon() { 
+    const isDark = !document.body.classList.contains('light-mode'); 
+    const themeBtn = document.getElementById('themeToggle');
+    if(themeBtn) {
+        themeBtn.innerHTML = isDark ? '<i class="fas fa-sun"></i><span>Light</span>' : '<i class="fas fa-moon"></i><span>Dark</span>';
+    }
+}
+
+// Make all functions global for onclick handlers
+window.selectDepartment = selectDepartment;
+window.goBack = goBack;
+window.triggerUpload = triggerUpload;
+window.clearSearch = clearSearch;
+window.navigateToBreadcrumb = navigateToBreadcrumb;
+window.renameCurrentFolder = renameCurrentFolder;
+window.deleteCurrentFolder = deleteCurrentFolder;
+window.addNewFolder = addNewFolder;
+window.addNewDepartment = addNewDepartment;
+window.openPDF = openPDF;
+window.renameFile = (p, old) => { 
+    const nu = prompt("New name:", old.replace('.pdf', '')); 
+    if(nu && nu.trim()) renameFileInFolder(p, old, nu.trim()); 
+};
+window.deleteFile = (p, n) => { 
+    if(confirm(`Delete "${n}"?`)) deleteFileFromFolder(p, n); 
+};
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
-    document.getElementById('themeToggle').onclick = toggleTheme;
-    if(localStorage.getItem('oarcel_theme') === 'light-mode') document.body.classList.add('light-mode');
+    // Setup theme toggle
+    const themeBtn = document.getElementById('themeToggle');
+    if(themeBtn) {
+        themeBtn.onclick = toggleTheme;
+    }
+    
+    if(localStorage.getItem('oarcel_theme') === 'light-mode') {
+        document.body.classList.add('light-mode');
+    }
     updateThemeIcon();
-    document.getElementById('fileInput').addEventListener('change', async(e) => {
-        const files = Array.from(e.target.files);
-        for(let f of files) if(f.type === 'application/pdf') await addFileToCurrentFolder(f);
-        showToast(`${files.length} PDF(s) saved!`); render(); e.target.value = '';
-    });
-    document.getElementById('searchInput').addEventListener('input', () => render());
-    document.getElementById('clearSearchBtn').addEventListener('click', clearSearch);
-    window.deleteFile = (p,n) => { if(confirm(`Delete "${n}"?`)) deleteFileFromFolder(p,n); };
-    window.renameFile = (p,old) => { const nu = prompt("New name:", old.replace('.pdf','')); if(nu?.trim()) renameFileInFolder(p, old, nu.trim()); };
+    
+    // Setup file input
+    const fileInput = document.getElementById('fileInput');
+    if(fileInput) {
+        fileInput.addEventListener('change', async(e) => {
+            const files = Array.from(e.target.files);
+            for(let f of files) {
+                if(f.type === 'application/pdf') {
+                    await addFileToCurrentFolder(f);
+                }
+            }
+            showToast(`${files.length} PDF(s) saved!`);
+            render();
+            e.target.value = '';
+        });
+    }
+    
+    // Setup search input
+    const searchInput = document.getElementById('searchInput');
+    if(searchInput) {
+        searchInput.addEventListener('input', () => render());
+    }
+    
+    // Setup clear search button
+    const clearSearchBtn = document.getElementById('clearSearchBtn');
+    if(clearSearchBtn) {
+        clearSearchBtn.addEventListener('click', clearSearch);
+    }
+    
+    // Setup back button
+    const backBtn = document.getElementById('backBtn');
+    if(backBtn) {
+        backBtn.addEventListener('click', goBack);
+    }
+    
+    // Setup upload button
+    const uploadBtn = document.getElementById('uploadBtn');
+    if(uploadBtn) {
+        uploadBtn.addEventListener('click', triggerUpload);
+    }
     
     try {
         await initDB();
@@ -290,17 +611,3 @@ document.addEventListener('DOMContentLoaded', async () => {
         showToast('Database error', true);
     }
 });
-
-// Make functions globally accessible for inline onclick handlers
-window.goBack = goBack;
-window.triggerUpload = triggerUpload;
-window.selectDepartment = selectDepartment;
-window.navigateToBreadcrumb = navigateToBreadcrumb;
-window.renameCurrentFolder = renameCurrentFolder;
-window.deleteCurrentFolder = deleteCurrentFolder;
-window.addNewFolder = addNewFolder;
-window.addNewDepartment = addNewDepartment;
-window.openPDF = openPDF;
-window.clearSearch = clearSearch;
-window.renameFile = (p,old) => { const nu = prompt("New name:", old.replace('.pdf','')); if(nu?.trim()) renameFileInFolder(p, old, nu.trim()); };
-window.deleteFile = (p,n) => { if(confirm(`Delete "${n}"?`)) deleteFileFromFolder(p,n); };
