@@ -1,214 +1,31 @@
 // ==================== INDEXEDDB CORE ====================
 const DB_NAME = 'OarcelDB';
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 let db = null;
 let allFiles = {};
 let fileSystem = {};
 let currentPath = [];
 let isSearchMode = false;
 
-// ==================== NATIVE PDF VIEWER (Works with all multi-page PDFs) ====================
-function openPDFEmbedded(dataUrl, fileName) {
-    // Create modal container
-    const modal = document.createElement('div');
-    modal.id = 'pdfModal';
-    modal.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: #1a1a2e;
-        z-index: 10000;
-        display: flex;
-        flex-direction: column;
-        animation: fadeIn 0.3s ease;
-    `;
+// ==================== PDF VIEWER - Opens in new tab for full multi-page support ====================
+function openPDF(dataUrl, fileName) {
+    // Show toast notification
+    showToast(`Opening ${fileName}...`);
     
-    // Create header bar
-    const header = document.createElement('div');
-    header.style.cssText = `
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 12px 20px;
-        background: #0f0f1a;
-        color: white;
-        border-bottom: 1px solid rgba(255,255,255,0.1);
-        flex-shrink: 0;
-        flex-wrap: wrap;
-        gap: 10px;
-    `;
-    
-    // File name display
-    const fileNameSpan = document.createElement('span');
-    fileNameSpan.style.cssText = `
-        font-size: 0.9rem;
-        font-weight: 500;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        max-width: 300px;
-    `;
-    fileNameSpan.innerHTML = `<i class="fas fa-file-pdf" style="color: #ef4444; margin-right: 8px;"></i>${escapeHtml(fileName)}`;
-    
-    // Button container
-    const buttonContainer = document.createElement('div');
-    buttonContainer.style.cssText = `
-        display: flex;
-        gap: 12px;
-    `;
-    
-    // Download button
-    const downloadBtn = document.createElement('button');
-    downloadBtn.innerHTML = '<i class="fas fa-download"></i> Download';
-    downloadBtn.style.cssText = `
-        padding: 6px 14px;
-        background: rgba(59, 130, 246, 0.8);
-        border: none;
-        border-radius: 20px;
-        color: white;
-        cursor: pointer;
-        font-size: 0.8rem;
-        transition: all 0.2s;
-    `;
-    downloadBtn.onmouseover = () => downloadBtn.style.background = 'rgba(59, 130, 246, 1)';
-    downloadBtn.onmouseout = () => downloadBtn.style.background = 'rgba(59, 130, 246, 0.8)';
-    downloadBtn.onclick = () => {
-        const link = document.createElement('a');
-        link.href = dataUrl;
-        link.download = fileName;
-        link.click();
-        showToast(`Downloading ${fileName}`);
-    };
-    
-    // Close button
-    const closeBtn = document.createElement('button');
-    closeBtn.innerHTML = '<i class="fas fa-times"></i> Close';
-    closeBtn.style.cssText = `
-        padding: 6px 14px;
-        background: rgba(239, 68, 68, 0.8);
-        border: none;
-        border-radius: 20px;
-        color: white;
-        cursor: pointer;
-        font-size: 0.8rem;
-        transition: all 0.2s;
-    `;
-    closeBtn.onmouseover = () => closeBtn.style.background = 'rgba(239, 68, 68, 1)';
-    closeBtn.onmouseout = () => closeBtn.style.background = 'rgba(239, 68, 68, 0.8)';
-    closeBtn.onclick = () => {
-        document.body.removeChild(modal);
-        if (modal.blobUrl) URL.revokeObjectURL(modal.blobUrl);
-    };
-    
-    buttonContainer.appendChild(downloadBtn);
-    buttonContainer.appendChild(closeBtn);
-    header.appendChild(fileNameSpan);
-    header.appendChild(buttonContainer);
-    
-    // Create iframe for PDF - Chrome's native PDF viewer handles multi-page perfectly
-    const iframe = document.createElement('iframe');
-    iframe.style.cssText = `
-        flex: 1;
-        width: 100%;
-        border: none;
-        background: #525659;
-    `;
-    
-    // Add loading indicator
-    const loadingDiv = document.createElement('div');
-    loadingDiv.style.cssText = `
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        color: white;
-        text-align: center;
-        z-index: 10001;
-    `;
-    loadingDiv.innerHTML = '<i class="fas fa-spinner fa-pulse fa-2x"></i><p style="margin-top: 10px;">Loading PDF...</p>';
-    
-    modal.appendChild(header);
-    modal.appendChild(iframe);
-    modal.appendChild(loadingDiv);
-    document.body.appendChild(modal);
-    
-    // Add animation keyframes
-    if (!document.querySelector('#pdfViewerStyles')) {
-        const style = document.createElement('style');
-        style.id = 'pdfViewerStyles';
-        style.textContent = `
-            @keyframes fadeIn {
-                from { opacity: 0; }
-                to { opacity: 1; }
-            }
-        `;
-        document.head.appendChild(style);
-    }
-    
-    // Convert dataUrl to blob and create a blob URL
+    // Convert dataUrl to blob and open in new tab
     fetch(dataUrl)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Failed to fetch PDF');
-            }
-            return response.blob();
-        })
+        .then(response => response.blob())
         .then(blob => {
-            // Check if blob is valid PDF
-            if (blob.type !== 'application/pdf' && !blob.type.includes('pdf')) {
-                console.warn('Blob type:', blob.type);
-            }
-            
             const blobUrl = URL.createObjectURL(blob);
-            modal.blobUrl = blobUrl;
-            
-            // Set iframe source
-            iframe.src = blobUrl;
-            
-            // Hide loading indicator when iframe loads
-            iframe.onload = () => {
-                loadingDiv.style.display = 'none';
-            };
-            
-            iframe.onerror = () => {
-                loadingDiv.innerHTML = '<i class="fas fa-exclamation-triangle fa-2x"></i><p style="margin-top: 10px;">Failed to load PDF. Try downloading instead.</p>';
-                setTimeout(() => {
-                    if (loadingDiv) loadingDiv.style.display = 'none';
-                }, 3000);
-            };
-            
-            // Fallback timeout
-            setTimeout(() => {
-                if (loadingDiv) loadingDiv.style.display = 'none';
-            }, 5000);
-            
-            // ESC key handler
-            const escHandler = (e) => {
-                if (e.key === 'Escape' && document.body.contains(modal)) {
-                    document.body.removeChild(modal);
-                    URL.revokeObjectURL(blobUrl);
-                    document.removeEventListener('keydown', escHandler);
-                }
-            };
-            document.addEventListener('keydown', escHandler);
+            window.open(blobUrl, '_blank');
+            showToast(`PDF opened in new tab. Close tab to return.`);
+            // Clean up after 1 minute
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
         })
         .catch(err => {
             console.error('PDF error:', err);
             showToast(`Failed to open PDF: ${err.message}`, true);
-            loadingDiv.innerHTML = '<i class="fas fa-exclamation-triangle fa-2x"></i><p style="margin-top: 10px;">Error loading PDF</p>';
-            setTimeout(() => {
-                if (modal && document.body.contains(modal)) {
-                    document.body.removeChild(modal);
-                }
-            }, 2000);
         });
-}
-
-// Open PDF function
-function openPDF(dataUrl, fileName) {
-    openPDFEmbedded(dataUrl, fileName);
 }
 
 // ==================== INDEXEDDB FUNCTIONS ====================
