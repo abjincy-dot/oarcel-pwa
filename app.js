@@ -7,29 +7,8 @@ let fileSystem = {};
 let currentPath = [];
 let isSearchMode = false;
 
-// ==================== PDF.JS WITH VERTICAL SCROLLING ====================
-// Load PDF.js library
-function loadPDFJS() {
-    return new Promise((resolve, reject) => {
-        if (window.pdfjsLib) {
-            resolve(window.pdfjsLib);
-            return;
-        }
-        const script = document.createElement('script');
-        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js';
-        script.onload = () => {
-            window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-            resolve(window.pdfjsLib);
-        };
-        script.onerror = reject;
-        document.head.appendChild(script);
-    });
-}
-
-async function openPDFEmbedded(dataUrl, fileName) {
-    // Load PDF.js
-    const pdfjsLib = await loadPDFJS();
-    
+// ==================== NATIVE PDF VIEWER (Works with all multi-page PDFs) ====================
+function openPDFEmbedded(dataUrl, fileName) {
     // Create modal container
     const modal = document.createElement('div');
     modal.id = 'pdfModal';
@@ -46,9 +25,9 @@ async function openPDFEmbedded(dataUrl, fileName) {
         animation: fadeIn 0.3s ease;
     `;
     
-    // Create toolbar
-    const toolbar = document.createElement('div');
-    toolbar.style.cssText = `
+    // Create header bar
+    const header = document.createElement('div');
+    header.style.cssText = `
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -61,7 +40,7 @@ async function openPDFEmbedded(dataUrl, fileName) {
         gap: 10px;
     `;
     
-    // File name
+    // File name display
     const fileNameSpan = document.createElement('span');
     fileNameSpan.style.cssText = `
         font-size: 0.9rem;
@@ -69,61 +48,18 @@ async function openPDFEmbedded(dataUrl, fileName) {
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        max-width: 250px;
+        max-width: 300px;
     `;
     fileNameSpan.innerHTML = `<i class="fas fa-file-pdf" style="color: #ef4444; margin-right: 8px;"></i>${escapeHtml(fileName)}`;
     
-    // Page info and controls
-    const controlsDiv = document.createElement('div');
-    controlsDiv.style.cssText = `
+    // Button container
+    const buttonContainer = document.createElement('div');
+    buttonContainer.style.cssText = `
         display: flex;
-        gap: 15px;
-        align-items: center;
+        gap: 12px;
     `;
     
-    const zoomControls = document.createElement('div');
-    zoomControls.style.cssText = `
-        display: flex;
-        gap: 8px;
-        align-items: center;
-    `;
-    
-    const zoomOutBtn = document.createElement('button');
-    zoomOutBtn.innerHTML = '<i class="fas fa-search-minus"></i>';
-    zoomOutBtn.style.cssText = `
-        padding: 6px 10px;
-        background: rgba(255,255,255,0.1);
-        border: none;
-        border-radius: 20px;
-        color: white;
-        cursor: pointer;
-        font-size: 0.8rem;
-    `;
-    
-    const zoomLevel = document.createElement('span');
-    zoomLevel.style.cssText = `font-size: 0.8rem; min-width: 45px; text-align: center;`;
-    zoomLevel.innerHTML = '100%';
-    
-    const zoomInBtn = document.createElement('button');
-    zoomInBtn.innerHTML = '<i class="fas fa-search-plus"></i>';
-    zoomInBtn.style.cssText = `
-        padding: 6px 10px;
-        background: rgba(255,255,255,0.1);
-        border: none;
-        border-radius: 20px;
-        color: white;
-        cursor: pointer;
-        font-size: 0.8rem;
-    `;
-    
-    zoomControls.appendChild(zoomOutBtn);
-    zoomControls.appendChild(zoomLevel);
-    zoomControls.appendChild(zoomInBtn);
-    
-    // Right buttons
-    const rightButtons = document.createElement('div');
-    rightButtons.style.cssText = `display: flex; gap: 8px;`;
-    
+    // Download button
     const downloadBtn = document.createElement('button');
     downloadBtn.innerHTML = '<i class="fas fa-download"></i> Download';
     downloadBtn.style.cssText = `
@@ -134,8 +70,19 @@ async function openPDFEmbedded(dataUrl, fileName) {
         color: white;
         cursor: pointer;
         font-size: 0.8rem;
+        transition: all 0.2s;
     `;
+    downloadBtn.onmouseover = () => downloadBtn.style.background = 'rgba(59, 130, 246, 1)';
+    downloadBtn.onmouseout = () => downloadBtn.style.background = 'rgba(59, 130, 246, 0.8)';
+    downloadBtn.onclick = () => {
+        const link = document.createElement('a');
+        link.href = dataUrl;
+        link.download = fileName;
+        link.click();
+        showToast(`Downloading ${fileName}`);
+    };
     
+    // Close button
     const closeBtn = document.createElement('button');
     closeBtn.innerHTML = '<i class="fas fa-times"></i> Close';
     closeBtn.style.cssText = `
@@ -146,174 +93,117 @@ async function openPDFEmbedded(dataUrl, fileName) {
         color: white;
         cursor: pointer;
         font-size: 0.8rem;
+        transition: all 0.2s;
     `;
-    
-    rightButtons.appendChild(downloadBtn);
-    rightButtons.appendChild(closeBtn);
-    
-    toolbar.appendChild(fileNameSpan);
-    toolbar.appendChild(zoomControls);
-    toolbar.appendChild(rightButtons);
-    
-    // Scroll container
-    const scrollContainer = document.createElement('div');
-    scrollContainer.style.cssText = `
-        flex: 1;
-        overflow-y: auto;
-        overflow-x: auto;
-        padding: 20px;
-        background: #1a1a2e;
-        -webkit-overflow-scrolling: touch;
-    `;
-    
-    // Pages container
-    const pagesContainer = document.createElement('div');
-    pagesContainer.style.cssText = `
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 20px;
-    `;
-    scrollContainer.appendChild(pagesContainer);
-    
-    modal.appendChild(toolbar);
-    modal.appendChild(scrollContainer);
-    document.body.appendChild(modal);
-    
-    // PDF variables
-    let pdfDoc = null;
-    let pages = [];
-    let currentScale = 1.0;
-    let totalPages = 0;
-    
-    // Render a single page
-    async function renderPage(pageNum, scale) {
-        const page = await pdfDoc.getPage(pageNum);
-        const viewport = page.getViewport({ scale: scale });
-        
-        // Create page wrapper
-        let pageWrapper = pages[pageNum - 1];
-        if (!pageWrapper) {
-            pageWrapper = document.createElement('div');
-            pageWrapper.style.cssText = `
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                gap: 8px;
-            `;
-            
-            const pageLabel = document.createElement('div');
-            pageLabel.style.cssText = `
-                font-size: 0.7rem;
-                color: #888;
-            `;
-            pageLabel.innerHTML = `Page ${pageNum}`;
-            pageWrapper.appendChild(pageLabel);
-            
-            const canvas = document.createElement('canvas');
-            canvas.style.cssText = `
-                box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-                background: white;
-                display: block;
-            `;
-            pageWrapper.appendChild(canvas);
-            pagesContainer.appendChild(pageWrapper);
-            
-            pages[pageNum - 1] = { wrapper: pageWrapper, canvas, pageNum };
-        }
-        
-        const { canvas } = pages[pageNum - 1];
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-        canvas.style.width = viewport.width + 'px';
-        canvas.style.height = viewport.height + 'px';
-        
-        const renderContext = {
-            canvasContext: canvas.getContext('2d'),
-            viewport: viewport
-        };
-        
-        await page.render(renderContext).promise;
-    }
-    
-    // Render all pages
-    async function renderAllPages(scale) {
-        if (!pdfDoc) return;
-        
-        currentScale = scale;
-        zoomLevel.innerHTML = Math.round(scale * 100) + '%';
-        
-        // Clear container but keep page references
-        pagesContainer.innerHTML = '';
-        pages = [];
-        
-        // Render all pages
-        for (let i = 1; i <= totalPages; i++) {
-            await renderPage(i, scale);
-        }
-    }
-    
-    // Zoom functions
-    async function zoomIn() {
-        if (currentScale < 2.5) {
-            await renderAllPages(currentScale + 0.25);
-        }
-    }
-    
-    async function zoomOut() {
-        if (currentScale > 0.5) {
-            await renderAllPages(currentScale - 0.25);
-        }
-    }
-    
-    // Event listeners
-    zoomInBtn.onclick = zoomIn;
-    zoomOutBtn.onclick = zoomOut;
-    
-    downloadBtn.onclick = () => {
-        const link = document.createElement('a');
-        link.href = dataUrl;
-        link.download = fileName;
-        link.click();
-        showToast(`Downloading ${fileName}`);
-    };
-    
+    closeBtn.onmouseover = () => closeBtn.style.background = 'rgba(239, 68, 68, 1)';
+    closeBtn.onmouseout = () => closeBtn.style.background = 'rgba(239, 68, 68, 0.8)';
     closeBtn.onclick = () => {
         document.body.removeChild(modal);
         if (modal.blobUrl) URL.revokeObjectURL(modal.blobUrl);
     };
     
-    // ESC key handler
-    const escHandler = (e) => {
-        if (e.key === 'Escape' && document.body.contains(modal)) {
-            document.body.removeChild(modal);
-            if (modal.blobUrl) URL.revokeObjectURL(modal.blobUrl);
-            document.removeEventListener('keydown', escHandler);
-        }
-    };
-    document.addEventListener('keydown', escHandler);
+    buttonContainer.appendChild(downloadBtn);
+    buttonContainer.appendChild(closeBtn);
+    header.appendChild(fileNameSpan);
+    header.appendChild(buttonContainer);
     
-    // Load and render PDF
-    showToast(`Loading ${fileName}...`);
+    // Create iframe for PDF - Chrome's native PDF viewer handles multi-page perfectly
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = `
+        flex: 1;
+        width: 100%;
+        border: none;
+        background: #525659;
+    `;
     
-    try {
-        const response = await fetch(dataUrl);
-        const blob = await response.blob();
-        modal.blobUrl = URL.createObjectURL(blob);
-        
-        const loadingTask = pdfjsLib.getDocument(modal.blobUrl);
-        pdfDoc = await loadingTask.promise;
-        totalPages = pdfDoc.numPages;
-        
-        // Render all pages
-        await renderAllPages(1.0);
-        
-        showToast(`Loaded ${fileName} (${totalPages} pages)`);
-    } catch (err) {
-        console.error('PDF error:', err);
-        showToast(`Failed to load PDF: ${err.message}`, true);
-        document.body.removeChild(modal);
+    // Add loading indicator
+    const loadingDiv = document.createElement('div');
+    loadingDiv.style.cssText = `
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        text-align: center;
+        z-index: 10001;
+    `;
+    loadingDiv.innerHTML = '<i class="fas fa-spinner fa-pulse fa-2x"></i><p style="margin-top: 10px;">Loading PDF...</p>';
+    
+    modal.appendChild(header);
+    modal.appendChild(iframe);
+    modal.appendChild(loadingDiv);
+    document.body.appendChild(modal);
+    
+    // Add animation keyframes
+    if (!document.querySelector('#pdfViewerStyles')) {
+        const style = document.createElement('style');
+        style.id = 'pdfViewerStyles';
+        style.textContent = `
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
     }
+    
+    // Convert dataUrl to blob and create a blob URL
+    fetch(dataUrl)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to fetch PDF');
+            }
+            return response.blob();
+        })
+        .then(blob => {
+            // Check if blob is valid PDF
+            if (blob.type !== 'application/pdf' && !blob.type.includes('pdf')) {
+                console.warn('Blob type:', blob.type);
+            }
+            
+            const blobUrl = URL.createObjectURL(blob);
+            modal.blobUrl = blobUrl;
+            
+            // Set iframe source
+            iframe.src = blobUrl;
+            
+            // Hide loading indicator when iframe loads
+            iframe.onload = () => {
+                loadingDiv.style.display = 'none';
+            };
+            
+            iframe.onerror = () => {
+                loadingDiv.innerHTML = '<i class="fas fa-exclamation-triangle fa-2x"></i><p style="margin-top: 10px;">Failed to load PDF. Try downloading instead.</p>';
+                setTimeout(() => {
+                    if (loadingDiv) loadingDiv.style.display = 'none';
+                }, 3000);
+            };
+            
+            // Fallback timeout
+            setTimeout(() => {
+                if (loadingDiv) loadingDiv.style.display = 'none';
+            }, 5000);
+            
+            // ESC key handler
+            const escHandler = (e) => {
+                if (e.key === 'Escape' && document.body.contains(modal)) {
+                    document.body.removeChild(modal);
+                    URL.revokeObjectURL(blobUrl);
+                    document.removeEventListener('keydown', escHandler);
+                }
+            };
+            document.addEventListener('keydown', escHandler);
+        })
+        .catch(err => {
+            console.error('PDF error:', err);
+            showToast(`Failed to open PDF: ${err.message}`, true);
+            loadingDiv.innerHTML = '<i class="fas fa-exclamation-triangle fa-2x"></i><p style="margin-top: 10px;">Error loading PDF</p>';
+            setTimeout(() => {
+                if (modal && document.body.contains(modal)) {
+                    document.body.removeChild(modal);
+                }
+            }, 2000);
+        });
 }
 
 // Open PDF function
@@ -344,15 +234,20 @@ function saveAllFilesToDB() {
     const tx = db.transaction('files', 'readwrite');
     const store = tx.objectStore('files');
     store.clear();
-    for (const folderPath in allFiles) store.put({ id: folderPath, folderPath, files: allFiles[folderPath] });
+    for (const folderPath in allFiles) {
+        if (allFiles[folderPath] && allFiles[folderPath].length > 0) {
+            store.put({ id: folderPath, folderPath, files: allFiles[folderPath] });
+        }
+    }
     tx.commit();
 }
 
 async function loadFromIndexedDB() {
     const folderReq = db.transaction('folderStructure', 'readonly').objectStore('folderStructure').get('structure');
     folderReq.onsuccess = () => {
-        if (folderReq.result) fileSystem = folderReq.result.value;
-        else {
+        if (folderReq.result) {
+            fileSystem = folderReq.result.value;
+        } else {
             fileSystem = {
                 "REMELT":{"A":{},"B":{},"C":{},"D":{},"E":{},"F":{},"G":{},"H":{},"I":{},"J":{},"K":{},"L":{},"M":{},"N":{},"O":{},"P":{},"Q":{},"R":{},"S":{},"T":{},"U":{},"V":{},"W":{},"X":{},"Y":{},"Z":{}},
                 "CASTER":{"Quality Reports":{},"Mechanical":{},"Maintenance":{},"Production Data":{},"Testing":{},"Checklists":{},"Safety":{},"Training":{}},
@@ -368,7 +263,9 @@ async function loadFromIndexedDB() {
         const fileReq = db.transaction('files', 'readonly').objectStore('files').getAll();
         fileReq.onsuccess = () => {
             allFiles = {};
-            for (let item of fileReq.result) allFiles[item.folderPath] = item.files;
+            for (let item of fileReq.result) {
+                allFiles[item.folderPath] = item.files;
+            }
             render();
         };
     };
@@ -709,10 +606,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
     
-    document.getElementById('searchInput')?.addEventListener('input', () => render());
-    document.getElementById('clearSearchBtn')?.addEventListener('click', clearSearch);
-    document.getElementById('backBtn')?.addEventListener('click', goBack);
-    document.getElementById('uploadBtn')?.addEventListener('click', triggerUpload);
+    const searchInput = document.getElementById('searchInput');
+    if(searchInput) {
+        searchInput.addEventListener('input', () => render());
+    }
+    
+    const clearSearchBtn = document.getElementById('clearSearchBtn');
+    if(clearSearchBtn) {
+        clearSearchBtn.addEventListener('click', clearSearch);
+    }
+    
+    const backBtn = document.getElementById('backBtn');
+    if(backBtn) {
+        backBtn.addEventListener('click', goBack);
+    }
+    
+    const uploadBtn = document.getElementById('uploadBtn');
+    if(uploadBtn) {
+        uploadBtn.addEventListener('click', triggerUpload);
+    }
     
     try {
         await initDB();
