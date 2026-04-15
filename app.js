@@ -7,24 +7,244 @@ let fileSystem = {};
 let currentPath = [];
 let isSearchMode = false;
 
-// ==================== PDF VIEWER - Opens in new tab for full multi-page support ====================
+// ==================== SAME-WINDOW PDF VIEWER ====================
 function openPDF(dataUrl, fileName) {
-    // Show toast notification
-    showToast(`Opening ${fileName}...`);
+    // Create full-screen modal
+    const modal = document.createElement('div');
+    modal.id = 'pdfModal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #1a1a2e;
+        z-index: 10000;
+        display: flex;
+        flex-direction: column;
+        animation: fadeIn 0.3s ease;
+    `;
     
-    // Convert dataUrl to blob and open in new tab
+    // Header toolbar
+    const header = document.createElement('div');
+    header.style.cssText = `
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 20px;
+        background: #0f0f1a;
+        color: white;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        flex-shrink: 0;
+        flex-wrap: wrap;
+        gap: 10px;
+    `;
+    
+    // File name
+    const fileNameSpan = document.createElement('span');
+    fileNameSpan.style.cssText = `
+        font-size: 0.9rem;
+        font-weight: 500;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 250px;
+    `;
+    fileNameSpan.innerHTML = `<i class="fas fa-file-pdf" style="color: #ef4444; margin-right: 8px;"></i>${escapeHtml(fileName)}`;
+    
+    // Zoom controls
+    const zoomControls = document.createElement('div');
+    zoomControls.style.cssText = `display: flex; gap: 8px; align-items: center;`;
+    
+    const zoomOutBtn = document.createElement('button');
+    zoomOutBtn.innerHTML = '<i class="fas fa-search-minus"></i>';
+    zoomOutBtn.style.cssText = `padding: 6px 10px; background: rgba(255,255,255,0.1); border: none; border-radius: 20px; color: white; cursor: pointer; font-size: 0.8rem;`;
+    
+    const zoomLevel = document.createElement('span');
+    zoomLevel.style.cssText = `font-size: 0.8rem; min-width: 45px; text-align: center;`;
+    zoomLevel.innerHTML = 'Fit';
+    
+    const zoomInBtn = document.createElement('button');
+    zoomInBtn.innerHTML = '<i class="fas fa-search-plus"></i>';
+    zoomInBtn.style.cssText = `padding: 6px 10px; background: rgba(255,255,255,0.1); border: none; border-radius: 20px; color: white; cursor: pointer; font-size: 0.8rem;`;
+    
+    const fitWidthBtn = document.createElement('button');
+    fitWidthBtn.innerHTML = '<i class="fas fa-arrows-alt-h"></i>';
+    fitWidthBtn.style.cssText = `padding: 6px 10px; background: rgba(255,255,255,0.1); border: none; border-radius: 20px; color: white; cursor: pointer; font-size: 0.8rem;`;
+    fitWidthBtn.title = 'Fit to Width';
+    
+    zoomControls.appendChild(zoomOutBtn);
+    zoomControls.appendChild(zoomLevel);
+    zoomControls.appendChild(zoomInBtn);
+    zoomControls.appendChild(fitWidthBtn);
+    
+    // Action buttons
+    const actionButtons = document.createElement('div');
+    actionButtons.style.cssText = `display: flex; gap: 8px;`;
+    
+    const downloadBtn = document.createElement('button');
+    downloadBtn.innerHTML = '<i class="fas fa-download"></i> Download';
+    downloadBtn.style.cssText = `padding: 6px 14px; background: rgba(59, 130, 246, 0.8); border: none; border-radius: 20px; color: white; cursor: pointer; font-size: 0.8rem;`;
+    
+    const closeBtn = document.createElement('button');
+    closeBtn.innerHTML = '<i class="fas fa-times"></i> Close';
+    closeBtn.style.cssText = `padding: 6px 14px; background: rgba(239, 68, 68, 0.8); border: none; border-radius: 20px; color: white; cursor: pointer; font-size: 0.8rem;`;
+    
+    actionButtons.appendChild(downloadBtn);
+    actionButtons.appendChild(closeBtn);
+    
+    header.appendChild(fileNameSpan);
+    header.appendChild(zoomControls);
+    header.appendChild(actionButtons);
+    
+    // PDF container with iframe - uses browser's native PDF viewer
+    const pdfContainer = document.createElement('div');
+    pdfContainer.style.cssText = `
+        flex: 1;
+        width: 100%;
+        background: #525659;
+        position: relative;
+    `;
+    
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = `
+        width: 100%;
+        height: 100%;
+        border: none;
+    `;
+    iframe.allow = "fullscreen";
+    
+    // Loading indicator
+    const loadingDiv = document.createElement('div');
+    loadingDiv.style.cssText = `
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        text-align: center;
+        z-index: 10001;
+    `;
+    loadingDiv.innerHTML = '<i class="fas fa-spinner fa-pulse fa-2x"></i><p style="margin-top: 10px;">Loading PDF...</p>';
+    
+    pdfContainer.appendChild(iframe);
+    pdfContainer.appendChild(loadingDiv);
+    modal.appendChild(header);
+    modal.appendChild(pdfContainer);
+    document.body.appendChild(modal);
+    
+    // Add animation styles
+    if (!document.querySelector('#pdfViewerStyles')) {
+        const style = document.createElement('style');
+        style.id = 'pdfViewerStyles';
+        style.textContent = `
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    // Zoom functionality
+    let currentZoom = 1;
+    
+    function applyZoom() {
+        iframe.style.transform = `scale(${currentZoom})`;
+        iframe.style.transformOrigin = 'top left';
+        iframe.style.width = `${100 / currentZoom}%`;
+        iframe.style.height = `${100 / currentZoom}%`;
+        zoomLevel.innerHTML = Math.round(currentZoom * 100) + '%';
+    }
+    
+    function fitToWidth() {
+        const containerWidth = pdfContainer.clientWidth;
+        const iframeWidth = iframe.offsetWidth;
+        currentZoom = containerWidth / (iframeWidth / currentZoom);
+        currentZoom = Math.min(Math.max(currentZoom, 0.5), 3);
+        applyZoom();
+    }
+    
+    zoomInBtn.onclick = () => {
+        if (currentZoom < 3) {
+            currentZoom += 0.25;
+            applyZoom();
+        }
+    };
+    
+    zoomOutBtn.onclick = () => {
+        if (currentZoom > 0.5) {
+            currentZoom -= 0.25;
+            applyZoom();
+        }
+    };
+    
+    fitWidthBtn.onclick = fitToWidth;
+    
+    downloadBtn.onclick = () => {
+        const link = document.createElement('a');
+        link.href = dataUrl;
+        link.download = fileName;
+        link.click();
+        showToast(`Downloading ${fileName}`);
+    };
+    
+    closeBtn.onclick = () => {
+        document.body.removeChild(modal);
+        if (modal.blobUrl) URL.revokeObjectURL(modal.blobUrl);
+    };
+    
+    // Load PDF
     fetch(dataUrl)
         .then(response => response.blob())
         .then(blob => {
             const blobUrl = URL.createObjectURL(blob);
-            window.open(blobUrl, '_blank');
-            showToast(`PDF opened in new tab. Close tab to return.`);
-            // Clean up after 1 minute
-            setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+            modal.blobUrl = blobUrl;
+            iframe.src = blobUrl;
+            
+            iframe.onload = () => {
+                loadingDiv.style.display = 'none';
+                // Apply fit to width after load
+                setTimeout(fitToWidth, 500);
+            };
+            
+            iframe.onerror = () => {
+                loadingDiv.innerHTML = '<i class="fas fa-exclamation-triangle fa-2x"></i><p style="margin-top: 10px;">Failed to load PDF</p>';
+            };
+            
+            setTimeout(() => {
+                if (loadingDiv) loadingDiv.style.display = 'none';
+            }, 5000);
+            
+            // ESC key handler
+            const escHandler = (e) => {
+                if (e.key === 'Escape' && document.body.contains(modal)) {
+                    document.body.removeChild(modal);
+                    URL.revokeObjectURL(blobUrl);
+                    document.removeEventListener('keydown', escHandler);
+                }
+            };
+            document.addEventListener('keydown', escHandler);
+            
+            // Handle window resize for fit to width
+            const resizeHandler = () => {
+                if (document.body.contains(modal) && zoomLevel.innerHTML === 'Fit') {
+                    fitToWidth();
+                }
+            };
+            window.addEventListener('resize', resizeHandler);
+            
+            // Cleanup resize handler on close
+            const originalClose = closeBtn.onclick;
+            closeBtn.onclick = () => {
+                window.removeEventListener('resize', resizeHandler);
+                originalClose();
+            };
         })
         .catch(err => {
             console.error('PDF error:', err);
             showToast(`Failed to open PDF: ${err.message}`, true);
+            document.body.removeChild(modal);
         });
 }
 
@@ -47,6 +267,7 @@ function saveFolderStructure() {
     tx.objectStore('folderStructure').put({ key: 'structure', value: fileSystem });
     tx.commit();
 }
+
 function saveAllFilesToDB() {
     const tx = db.transaction('files', 'readwrite');
     const store = tx.objectStore('files');
