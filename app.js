@@ -78,19 +78,14 @@ function openPDF(dataUrl, fileName) {
     zoomControls.appendChild(zoomInBtn);
     zoomControls.appendChild(fitWidthBtn);
     
-    // Action buttons
+    // Action buttons (Download button removed)
     const actionButtons = document.createElement('div');
     actionButtons.style.cssText = `display: flex; gap: 8px;`;
-    
-    const downloadBtn = document.createElement('button');
-    downloadBtn.innerHTML = '<i class="fas fa-download"></i> Download';
-    downloadBtn.style.cssText = `padding: 6px 14px; background: rgba(59, 130, 246, 0.8); border: none; border-radius: 20px; color: white; cursor: pointer; font-size: 0.8rem;`;
     
     const closeBtn = document.createElement('button');
     closeBtn.innerHTML = '<i class="fas fa-times"></i> Close';
     closeBtn.style.cssText = `padding: 6px 14px; background: rgba(239, 68, 68, 0.8); border: none; border-radius: 20px; color: white; cursor: pointer; font-size: 0.8rem;`;
     
-    actionButtons.appendChild(downloadBtn);
     actionButtons.appendChild(closeBtn);
     
     header.appendChild(fileNameSpan);
@@ -108,7 +103,6 @@ function openPDF(dataUrl, fileName) {
         -webkit-overflow-scrolling: touch;
     `;
     
-    // Use <object> instead of <iframe> for better mobile support
     const pdfObject = document.createElement('object');
     pdfObject.type = "application/pdf";
     pdfObject.style.cssText = `
@@ -118,7 +112,6 @@ function openPDF(dataUrl, fileName) {
         display: block;
     `;
     
-    // Loading indicator
     const loadingDiv = document.createElement('div');
     loadingDiv.style.cssText = `
         position: absolute;
@@ -146,7 +139,6 @@ function openPDF(dataUrl, fileName) {
 
     let currentZoom = 1;
     function applyZoom() {
-        // Disable scale zoom on mobile to prevent scrolling issues
         if (window.innerWidth < 768) {
             pdfObject.style.transform = 'none';
             pdfObject.style.width = '100%';
@@ -174,13 +166,6 @@ function openPDF(dataUrl, fileName) {
     zoomOutBtn.onclick = () => { if (currentZoom > 0.5) { currentZoom -= 0.25; applyZoom(); } };
     fitWidthBtn.onclick = fitToWidth;
     
-    downloadBtn.onclick = () => {
-        const link = document.createElement('a');
-        link.href = dataUrl;
-        link.download = fileName;
-        link.click();
-    };
-
     closeBtn.onclick = () => {
         document.body.removeChild(modal);
         if (modal.blobUrl) URL.revokeObjectURL(modal.blobUrl);
@@ -191,10 +176,8 @@ function openPDF(dataUrl, fileName) {
         .then(blob => {
             const blobUrl = URL.createObjectURL(blob);
             modal.blobUrl = blobUrl;
-            // Append #view=FitH to force the PDF to fit width and allow vertical scrolling
             pdfObject.data = `${blobUrl}#view=FitH`;
             
-            // Native <object> does not always trigger onload like iframe
             setTimeout(() => {
                 loadingDiv.style.display = 'none';
                 fitToWidth();
