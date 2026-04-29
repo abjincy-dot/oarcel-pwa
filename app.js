@@ -7,185 +7,24 @@ let fileSystem = {};
 let currentPath = [];
 let isSearchMode = false;
 
-// ==================== SAME-WINDOW PDF VIEWER ====================
+// ==================== PDF VIEWER - Opens in new tab for full multi-page support ====================
 function openPDF(dataUrl, fileName) {
-    // Create full-screen modal
-    const modal = document.createElement('div');
-    modal.id = 'pdfModal';
-    modal.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: #1a1a2e;
-        z-index: 10000;
-        display: flex;
-        flex-direction: column;
-        animation: fadeIn 0.3s ease;
-    `;
+    // Show toast notification
+    showToast(`Opening ${fileName}...`);
     
-    // Header toolbar
-    const header = document.createElement('div');
-    header.style.cssText = `
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 12px 20px;
-        background: #0f0f1a;
-        color: white;
-        border-bottom: 1px solid rgba(255,255,255,0.1);
-        flex-shrink: 0;
-        flex-wrap: wrap;
-        gap: 10px;
-    `;
-    
-    // File name
-    const fileNameSpan = document.createElement('span');
-    fileNameSpan.style.cssText = `
-        font-size: 0.9rem;
-        font-weight: 500;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        max-width: 250px;
-    `;
-    fileNameSpan.innerHTML = `<i class="fas fa-file-pdf" style="color: #ef4444; margin-right: 8px;"></i>${escapeHtml(fileName)}`;
-    
-    // Zoom controls
-    const zoomControls = document.createElement('div');
-    zoomControls.style.cssText = `display: flex; gap: 8px; align-items: center;`;
-    
-    const zoomOutBtn = document.createElement('button');
-    zoomOutBtn.innerHTML = '<i class="fas fa-search-minus"></i>';
-    zoomOutBtn.style.cssText = `padding: 6px 10px; background: rgba(255,255,255,0.1); border: none; border-radius: 20px; color: white; cursor: pointer; font-size: 0.8rem;`;
-    
-    const zoomLevel = document.createElement('span');
-    zoomLevel.style.cssText = `font-size: 0.8rem; min-width: 45px; text-align: center;`;
-    zoomLevel.innerHTML = 'Fit';
-    
-    const zoomInBtn = document.createElement('button');
-    zoomInBtn.innerHTML = '<i class="fas fa-search-plus"></i>';
-    zoomInBtn.style.cssText = `padding: 6px 10px; background: rgba(255,255,255,0.1); border: none; border-radius: 20px; color: white; cursor: pointer; font-size: 0.8rem;`;
-    
-    const fitWidthBtn = document.createElement('button');
-    fitWidthBtn.innerHTML = '<i class="fas fa-arrows-alt-h"></i>';
-    fitWidthBtn.style.cssText = `padding: 6px 10px; background: rgba(255,255,255,0.1); border: none; border-radius: 20px; color: white; cursor: pointer; font-size: 0.8rem;`;
-    fitWidthBtn.title = 'Fit to Width';
-    
-    zoomControls.appendChild(zoomOutBtn);
-    zoomControls.appendChild(zoomLevel);
-    zoomControls.appendChild(zoomInBtn);
-    zoomControls.appendChild(fitWidthBtn);
-    
-    // Action buttons (Download button removed)
-    const actionButtons = document.createElement('div');
-    actionButtons.style.cssText = `display: flex; gap: 8px;`;
-    
-    const closeBtn = document.createElement('button');
-    closeBtn.innerHTML = '<i class="fas fa-times"></i> Close';
-    closeBtn.style.cssText = `padding: 6px 14px; background: rgba(239, 68, 68, 0.8); border: none; border-radius: 20px; color: white; cursor: pointer; font-size: 0.8rem;`;
-    
-    actionButtons.appendChild(closeBtn);
-    
-    header.appendChild(fileNameSpan);
-    header.appendChild(zoomControls);
-    header.appendChild(actionButtons);
-    
-    // PDF container with Mobile Scroll Fix
-    const pdfContainer = document.createElement('div');
-    pdfContainer.style.cssText = `
-        flex: 1;
-        width: 100%;
-        background: #525659;
-        position: relative;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-    `;
-    
-    const pdfObject = document.createElement('object');
-    pdfObject.type = "application/pdf";
-    pdfObject.style.cssText = `
-        width: 100%;
-        height: 100%;
-        border: none;
-        display: block;
-    `;
-    
-    const loadingDiv = document.createElement('div');
-    loadingDiv.style.cssText = `
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        color: white;
-        text-align: center;
-        z-index: 10001;
-    `;
-    loadingDiv.innerHTML = '<i class="fas fa-spinner fa-pulse fa-2x"></i><p style="margin-top: 10px;">Loading PDF...</p>';
-    
-    pdfContainer.appendChild(pdfObject);
-    pdfContainer.appendChild(loadingDiv);
-    modal.appendChild(header);
-    modal.appendChild(pdfContainer);
-    document.body.appendChild(modal);
-    
-    if (!document.querySelector('#pdfViewerStyles')) {
-        const style = document.createElement('style');
-        style.id = 'pdfViewerStyles';
-        style.textContent = `@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }`;
-        document.head.appendChild(style);
-    }
-
-    let currentZoom = 1;
-    function applyZoom() {
-        if (window.innerWidth < 768) {
-            pdfObject.style.transform = 'none';
-            pdfObject.style.width = '100%';
-            pdfObject.style.height = '100%';
-            zoomLevel.innerHTML = 'Mobile';
-            return;
-        }
-        pdfObject.style.transform = `scale(${currentZoom})`;
-        pdfObject.style.transformOrigin = 'top left';
-        pdfObject.style.width = `${100 / currentZoom}%`;
-        pdfObject.style.height = `${100 / currentZoom}%`;
-        zoomLevel.innerHTML = Math.round(currentZoom * 100) + '%';
-    }
-    
-    function fitToWidth() {
-        if (window.innerWidth < 768) return;
-        const containerWidth = pdfContainer.clientWidth;
-        const objectWidth = pdfObject.offsetWidth;
-        currentZoom = containerWidth / (objectWidth / currentZoom);
-        currentZoom = Math.min(Math.max(currentZoom, 0.5), 3);
-        applyZoom();
-    }
-
-    zoomInBtn.onclick = () => { if (currentZoom < 3) { currentZoom += 0.25; applyZoom(); } };
-    zoomOutBtn.onclick = () => { if (currentZoom > 0.5) { currentZoom -= 0.25; applyZoom(); } };
-    fitWidthBtn.onclick = fitToWidth;
-    
-    closeBtn.onclick = () => {
-        document.body.removeChild(modal);
-        if (modal.blobUrl) URL.revokeObjectURL(modal.blobUrl);
-    };
-
+    // Convert dataUrl to blob and open in new tab
     fetch(dataUrl)
         .then(response => response.blob())
         .then(blob => {
             const blobUrl = URL.createObjectURL(blob);
-            modal.blobUrl = blobUrl;
-            pdfObject.data = `${blobUrl}#view=FitH`;
-            
-            setTimeout(() => {
-                loadingDiv.style.display = 'none';
-                fitToWidth();
-            }, 1000);
+            window.open(blobUrl, '_blank');
+            showToast(`PDF opened in new tab. Close tab to return.`);
+            // Clean up after 1 minute
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
         })
         .catch(err => {
-            showToast(`Failed to open PDF`, true);
-            document.body.removeChild(modal);
+            console.error('PDF error:', err);
+            showToast(`Failed to open PDF: ${err.message}`, true);
         });
 }
 
@@ -206,8 +45,8 @@ function initDB() {
 function saveFolderStructure() {
     const tx = db.transaction('folderStructure', 'readwrite');
     tx.objectStore('folderStructure').put({ key: 'structure', value: fileSystem });
+    tx.commit();
 }
-
 function saveAllFilesToDB() {
     const tx = db.transaction('files', 'readwrite');
     const store = tx.objectStore('files');
@@ -217,12 +56,11 @@ function saveAllFilesToDB() {
             store.put({ id: folderPath, folderPath, files: allFiles[folderPath] });
         }
     }
+    tx.commit();
 }
 
 async function loadFromIndexedDB() {
-    const tx = db.transaction(['folderStructure', 'files'], 'readonly');
-    const folderReq = tx.objectStore('folderStructure').get('structure');
-    
+    const folderReq = db.transaction('folderStructure', 'readonly').objectStore('folderStructure').get('structure');
     folderReq.onsuccess = () => {
         if (folderReq.result) {
             fileSystem = folderReq.result.value;
@@ -239,8 +77,7 @@ async function loadFromIndexedDB() {
             };
             saveFolderStructure();
         }
-        
-        const fileReq = tx.objectStore('files').getAll();
+        const fileReq = db.transaction('files', 'readonly').objectStore('files').getAll();
         fileReq.onsuccess = () => {
             allFiles = {};
             for (let item of fileReq.result) {
@@ -257,13 +94,9 @@ function getFilesForCurrentFolder() { return allFiles[currentPath.join('/')] || 
 async function addFileToCurrentFolder(file) {
     const folderPath = currentPath.join('/');
     if (!allFiles[folderPath]) allFiles[folderPath] = [];
-    const base64 = await new Promise(r => { 
-        const rd = new FileReader(); 
-        rd.onload = e => r(e.target.result); 
-        rd.readAsDataURL(file); 
-    });
+    const base64 = await new Promise(r => { const rd = new FileReader(); rd.onload = e => r(e.target.result); rd.readAsDataURL(file); });
     allFiles[folderPath].push({ name: file.name, dataUrl: base64 });
-    saveAllFilesToDB();
+    await saveAllFilesToDB();
 }
 
 function deleteFileFromFolder(folderPath, fileName) {
@@ -289,17 +122,39 @@ function renameFileInFolder(folderPath, oldName, newName) {
     }
 }
 
-// ==================== NAVIGATION & UI ====================
-function selectDepartment(d) { currentPath = [d]; render(); }
-function goBack() { if(currentPath.length && !isSearchMode) { currentPath.pop(); render(); } else if(isSearchMode) { clearSearch(); } }
-function triggerUpload() { document.getElementById('fileInput').click(); }
-function clearSearch() { document.getElementById('searchInput').value = ''; isSearchMode = false; document.getElementById('searchInfo').classList.add('hidden'); render(); }
+function selectDepartment(d) { 
+    currentPath = [d]; 
+    render(); 
+}
+
+function goBack() { 
+    if(currentPath.length && !isSearchMode) { 
+        currentPath.pop(); 
+        render(); 
+    } else if(isSearchMode) { 
+        clearSearch(); 
+    } 
+}
+
+function triggerUpload() { 
+    document.getElementById('fileInput').click(); 
+}
+
+function clearSearch() { 
+    document.getElementById('searchInput').value = ''; 
+    isSearchMode = false; 
+    document.getElementById('searchInfo').classList.add('hidden'); 
+    document.getElementById('clearSearchBtn').classList.add('hidden'); 
+    render(); 
+}
 
 function searchFiles(q) {
     if(!q.trim()) return [];
     const all = [];
     for(const path in allFiles) {
-        if(allFiles[path]) allFiles[path].forEach(f => all.push({...f, folder:path}));
+        if(allFiles[path]) {
+            allFiles[path].forEach(f => all.push({...f, folder:path}));
+        }
     }
     return all.filter(f => f.name.toLowerCase().includes(q.toLowerCase()));
 }
@@ -321,66 +176,177 @@ function createCard(title, onClick, isFolder=false, showDel=false, delPath=null,
 
 function render() {
     const query = document.getElementById('searchInput').value.trim().toLowerCase();
-    const contentDiv = document.getElementById('content');
-    const deptSection = document.getElementById('departmentsSection');
-    const bcDiv = document.getElementById('breadcrumb');
-
     if(query) {
         isSearchMode = true;
+        document.getElementById('clearSearchBtn').classList.remove('hidden');
         const results = searchFiles(query);
         document.getElementById('searchInfo').classList.remove('hidden');
-        document.getElementById('searchInfo').innerHTML = `<i class="fas fa-search"></i> Found ${results.length} results.`;
+        document.getElementById('searchInfo').innerHTML = `<i class="fas fa-search"></i> Found ${results.length} result(s) for "${escapeHtml(query)}" <button onclick="clearSearch()" style="background:none;border:none;color:#60a5fa;cursor:pointer;margin-left:10px;">Clear</button>`;
+        const contentDiv = document.getElementById('content'); 
         contentDiv.innerHTML = '';
-        deptSection.innerHTML = '';
-        bcDiv.innerHTML = '';
-        if(!results.length) contentDiv.innerHTML = '<div class="empty-state">No PDFs found.</div>';
-        else results.forEach(f => contentDiv.appendChild(createCard(f.name, () => openPDF(f.dataUrl, f.name), false)));
-        updateStats();
+        document.getElementById('backBtn').classList.remove('hidden');
+        document.getElementById('uploadBtn').classList.add('hidden');
+        document.getElementById('departmentsSection').innerHTML = '';
+        document.getElementById('breadcrumb').innerHTML = '';
+        if(!results.length) {
+            contentDiv.innerHTML = '<div class="empty-state"><i class="fas fa-search"></i><p>No PDFs found.</p></div>';
+        } else {
+            results.forEach(f => contentDiv.appendChild(createCard(f.name, () => openPDF(f.dataUrl, f.name), false)));
+        }
+        updateStats(); 
         return;
     }
-
-    contentDiv.innerHTML = '';
+    isSearchMode = false;
+    document.getElementById('clearSearchBtn').classList.add('hidden');
+    document.getElementById('searchInfo').classList.add('hidden');
+    document.getElementById('content').innerHTML = '';
     const folder = getCurrentFolderObject();
-    if(!folder) { currentPath = []; render(); return; }
-
-    document.getElementById('backBtn').classList.toggle('hidden', currentPath.length === 0);
-    bcDiv.innerHTML = `<div class="breadcrumb-item" onclick="navigateToBreadcrumb(-1)"><i class="fas fa-home"></i> Home</div>`;
-    currentPath.forEach((f,i) => { bcDiv.innerHTML += `<span class="breadcrumb-separator">/</span><div class="breadcrumb-item" onclick="navigateToBreadcrumb(${i})">${escapeHtml(f)}</div>`; });
-
-    if(currentPath.length === 0){
-        let html = '<div class="section-title">Departments</div><div class="departments-grid">';
-        for(let dept in fileSystem){
-            const fcount = allFiles[dept] ? allFiles[dept].length : 0;
-            html += `<div class="dept-card" onclick="selectDepartment('${dept}')"><div class="dept-oval"><span>${dept}</span></div><div class="dept-info">${fcount} files</div></div>`;
-        }
-        deptSection.innerHTML = html + '</div>';
-    } else {
-        deptSection.innerHTML = '';
+    if(!folder) { 
+        currentPath = []; 
+        render(); 
+        return; 
     }
-
+    document.getElementById('backBtn').classList.toggle('hidden', currentPath.length === 0);
+    
+    const bcDiv = document.getElementById('breadcrumb');
+    bcDiv.innerHTML = `<div class="breadcrumb-item" onclick="navigateToBreadcrumb(-1)"><i class="fas fa-home"></i> Home</div>`;
+    currentPath.forEach((f,i) => { 
+        bcDiv.innerHTML += `<span class="breadcrumb-separator">/</span><div class="breadcrumb-item" onclick="navigateToBreadcrumb(${i})">${escapeHtml(f)}</div>`; 
+    });
+    
+    if(currentPath.length === 0){
+        let html = '<div class="section-title"><i class="fas fa-building"></i> Departments</div><div class="departments-grid">';
+        for(let dept in fileSystem){
+            const sub = Object.keys(fileSystem[dept]).length;
+            const fcount = allFiles[dept] ? allFiles[dept].length : 0;
+            html += `<div class="dept-card" data-dept="${dept}" onclick="selectDepartment('${dept}')"><div class="dept-oval"><span>${dept}</span></div><div class="dept-arrow"><i class="fas fa-chevron-right"></i></div><div class="dept-info">${sub+fcount} items</div></div>`;
+        }
+        html += '</div>';
+        document.getElementById('departmentsSection').innerHTML = html;
+    } else {
+        document.getElementById('departmentsSection').innerHTML = '';
+    }
+    
     const isLeaf = Object.keys(folder).length === 0;
     const isRoot = currentPath.length === 0;
     document.getElementById('uploadBtn').classList.toggle('hidden', !(isLeaf && !isRoot));
-
-    if(!isRoot && !isLeaf) {
-        for(let key in folder) contentDiv.appendChild(createCard(key, () => { currentPath.push(key); render(); }, true));
-    }
     
+    const actionDiv = document.createElement('div');
+    actionDiv.className = 'action-bar';
+    if(!isRoot) {
+        actionDiv.innerHTML = `<button class="action-btn" onclick="renameCurrentFolder()"><i class="fas fa-edit"></i> Rename Folder</button><button class="action-btn" onclick="deleteCurrentFolder()"><i class="fas fa-trash-alt"></i> Delete Folder</button><button class="action-btn" onclick="addNewFolder()"><i class="fas fa-plus"></i> Add Subfolder</button>`;
+    } else {
+        actionDiv.innerHTML = `<button class="action-btn" onclick="addNewDepartment()"><i class="fas fa-building"></i> Add Department</button>`;
+    }
+    document.getElementById('content').appendChild(actionDiv);
+    
+    if(!isRoot && !isLeaf) {
+        for(let key in folder) {
+            document.getElementById('content').appendChild(createCard(key, () => { currentPath.push(key); render(); }, true));
+        }
+    }
     if(isLeaf && !isRoot){
         const files = getFilesForCurrentFolder();
-        if(!files.length) contentDiv.innerHTML += '<div class="empty-state">No PDFs here.</div>';
-        else files.forEach(f => contentDiv.appendChild(createCard(f.name, () => openPDF(f.dataUrl, f.name), false, true, currentPath.join('/'), f.name, true)));
+        const path = currentPath.join('/');
+        if(!files.length) {
+            document.getElementById('content').innerHTML += '<div class="empty-state"><i class="fas fa-cloud-upload-alt"></i><p>No PDFs yet. Click Upload to add files.</p></div>';
+        } else {
+            files.forEach(f => document.getElementById('content').appendChild(createCard(f.name, () => openPDF(f.dataUrl, f.name), false, true, path, f.name, true)));
+        }
     }
     updateStats();
 }
 
-function navigateToBreadcrumb(idx) { currentPath = idx === -1 ? [] : currentPath.slice(0, idx+1); render(); }
+function navigateToBreadcrumb(idx) { 
+    if(idx === -1) {
+        currentPath = []; 
+    } else {
+        currentPath = currentPath.slice(0, idx+1); 
+    }
+    render(); 
+}
+
+function renameCurrentFolder() { 
+    if(!currentPath.length) return;
+    const old = currentPath[currentPath.length-1];
+    const newName = prompt("New folder name:", old);
+    if(newName && newName !== old && newName.trim()){
+        const parent = currentPath.slice(0,-1).reduce((o,p)=>o[p], fileSystem);
+        parent[newName] = parent[old];
+        delete parent[old];
+        const oldPath = currentPath.join('/');
+        const newPath = [...currentPath.slice(0,-1), newName].join('/');
+        if(allFiles[oldPath]){ 
+            allFiles[newPath] = allFiles[oldPath]; 
+            delete allFiles[oldPath]; 
+        }
+        currentPath[currentPath.length-1] = newName;
+        saveFolderStructure(); 
+        saveAllFilesToDB(); 
+        render(); 
+        showToast(`✅ Renamed to "${newName}"`);
+    }
+}
+
+function deleteCurrentFolder() {
+    if(!currentPath.length) return;
+    const name = currentPath[currentPath.length-1];
+    if(confirm(`Delete "${name}" and all contents?`)){
+        const path = currentPath.join('/');
+        delete allFiles[path];
+        const parent = currentPath.slice(0,-1).reduce((o,p)=>o[p], fileSystem);
+        delete parent[name];
+        currentPath.pop();
+        saveFolderStructure(); 
+        saveAllFilesToDB(); 
+        render(); 
+        showToast(`🗑️ Folder "${name}" deleted`);
+    }
+}
+
+function addNewFolder() {
+    const name = prompt("Folder name:");
+    if(name && name.trim()){
+        const cur = getCurrentFolderObject();
+        if(cur && !cur[name]){ 
+            cur[name] = {}; 
+            saveFolderStructure(); 
+            render(); 
+            showToast(`✅ Folder "${name}" created`); 
+        } else {
+            showToast("Exists", true);
+        }
+    }
+}
+
+function addNewDepartment() {
+    const name = prompt("Department name:");
+    if(name && name.trim() && !fileSystem[name]){ 
+        fileSystem[name] = {}; 
+        saveFolderStructure(); 
+        render(); 
+        showToast(`✅ Department "${name}" created`); 
+    } else if(fileSystem[name]) {
+        showToast("Department exists", true);
+    }
+}
 
 function updateStats() {
     let folderCount = 0, fileCount = 0;
-    const count = (obj) => { for(let k in obj) { folderCount++; count(obj[k]); } };
-    count(fileSystem);
-    for(let k in allFiles) if(allFiles[k]) fileCount += allFiles[k].length;
+    function countFolders(obj) { 
+        for(let k in obj) { 
+            if(typeof obj[k] === 'object') { 
+                folderCount++; 
+                countFolders(obj[k]); 
+            } 
+        } 
+    }
+    countFolders(fileSystem);
+    for(let k in allFiles) {
+        if(allFiles[k]) {
+            fileCount += allFiles[k].length;
+        }
+    }
     document.getElementById('folderCount').textContent = folderCount;
     document.getElementById('fileCount').textContent = fileCount;
 }
@@ -388,38 +354,100 @@ function updateStats() {
 function showToast(msg, isErr = false) {
     const toast = document.getElementById('toast');
     toast.querySelector('span').textContent = msg;
-    toast.style.background = isErr ? "red" : "green";
+    toast.style.background = isErr ? "linear-gradient(135deg,#ef4444,#dc2626)" : "linear-gradient(135deg,#10b981,#059669)";
     toast.classList.remove('hidden');
     setTimeout(() => toast.classList.add('hidden'), 3000);
 }
 
-function escapeHtml(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+function escapeHtml(str) { 
+    const div = document.createElement('div'); 
+    div.textContent = str; 
+    return div.innerHTML; 
+}
 
-// Global mappings for HTML onclicks
+function toggleTheme() { 
+    document.body.classList.toggle('light-mode'); 
+    localStorage.setItem('oarcel_theme', document.body.classList.contains('light-mode') ? 'light-mode' : ''); 
+    updateThemeIcon(); 
+}
+
+function updateThemeIcon() { 
+    const isDark = !document.body.classList.contains('light-mode'); 
+    const themeBtn = document.getElementById('themeToggle');
+    if(themeBtn) {
+        themeBtn.innerHTML = isDark ? '<i class="fas fa-sun"></i><span>Light</span>' : '<i class="fas fa-moon"></i><span>Dark</span>';
+    }
+}
+
+// Make all functions global
 window.selectDepartment = selectDepartment;
 window.goBack = goBack;
 window.triggerUpload = triggerUpload;
 window.clearSearch = clearSearch;
 window.navigateToBreadcrumb = navigateToBreadcrumb;
+window.renameCurrentFolder = renameCurrentFolder;
+window.deleteCurrentFolder = deleteCurrentFolder;
+window.addNewFolder = addNewFolder;
+window.addNewDepartment = addNewDepartment;
 window.openPDF = openPDF;
 window.renameFile = (p, old) => { 
     const nu = prompt("New name:", old.replace('.pdf', '')); 
-    if(nu) renameFileInFolder(p, old, nu.trim()); 
+    if(nu && nu.trim()) renameFileInFolder(p, old, nu.trim()); 
 };
-window.deleteFile = (p, n) => { if(confirm(`Delete "${n}"?`)) deleteFileFromFolder(p, n); };
+window.deleteFile = (p, n) => { 
+    if(confirm(`Delete "${n}"?`)) deleteFileFromFolder(p, n); 
+};
 
-// Init
+// Initialize
 document.addEventListener('DOMContentLoaded', async () => {
-    const fileInput = document.getElementById('fileInput');
-    if(fileInput) fileInput.addEventListener('change', async(e) => {
-        for(let f of e.target.files) if(f.type === 'application/pdf') await addFileToCurrentFolder(f);
-        render();
-        e.target.value = '';
-    });
+    const themeBtn = document.getElementById('themeToggle');
+    if(themeBtn) themeBtn.onclick = toggleTheme;
     
-    document.getElementById('searchInput')?.addEventListener('input', () => render());
-    document.getElementById('backBtn')?.addEventListener('click', goBack);
-    document.getElementById('uploadBtn')?.addEventListener('click', triggerUpload);
-
-    try { await initDB(); await loadFromIndexedDB(); } catch(e) { console.error(e); }
+    if(localStorage.getItem('oarcel_theme') === 'light-mode') {
+        document.body.classList.add('light-mode');
+    }
+    updateThemeIcon();
+    
+    const fileInput = document.getElementById('fileInput');
+    if(fileInput) {
+        fileInput.addEventListener('change', async(e) => {
+            const files = Array.from(e.target.files);
+            for(let f of files) {
+                if(f.type === 'application/pdf') {
+                    await addFileToCurrentFolder(f);
+                }
+            }
+            showToast(`${files.length} PDF(s) saved!`);
+            render();
+            e.target.value = '';
+        });
+    }
+    
+    const searchInput = document.getElementById('searchInput');
+    if(searchInput) {
+        searchInput.addEventListener('input', () => render());
+    }
+    
+    const clearSearchBtn = document.getElementById('clearSearchBtn');
+    if(clearSearchBtn) {
+        clearSearchBtn.addEventListener('click', clearSearch);
+    }
+    
+    const backBtn = document.getElementById('backBtn');
+    if(backBtn) {
+        backBtn.addEventListener('click', goBack);
+    }
+    
+    const uploadBtn = document.getElementById('uploadBtn');
+    if(uploadBtn) {
+        uploadBtn.addEventListener('click', triggerUpload);
+    }
+    
+    try {
+        await initDB();
+        await loadFromIndexedDB();
+    } catch(e) {
+        console.error(e);
+        showToast('Database error', true);
+    }
 });
