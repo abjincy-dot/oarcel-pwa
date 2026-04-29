@@ -1,485 +1,542 @@
-// ==================== OARCEL PDF MANAGER APPLICATION ====================
-
-// Industrial Data Model with expanded subfolders
-const fileSystem = {
-  "✨ REMELT": {
-    "🔥 Burner Systems": {
-      "Gas Burners": [
-        "https://drive.google.com/file/d/1eQ4v4vf_k4Bz0Dhbv6APR6IeUqI0pDsk/preview"
-      ],
-      "Oil Burners": [
-        "https://drive.google.com/file/d/1aB2cD3eF4gH5iJ6kL7mN8oP9qR0sT1uV/preview"
-      ],
-      "Burner Controls": [],
-      "Flame Monitoring": []
-    },
-    "❄️ Cooling Systems": {
-      "Water Cooling": [
-        "https://drive.google.com/file/d/1xY2zA3bC4dE5fG6hI7jK8lM9nO0pQ1rS/preview"
-      ],
-      "Air Cooling": [],
-      "Heat Exchangers": [],
-      "Cooling Towers": []
-    },
-    "🔧 Maintenance": {
-      "Preventive Maintenance": [
-        "https://drive.google.com/file/d/1Z9yX8wV7uT6sR5qP4oN3mL2kJ1hG0fD/preview"
-      ],
-      "Predictive Maintenance": [],
-      "Repair Logs": [],
-      "Spare Parts": []
-    },
-    "⚠️ Safety": {
-      "Safety Protocols": [],
-      "Emergency Shutdown": [],
-      "PPE Requirements": [],
-      "Hazard Analysis": []
-    },
-    "📊 Operations": {
-      "Daily Reports": [],
-      "Production Logs": [],
-      "Efficiency Reports": [],
-      "Downtime Analysis": []
-    },
-    "🔬 Quality Control": {
-      "Material Testing": [],
-      "Chemical Analysis": [],
-      "Temperature Logs": [],
-      "Defect Analysis": []
-    },
-    "📈 Performance": {
-      "KPI Tracking": [],
-      "Energy Consumption": [],
-      "Optimization Reports": [],
-      "Benchmarking": []
-    },
-    "🛠️ Equipment": {
-      "Furnace Specs": [],
-      "Instrumentation": [],
-      "Calibration Records": [],
-      "Equipment Manuals": []
-    },
-    "📚 Training": {
-      "Operator Training": [],
-      "Safety Training": [],
-      "Technical Guides": [],
-      "SOP Documents": []
-    },
-    "📜 Documentation": {
-      "Technical Drawings": [],
-      "P&ID Diagrams": [],
-      "Electrical Schematics": [],
-      "Certifications": []
-    }
-  },
-  "⚙️ CASTER": {
-    "⚡ Motor Specs": [
-      "https://drive.google.com/file/d/1MotorGuide2024_ABC123XYZ/preview"
-    ],
-    "🔩 Gearbox Maintenance": [
-      "https://drive.google.com/file/d/1GearPro_Manual_88x2/preview",
-      "https://drive.google.com/file/d/1LubricationGuide_Rolling/preview"
-    ],
-    "📊 Calibration Reports": [],
-    "🔧 Hydraulic Systems": [],
-    "❄️ Cooling Systems": [],
-    "📈 Production Reports": []
-  },
-  "✅ HRM": {
-    "📋 Inspection Checklists": [
-      "https://drive.google.com/file/d/1QC_Checklist_SteelMill_v2/preview",
-      "https://drive.google.com/file/d/1NDT_Ultrasonic_Testing/preview"
-    ],
-    "🏆 Certifications": [
-      "https://drive.google.com/file/d/1ISO9001_Cert_2025/preview"
-    ],
-    "📊 Quality Reports": [],
-    "🔬 Testing Procedures": [],
-    "📈 Statistical Analysis": []
-  },
-  "💡 CRM": {
-    "💻 PLC Schematics": [
-      "https://drive.google.com/file/d/1PLC_Siemens_S7_Diagram/preview"
-    ],
-    "⚡ Motor Control Centers": [],
-    "📐 CAD Drawings": [
-      "https://drive.google.com/file/d/1CAD_Drawing_Mill_v2/preview"
-    ],
-    "🔌 Electrical Panels": [],
-    "📡 SCADA Systems": [],
-    "🔧 Automation Guides": []
-  },
-  "🛡️ ANEALING": {
-    "🧪 Chemical Handling": [
-      "https://drive.google.com/file/d/1SDS_Chemical_Safety_2024/preview"
-    ],
-    "🚨 Emergency Procedures": [
-      "https://drive.google.com/file/d/1Fire_Emergency_Rolling/preview",
-      "https://drive.google.com/file/d/1FirstAid_SteelPlant/preview"
-    ],
-    "📜 Regulatory Docs": [],
-    "🌡️ Temperature Control": [],
-    "⚙️ Process Parameters": [],
-    "📊 Quality Assurance": []
-  },
-  "💡 TLL": {
-    "💻 PLC Schematics": [
-      "https://drive.google.com/file/d/1PLC_Siemens_S7_Diagram/preview"
-    ],
-    "⚡ Motor Control Centers": [],
-    "📐 CAD Drawings": [
-      "https://drive.google.com/file/d/1CAD_Drawing_Mill_v2/preview"
-    ],
-    "🔧 Maintenance Manuals": [],
-    "📈 Production Logs": [],
-    "⚙️ Process Optimization": []
-  },
-  "🛡️ SLITER": {
-    "🧪 Chemical Handling": [
-      "https://drive.google.com/file/d/1SDS_Chemical_Safety_2024/preview"
-    ],
-    "🚨 Emergency Procedures": [
-      "https://drive.google.com/file/d/1Fire_Emergency_Rolling/preview",
-      "https://drive.google.com/file/d/1FirstAid_SteelPlant/preview"
-    ],
-    "📜 Regulatory Docs": [],
-    "⚙️ Blade Maintenance": [],
-    "📊 Quality Control": [],
-    "📈 Production Reports": []
-  }
-};
-
-// Beautiful filename extraction
-function getSmartFileName(link) {
-  if (!link || typeof link !== 'string') return "Document.pdf";
-  
-  const cleanLink = link.split('?')[0];
-  const driveMatch = cleanLink.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-  
-  if (driveMatch) {
-    let id = driveMatch[1];
-    const nameMap = {
-      "eQ4v4vf": "Burner_Tuning_Guide_v2.1",
-      "MotorGuide": "Motor_Specifications_2024",
-      "GearPro": "Gearbox_Lubrication_Schedule",
-      "LubricationGuide": "Roll_Mill_Lubrication_Manual",
-      "QC_Checklist": "Steel_Inspection_Checklist",
-      "NDT_Ultrasonic": "Ultrasonic_Testing_Procedure",
-      "ISO9001": "ISO_9001_Certificate_2025",
-      "PLC_Siemens": "PLC_Programming_Manual_S7",
-      "SDS_Chemical": "Chemical_Safety_DataSheet",
-      "Fire_Emergency": "Fire_Response_Protocol",
-      "FirstAid": "FirstAid_SteelPlant_Manual",
-      "Cooling": "Cooling_System_Operations",
-      "Maintenance": "Preventive_Maintenance_Schedule",
-      "CAD_Drawing": "CAD_Engineering_Drawings"
-    };
-    
-    for (const [key, value] of Object.entries(nameMap)) {
-      if (id.includes(key)) return `${value}.pdf`;
-    }
-    return `Technical_Doc_${id.slice(-6)}.pdf`;
-  }
-  return "Engineering_Reference.pdf";
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-// Flatten files for search
-function flattenAllFiles(node, currentPath = []) {
-  let filesList = [];
-  for (let key in node) {
-    const value = node[key];
-    if (Array.isArray(value)) {
-      value.forEach(link => {
-        if (link && typeof link === 'string') {
-          filesList.push({
-            name: getSmartFileName(link),
-            link: link,
-            folderPath: [...currentPath, key].join(" › ")
-          });
-        }
-      });
-    } else if (value && typeof value === 'object') {
-      filesList.push(...flattenAllFiles(value, [...currentPath, key]));
-    }
-  }
-  return filesList;
+:root {
+    --bg-gradient: url("https://raw.githubusercontent.com/abjincy-dot/oarcel-pwa/main/images/wallpaper.jpg");
+    --glass-bg: rgba(15, 35, 55, 0.45);
+    --glass-border: rgba(255, 255, 255, 0.2);
+    --text-primary: #ffffff;
+    --text-secondary: #cfecff;
+    --card-bg: rgba(12, 32, 50, 0.65);
+    --input-bg: rgba(0, 0, 0, 0.4);
 }
 
-let currentPath = [];
-let allFilesCache = null;
-
-function getAllFilesIndex() {
-  if (!allFilesCache) {
-    allFilesCache = flattenAllFiles(fileSystem);
-  }
-  return allFilesCache;
+body.light-mode {
+    --bg-gradient: linear-gradient(165deg, #d4e6f1 0%, #b8d4e8 45%, #9bc0d4 100%);
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(0, 0, 0, 0.1);
+    --text-primary: #1a2a3a;
+    --text-secondary: #2c3e50;
+    --card-bg: rgba(255, 255, 255, 0.8);
+    --input-bg: rgba(255, 255, 255, 0.9);
 }
 
-function getCurrentNode() {
-  let node = fileSystem;
-  for (let segment of currentPath) {
-    if (node[segment] && !Array.isArray(node[segment])) {
-      node = node[segment];
-    } else {
-      return null;
-    }
-  }
-  return node;
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    min-height: 100vh;
+    background: var(--bg-gradient);
+    position: relative;
+    overflow-x: hidden;
+    color: var(--text-primary);
+    transition: background 0.3s ease;
 }
 
-function updateStats() {
-  const allFiles = getAllFilesIndex();
-  const statsBar = document.getElementById("statsBar");
-  const totalPDFs = allFiles.length;
-  const totalFolders = Object.keys(fileSystem).length;
-  
-  let totalSubfolders = 0;
-  function countSubfolders(node) {
-    for (let key in node) {
-      const val = node[key];
-      if (val && typeof val === 'object' && !Array.isArray(val)) {
-        totalSubfolders++;
-        countSubfolders(val);
-      }
-    }
-  }
-  countSubfolders(fileSystem);
-  
-  statsBar.innerHTML = `
-    <i class="fas fa-file-pdf"></i> <span>${totalPDFs}</span> Documents
-    <i class="fas fa-folder"></i> <span>${totalFolders}</span> Departments
-    <i class="fas fa-folder-open"></i> <span>${totalSubfolders}</span> Subfolders
-    <i class="fas fa-industry"></i> <span>OARCEL</span> Edition
-  `;
+body::before {
+    content: '';
+    position: fixed;
+    top: -20%;
+    left: -10%;
+    width: 120%;
+    height: 70%;
+    background: radial-gradient(ellipse at 30% 20%, rgba(255, 210, 140, 0.25) 0%, rgba(255, 160, 80, 0.1) 40%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+    animation: softGlow 12s ease-in-out infinite alternate;
 }
 
-function createCard(icon, title, onClick, className, subtitle = null) {
-  const div = document.createElement("div");
-  div.className = `card ${className}`;
-  div.style.animationDelay = `${Math.random() * 0.2}s`;
-  div.innerHTML = `
-    <div class="card-icon">
-      <i class="${icon}"></i>
-    </div>
-    <div class="card-title">${escapeHtml(title)}</div>
-    ${subtitle ? `<div class="card-subtitle"><i class="fas fa-folder-open"></i> ${escapeHtml(subtitle)}</div>` : '<div class="card-subtitle"><i class="fas fa-file"></i> Click to view</div>'}
-  `;
-  div.onclick = onClick;
-  return div;
+@keyframes softGlow {
+    0% { opacity: 0.5; transform: scale(1); }
+    100% { opacity: 1; transform: scale(1.05); }
 }
 
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
+@keyframes floatUp {
+    0% { transform: translateY(0) translateX(0); opacity: 0.2; }
+    50% { transform: translateY(-40px) translateX(20px); opacity: 0.6; }
+    100% { transform: translateY(-80px) translateX(40px); opacity: 0; }
 }
 
-function openPdfViewer(link) {
-  const viewerWrapper = document.getElementById("viewerWrapper");
-  const pdfIframe = document.getElementById("pdfIframe");
-  if (!link) return;
-  
-  let embedUrl = link;
-  if (link.includes("drive.google.com")) {
-    if (link.includes("/preview")) {
-      embedUrl = link;
-    } else {
-      const fileIdMatch = link.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-      if (fileIdMatch && fileIdMatch[1]) {
-        embedUrl = `https://drive.google.com/file/d/${fileIdMatch[1]}/preview`;
-      } else {
-        embedUrl = link.includes("?") ? link + "&embedded=true" : link + "?embedded=true";
-      }
-    }
-  }
-  
-  pdfIframe.src = embedUrl;
-  viewerWrapper.style.display = "block";
-  viewerWrapper.scrollIntoView({ behavior: "smooth", block: "start" });
+.particle {
+    position: fixed;
+    background: rgba(255, 255, 245, 0.5);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+    animation: floatUp 14s infinite ease-out;
 }
 
-function closeViewer() {
-  const viewerWrapper = document.getElementById("viewerWrapper");
-  const pdfIframe = document.getElementById("pdfIframe");
-  viewerWrapper.style.display = "none";
-  pdfIframe.src = "about:blank";
+.particle:nth-child(1) { width: 3px; height: 3px; top: 70%; left: 15%; animation-duration: 18s; }
+.particle:nth-child(2) { width: 5px; height: 5px; top: 60%; left: 85%; animation-duration: 22s; animation-delay: 2s; }
+.particle:nth-child(3) { width: 2px; height: 2px; top: 50%; left: 45%; animation-duration: 12s; animation-delay: 1s; }
+.particle:nth-child(4) { width: 4px; height: 4px; top: 80%; left: 70%; animation-duration: 20s; animation-delay: 4s; }
+.particle:nth-child(5) { width: 6px; height: 6px; top: 40%; left: 25%; animation-duration: 16s; animation-delay: 0.5s; }
+.particle:nth-child(6) { width: 3px; height: 3px; top: 85%; left: 55%; animation-duration: 24s; animation-delay: 3s; }
+.particle:nth-child(7) { width: 5px; height: 5px; top: 30%; left: 92%; animation-duration: 19s; animation-delay: 1.5s; }
+.particle:nth-child(8) { width: 2.5px; height: 2.5px; top: 20%; left: 10%; animation-duration: 15s; animation-delay: 2.5s; }
+
+.app {
+    position: relative;
+    z-index: 2;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 16px;
 }
 
-function goHome() {
-  currentPath = [];
-  document.getElementById("search").value = "";
-  closeViewer();
-  render();
+.header, .stats-bar, .card, .dept-oval, .action-bar, .top-bar, .breadcrumb, .search-container input, .empty-state {
+    backdrop-filter: blur(16px);
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 28px;
 }
 
-function render() {
-  const contentDiv = document.getElementById("content");
-  const breadcrumbSpan = document.getElementById("breadcrumb");
-  const searchQuery = document.getElementById("search").value.trim().toLowerCase();
-  const viewerWrapper = document.getElementById("viewerWrapper");
-  
-  if (viewerWrapper.style.display === "block") {
-    viewerWrapper.style.display = "none";
-    const iframe = document.getElementById("pdfIframe");
-    if (iframe) iframe.src = "about:blank";
-  }
-  
-  let breadText = `<i class="fas fa-home"></i> Dashboard`;
-  if (currentPath.length > 0) {
-    breadText += ` / ${currentPath.join(" / ")}`;
-  }
-  breadcrumbSpan.innerHTML = breadText;
-  
-  contentDiv.innerHTML = "";
-  
-  // Search mode
-  if (searchQuery !== "") {
-    const allFiles = getAllFilesIndex();
-    const filtered = allFiles.filter(file => 
-      file.name.toLowerCase().includes(searchQuery) || 
-      file.folderPath.toLowerCase().includes(searchQuery)
-    );
-    
-    if (filtered.length === 0) {
-      contentDiv.innerHTML = `<div class="empty-state"><i class="fas fa-search"></i><p>No matching documents found</p></div>`;
-      updateStats();
-      return;
-    }
-    
-    filtered.forEach(file => {
-      const displayName = file.name.replace('.pdf', '');
-      const card = createCard(
-        "fas fa-file-pdf", 
-        displayName, 
-        () => openPdfViewer(file.link), 
-        "pdf-card",
-        file.folderPath
-      );
-      contentDiv.appendChild(card);
-    });
-    updateStats();
-    return;
-  }
-  
-  // Folder navigation
-  const currentNode = getCurrentNode();
-  if (!currentNode) {
-    currentPath = [];
-    render();
-    return;
-  }
-  
-  const folderKeys = Object.keys(currentNode).filter(key => {
-    const val = currentNode[key];
-    return val && typeof val === 'object' && !Array.isArray(val);
-  });
-  
-  folderKeys.forEach(folder => {
-    const card = createCard(
-      "fas fa-folder", 
-      folder, 
-      () => {
-        currentPath.push(folder);
-        render();
-      }, 
-      "folder-card"
-    );
-    contentDiv.appendChild(card);
-  });
-  
-  // Render files
-  const allEntries = Object.keys(currentNode);
-  let fileLinks = [];
-  for (let key of allEntries) {
-    const val = currentNode[key];
-    if (Array.isArray(val)) {
-      val.forEach(link => {
-        if (link && typeof link === 'string') fileLinks.push(link);
-      });
-    }
-  }
-  
-  if (fileLinks.length === 0 && folderKeys.length === 0) {
-    contentDiv.innerHTML = `<div class="empty-state"><i class="fas fa-folder-open"></i><p>This folder is empty</p></div>`;
-  } else {
-    fileLinks.forEach(link => {
-      const fileName = getSmartFileName(link);
-      const displayName = fileName.replace('.pdf', '');
-      const card = createCard(
-        "fas fa-file-pdf", 
-        displayName, 
-        () => openPdfViewer(link), 
-        "pdf-card"
-      );
-      contentDiv.appendChild(card);
-    });
-  }
-  
-  updateStats();
+.header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+    padding: 16px 22px;
+    backdrop-filter: blur(20px);
+    border-radius: 32px;
 }
 
-// PWA Installation Prompt
-let deferredPrompt;
-const installPrompt = document.getElementById('installPrompt');
-const installBtn = document.getElementById('installBtn');
-const closeInstallBtn = document.getElementById('closeInstallBtn');
-
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-  installPrompt.style.display = 'block';
-});
-
-if (installBtn) {
-  installBtn.addEventListener('click', async () => {
-    installPrompt.style.display = 'none';
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      console.log(`User response: ${outcome}`);
-      deferredPrompt = null;
-    }
-  });
+.logo {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #4f9fff, #a855f7);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
 }
 
-if (closeInstallBtn) {
-  closeInstallBtn.addEventListener('click', () => {
-    installPrompt.style.display = 'none';
-  });
+.header-title {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.header-title .main-line {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 8px;
+    row-gap: 4px;
+}
+.header-title h1 { 
+    font-size: 1.4rem; 
+    font-weight: 700; 
+    letter-spacing: -0.3px;
+    margin: 0;
+}
+.header-title .doc-tag { 
+    font-size: 0.7rem; 
+    color: #9ac4e4;
+    background: rgba(255,255,255,0.1);
+    padding: 2px 8px;
+    border-radius: 20px;
+    display: inline-block;
+}
+.header-title .owner-name {
+    font-size: 0.7rem;
+    font-weight: 400;
+    color: #cde4ff;
+    margin-top: 2px;
+    word-spacing: -0.15em;
+}
+body.light-mode .header-title .owner-name {
+    color: #2c5282;
 }
 
-// Event Listeners
-document.getElementById("breadcrumb").addEventListener("click", goHome);
-document.getElementById("closeViewerBtn").addEventListener("click", closeViewer);
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    gap: 10px;
+    flex-wrap: wrap;
+    background: var(--glass-bg);
+    padding: 10px 16px;
+    border-radius: 50px;
+}
 
-// Real-time search with debounce
-let searchTimeout;
-const searchInput = document.getElementById("search");
-searchInput.addEventListener("input", () => {
-  clearTimeout(searchTimeout);
-  searchTimeout = setTimeout(() => {
-    render();
-  }, 180);
-});
+/* BACK BUTTON STYLES */
+.btn-back {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 40px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(8px);
+    color: var(--text-primary);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2));
+    border: 1px solid rgba(59, 130, 246, 0.5);
+    position: relative;
+    overflow: hidden;
+}
 
-// ESC to close viewer
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") {
-    const viewerWrap = document.getElementById("viewerWrapper");
-    if (viewerWrap.style.display === "block") {
-      closeViewer();
-    }
-  }
-});
+.btn-back::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(59, 130, 246, 0.4);
+    transform: translate(-50%, -50%);
+    transition: width 0.4s, height 0.4s;
+}
 
-// Network status detection
-window.addEventListener('online', () => {
-  console.log('Back online');
-});
+.btn-back:hover::before {
+    width: 200px;
+    height: 200px;
+}
 
-window.addEventListener('offline', () => {
-  console.log('You are offline');
-});
+.btn-back:hover {
+    transform: translateX(-3px);
+    border-color: rgba(59, 130, 246, 0.8);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(139, 92, 246, 0.3));
+}
 
-// Initialize
-render();
+.btn-back i {
+    font-size: 1rem;
+    transition: transform 0.3s ease;
+}
+
+.btn-back:hover i {
+    transform: translateX(-3px);
+}
+
+.btn-back span {
+    position: relative;
+    z-index: 1;
+}
+
+/* THEME TOGGLE BUTTON STYLES */
+.theme-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 40px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(8px);
+    color: var(--text-primary);
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(236, 72, 153, 0.2));
+    border: 1px solid rgba(168, 85, 247, 0.5);
+    position: relative;
+    overflow: hidden;
+}
+
+.theme-toggle::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(168, 85, 247, 0.4);
+    transform: translate(-50%, -50%);
+    transition: width 0.4s, height 0.4s;
+}
+
+.theme-toggle:hover::before {
+    width: 200px;
+    height: 200px;
+}
+
+.theme-toggle:hover {
+    transform: scale(1.05);
+    border-color: rgba(168, 85, 247, 0.8);
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(236, 72, 153, 0.3));
+}
+
+.theme-toggle i {
+    font-size: 1rem;
+    transition: transform 0.3s ease;
+}
+
+.theme-toggle:hover i {
+    transform: rotate(15deg);
+}
+
+.theme-toggle span {
+    position: relative;
+    z-index: 1;
+}
+
+/* Light mode specific styles for buttons */
+body.light-mode .btn-back {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(139, 92, 246, 0.3));
+    border-color: rgba(59, 130, 246, 0.6);
+}
+
+body.light-mode .theme-toggle {
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(236, 72, 153, 0.3));
+    border-color: rgba(168, 85, 247, 0.6);
+}
+
+.btn-upload {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    border: none;
+    border-radius: 40px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(8px);
+    color: white;
+    background: linear-gradient(135deg, #3b82f6, #7c3aed);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.btn-upload:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(59,130,246,0.4);
+}
+
+.search-container {
+    flex: 1;
+    position: relative;
+    min-width: 180px;
+}
+
+.search-container i {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #bbd9ff;
+    font-size: 0.9rem;
+}
+
+#searchInput {
+    width: 100%;
+    padding: 10px 14px 10px 40px;
+    border-radius: 40px;
+    border: 1px solid var(--glass-border);
+    background: var(--input-bg);
+    backdrop-filter: blur(12px);
+    color: var(--text-primary);
+    outline: none;
+    font-size: 0.85rem;
+}
+
+.clear-search {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+.hidden { display: none !important; }
+
+.stats-bar {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding: 12px 20px;
+    border-radius: 28px;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+}
+
+.stat-item i { font-size: 1.3rem; color: #7ab3ff; }
+.stat-item span { font-size: 1.3rem; font-weight: 700; }
+.stat-item label { font-size: 0.7rem; color: var(--text-secondary); margin-left: auto; }
+
+.action-bar {
+    display: flex;
+    gap: 10px;
+    padding: 12px 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 16px;
+    background: var(--glass-bg);
+    border-radius: 50px;
+}
+
+.action-btn {
+    background: rgba(20, 45, 65, 0.8);
+    border: 1px solid var(--glass-border);
+    padding: 8px 18px;
+    border-radius: 40px;
+    color: var(--text-primary);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    transition: 0.2s;
+}
+
+.action-btn:hover { transform: translateY(-1px); background: rgba(59,130,246,0.8); }
+
+.departments-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+.dept-card { display: flex; align-items: center; gap: 14px; cursor: pointer; padding: 4px 0; transition: transform 0.1s ease; }
+.dept-card:hover { transform: translateX(5px); }
+.dept-oval { padding: 10px 24px; border-radius: 50px; background: linear-gradient(145deg, #2c6285, #1c4468); border: 1px solid rgba(255,255,255,0.25); }
+.dept-oval span { font-size: 14px; font-weight: 600; color: white; }
+.dept-arrow { color: rgba(100, 180, 250, 0.9); font-size: 14px; }
+.dept-info { margin-left: auto; font-size: 11px; background: rgba(0, 0, 0, 0.35); padding: 4px 10px; border-radius: 25px; }
+
+.dept-card[data-dept="REMELT"] .dept-oval { background: linear-gradient(145deg, #d45a2b, #a53f15); }
+.dept-card[data-dept="CASTER"] .dept-oval { background: linear-gradient(145deg, #1f8a7c, #146b60); }
+.dept-card[data-dept="HRM"] .dept-oval { background: linear-gradient(145deg, #6b6bd6, #4a4ab0); }
+.dept-card[data-dept="CRM"] .dept-oval { background: linear-gradient(145deg, #e68a2e, #c0681a); }
+.dept-card[data-dept="ANNEALING"] .dept-oval { background: linear-gradient(145deg, #c53b6b, #9e2550); }
+.dept-card[data-dept="TLL"] .dept-oval { background: linear-gradient(145deg, #1f958b, #147a70); }
+.dept-card[data-dept="SLITTER"] .dept-oval { background: linear-gradient(145deg, #3b70e0, #2a53b3); }
+.dept-card[data-dept="UTILITY"] .dept-oval { background: linear-gradient(145deg, #cf4a2e, #aa351a); }
+
+.content { display: flex; flex-direction: column; gap: 8px; }
+
+.card {
+    background: var(--card-bg);
+    backdrop-filter: blur(14px);
+    padding: 12px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    border: 1px solid var(--glass-border);
+    transition: all 0.2s;
+}
+
+.card:hover { background: rgba(59, 130, 246, 0.2); transform: translateY(-1px); }
+
+.card-icon { width: 32px; flex-shrink: 0; }
+.card-icon i { font-size: 1.2rem; color: #60a5fa; }
+
+.card-filename {
+    flex: 1;
+    font-size: 0.85rem;
+    font-weight: 500;
+    word-break: break-word;
+    min-width: 120px;
+}
+
+.card-buttons {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.card-buttons button {
+    padding: 6px 12px;
+    border-radius: 25px;
+    font-size: 0.7rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: 500;
+    transition: 0.2s;
+    border: none;
+}
+
+.rename-file-btn {
+    background: rgba(59, 130, 246, 0.3);
+    border: 1px solid rgba(59, 130, 246, 0.5);
+    color: #bfdbfe;
+}
+
+.delete-btn {
+    background: rgba(239, 68, 68, 0.3);
+    border: 1px solid rgba(239, 68, 68, 0.5);
+    color: #fecaca;
+}
+
+.toast {
+    position: fixed;
+    bottom: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #10b981;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 40px;
+    z-index: 1100;
+    backdrop-filter: blur(12px);
+    font-size: 0.85rem;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.empty-state { text-align: center; padding: 40px 20px; background: var(--card-bg); border-radius: 28px; }
+.empty-state i { font-size: 2.5rem; margin-bottom: 12px; opacity: 0.7; }
+
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+    padding: 10px 16px;
+    background: rgba(0, 0, 0, 0.35);
+    border-radius: 40px;
+    width: fit-content;
+}
+
+.breadcrumb-item {
+    color: #cae3ff;
+    cursor: pointer;
+    font-size: 0.8rem;
+    padding: 4px 8px;
+    border-radius: 25px;
+}
+
+.section-title { font-size: 0.9rem; font-weight: 600; margin: 0 0 12px 0; display: flex; align-items: center; gap: 8px; }
+#fileInput { display: none; }
+
+.search-result-info {
+    margin: 8px 0;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    background: var(--glass-bg);
+    border-radius: 20px;
+    display: inline-block;
+}
+
+@media (max-width: 640px) {
+    .app { padding: 12px; }
+    .btn-back span, .btn-upload span, .theme-toggle span { display: inline-block; }
+    .btn-back, .btn-upload, .theme-toggle { padding: 8px 16px; }
+    .action-btn { padding: 6px 14px; font-size: 0.75rem; }
+    .card { padding: 10px 12px; }
+    .card-filename { font-size: 0.8rem; }
+    .dept-oval { padding: 8px 18px; }
+    .stat-item span { font-size: 1.1rem; }
+    .toast { white-space: nowrap; font-size: 0.75rem; bottom: 20px; }
+    .header-title h1 { font-size: 1.2rem; }
+    .header-title .doc-tag { font-size: 0.6rem; }
+    .header-title .owner-name { font-size: 0.6rem; }
+}
