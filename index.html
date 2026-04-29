@@ -2,123 +2,58 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Department Folders</title>
-
-<style>
-body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: linear-gradient(135deg, #8e0e00, #1f1c18);
-    min-height: 100vh;
-    padding: 20px;
-}
-
-/* Title */
-h1 {
-    text-align: center;
-    color: white;
-    margin-bottom: 30px;
-}
-
-/* Departments Section */
-.departments-section {
-    width: 90%;
-    max-width: 700px;
-    margin: auto;
-}
-
-/* Each Row */
-.department-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin: 14px 0;
-}
-
-/* Department Buttons */
-.department-btn {
-    color: white;
-    border: none;
-    padding: 14px 28px;
-    border-radius: 30px;
-    font-weight: bold;
-    font-size: 22px;
-    cursor: pointer;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
-    min-width: 220px;
-    text-align: center;
-}
-
-/* File Count Badge */
-.file-count {
-    background: rgba(255,255,255,0.15);
-    color: white;
-    padding: 10px 18px;
-    border-radius: 20px;
-    font-size: 18px;
-    min-width: 90px;
-    text-align: center;
-}
-
-/* Colors */
-.remelt { background: linear-gradient(135deg, #ff6b6b, #e63946); }
-.caster { background: linear-gradient(135deg, #4dabf7, #1c7ed6); }
-.hrm { background: linear-gradient(135deg, #51cf66, #2f9e44); }
-.crm { background: linear-gradient(135deg, #fcc419, #f59f00); color:black; }
-.annealing { background: linear-gradient(135deg, #845ef7, #5f3dc4); }
-.tll { background: linear-gradient(135deg, #f06595, #d6336c); }
-.slitter { background: linear-gradient(135deg, #20c997, #099268); }
-.utility { background: linear-gradient(135deg, #ff922b, #f76707); }
-</style>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+<title>OARCEL | Document Manager</title>
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="OARCEL">
+<meta name="theme-color" content="#0a1128">
+<link rel="apple-touch-icon" href="https://img.icons8.com/fluency/192/folder-invoices.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
+<div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div>
+<div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div>
 
-<h1>Department Folders</h1>
-
-<div class="departments-section">
-
-    <div class="department-row">
-        <button class="department-btn remelt">REMELT</button>
-        <span class="file-count">0 files</span>
+<div class="app">
+  <div class="header">
+    <div class="logo"><i class="fas fa-folder-open"></i></div>
+    <div class="header-title">
+      <div class="main-line">
+        <h1>OARCEL</h1>
+        <span class="doc-tag"><i class="fas fa-file-alt"></i> Document Manager</span>
+      </div>
+      <div class="owner-name">𝓐𝓫𝓲𝓼𝓱 𝓡𝓪𝓳𝓪𝓷</div>
     </div>
+  </div>
 
-    <div class="department-row">
-        <button class="department-btn caster">CASTER</button>
-        <span class="file-count">0 files</span>
+  <div class="top-bar">
+    <button id="backBtn" class="btn-back hidden"><i class="fas fa-arrow-left"></i><span>Back</span></button>
+    <div class="search-container">
+      <i class="fas fa-search"></i>
+      <input type="text" id="searchInput" placeholder="Search PDFs...">
+      <button id="clearSearchBtn" class="clear-search hidden"><i class="fas fa-times-circle"></i></button>
     </div>
+    <button id="themeToggle" class="theme-toggle"><i class="fas fa-moon"></i><span>Theme</span></button>
+    <button id="uploadBtn" class="btn-upload hidden"><i class="fas fa-cloud-upload-alt"></i><span>Upload</span></button>
+    <input type="file" id="fileInput" accept="application/pdf" multiple>
+  </div>
 
-    <div class="department-row">
-        <button class="department-btn hrm">HRM</button>
-        <span class="file-count">0 files</span>
-    </div>
+  <div class="stats-bar">
+    <div class="stat-item"><i class="fas fa-folder"></i><span id="folderCount">0</span><label>Folders</label></div>
+    <div class="stat-item"><i class="fas fa-file-pdf"></i><span id="fileCount">0</span><label>Documents</label></div>
+  </div>
 
-    <div class="department-row">
-        <button class="department-btn crm">CRM</button>
-        <span class="file-count">0 files</span>
-    </div>
-
-    <div class="department-row">
-        <button class="department-btn annealing">ANNEALING</button>
-        <span class="file-count">0 files</span>
-    </div>
-
-    <div class="department-row">
-        <button class="department-btn tll">TLL</button>
-        <span class="file-count">0 files</span>
-    </div>
-
-    <div class="department-row">
-        <button class="department-btn slitter">SLITTER</button>
-        <span class="file-count">0 files</span>
-    </div>
-
-    <div class="department-row">
-        <button class="department-btn utility">UTILITY</button>
-        <span class="file-count">0 files</span>
-    </div>
-
+  <div id="breadcrumb" class="breadcrumb"></div>
+  <div id="departmentsSection"></div>
+  <div id="searchInfo" class="search-result-info hidden"></div>
+  <div id="content" class="content"></div>
 </div>
 
+<div id="toast" class="toast hidden"><i class="fas fa-check-circle"></i><span></span></div>
+
+<script src="app.js"></script>
 </body>
 </html>
