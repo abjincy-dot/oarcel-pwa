@@ -1,453 +1,538 @@
-// ==================== INDEXEDDB CORE ====================
-const DB_NAME = 'OarcelDB';
-const DB_VERSION = 4;
-let db = null;
-let allFiles = {};
-let fileSystem = {};
-let currentPath = [];
-let isSearchMode = false;
+// ==================== OARCEL PDF MANAGER APPLICATION ====================
 
-// ==================== PDF VIEWER - Opens in new tab for full multi-page support ====================
-function openPDF(dataUrl, fileName) {
-    // Show toast notification
-    showToast(`Opening ${fileName}...`);
-    
-    // Convert dataUrl to blob and open in new tab
-    fetch(dataUrl)
-        .then(response => response.blob())
-        .then(blob => {
-            const blobUrl = URL.createObjectURL(blob);
-            window.open(blobUrl, '_blank');
-            showToast(`PDF opened in new tab. Close tab to return.`);
-            // Clean up after 1 minute
-            setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
-        })
-        .catch(err => {
-            console.error('PDF error:', err);
-            showToast(`Failed to open PDF: ${err.message}`, true);
-        });
-}
-
-// ==================== INDEXEDDB FUNCTIONS ====================
-function initDB() {
-    return new Promise((resolve, reject) => {
-        const request = indexedDB.open(DB_NAME, DB_VERSION);
-        request.onerror = () => reject(request.error);
-        request.onsuccess = () => { db = request.result; resolve(); };
-        request.onupgradeneeded = (e) => {
-            const db = e.target.result;
-            if (!db.objectStoreNames.contains('files')) db.createObjectStore('files', { keyPath: 'id' });
-            if (!db.objectStoreNames.contains('folderStructure')) db.createObjectStore('folderStructure', { keyPath: 'key' });
-        };
-    });
-}
-
-function saveFolderStructure() {
-    const tx = db.transaction('folderStructure', 'readwrite');
-    tx.objectStore('folderStructure').put({ key: 'structure', value: fileSystem });
-    tx.commit();
-}
-function saveAllFilesToDB() {
-    const tx = db.transaction('files', 'readwrite');
-    const store = tx.objectStore('files');
-    store.clear();
-    for (const folderPath in allFiles) {
-        if (allFiles[folderPath] && allFiles[folderPath].length > 0) {
-            store.put({ id: folderPath, folderPath, files: allFiles[folderPath] });
-        }
+// Industrial Data Model with expanded subfolders
+const fileSystem = {
+  "✨ REMELT": {
+    "🔥 Burner Systems": {
+      "Gas Burners": [
+        "https://drive.google.com/file/d/1eQ4v4vf_k4Bz0Dhbv6APR6IeUqI0pDsk/preview"
+      ],
+      "Oil Burners": [
+        "https://drive.google.com/file/d/1aB2cD3eF4gH5iJ6kL7mN8oP9qR0sT1uV/preview"
+      ],
+      "Burner Controls": [],
+      "Flame Monitoring": []
+    },
+    "❄️ Cooling Systems": {
+      "Water Cooling": [
+        "https://drive.google.com/file/d/1xY2zA3bC4dE5fG6hI7jK8lM9nO0pQ1rS/preview"
+      ],
+      "Air Cooling": [],
+      "Heat Exchangers": [],
+      "Cooling Towers": []
+    },
+    "🔧 Maintenance": {
+      "Preventive Maintenance": [
+        "https://drive.google.com/file/d/1Z9yX8wV7uT6sR5qP4oN3mL2kJ1hG0fD/preview"
+      ],
+      "Predictive Maintenance": [],
+      "Repair Logs": [],
+      "Spare Parts": []
+    },
+    "⚠️ Safety": {
+      "Safety Protocols": [],
+      "Emergency Shutdown": [],
+      "PPE Requirements": [],
+      "Hazard Analysis": []
+    },
+    "📊 Operations": {
+      "Daily Reports": [],
+      "Production Logs": [],
+      "Efficiency Reports": [],
+      "Downtime Analysis": []
+    },
+    "🔬 Quality Control": {
+      "Material Testing": [],
+      "Chemical Analysis": [],
+      "Temperature Logs": [],
+      "Defect Analysis": []
+    },
+    "📈 Performance": {
+      "KPI Tracking": [],
+      "Energy Consumption": [],
+      "Optimization Reports": [],
+      "Benchmarking": []
+    },
+    "🛠️ Equipment": {
+      "Furnace Specs": [],
+      "Instrumentation": [],
+      "Calibration Records": [],
+      "Equipment Manuals": []
+    },
+    "📚 Training": {
+      "Operator Training": [],
+      "Safety Training": [],
+      "Technical Guides": [],
+      "SOP Documents": []
+    },
+    "📜 Documentation": {
+      "Technical Drawings": [],
+      "P&ID Diagrams": [],
+      "Electrical Schematics": [],
+      "Certifications": []
     }
-    tx.commit();
+  },
+  "⚙️ CASTER": {
+    "⚡ Motor Specs": [
+      "https://drive.google.com/file/d/1MotorGuide2024_ABC123XYZ/preview"
+    ],
+    "🔩 Gearbox Maintenance": [
+      "https://drive.google.com/file/d/1GearPro_Manual_88x2/preview",
+      "https://drive.google.com/file/d/1LubricationGuide_Rolling/preview"
+    ],
+    "📊 Calibration Reports": [],
+    "🔧 Hydraulic Systems": [],
+    "❄️ Cooling Systems": [],
+    "📈 Production Reports": []
+  },
+  "✅ HRM": {
+    "📋 Inspection Checklists": [
+      "https://drive.google.com/file/d/1QC_Checklist_SteelMill_v2/preview",
+      "https://drive.google.com/file/d/1NDT_Ultrasonic_Testing/preview"
+    ],
+    "🏆 Certifications": [
+      "https://drive.google.com/file/d/1ISO9001_Cert_2025/preview"
+    ],
+    "📊 Quality Reports": [],
+    "🔬 Testing Procedures": [],
+    "📈 Statistical Analysis": []
+  },
+  "💡 CRM": {
+    "💻 PLC Schematics": [
+      "https://drive.google.com/file/d/1PLC_Siemens_S7_Diagram/preview"
+    ],
+    "⚡ Motor Control Centers": [],
+    "📐 CAD Drawings": [
+      "https://drive.google.com/file/d/1CAD_Drawing_Mill_v2/preview"
+    ],
+    "🔌 Electrical Panels": [],
+    "📡 SCADA Systems": [],
+    "🔧 Automation Guides": []
+  },
+  "🛡️ ANEALING": {
+    "🧪 Chemical Handling": [
+      "https://drive.google.com/file/d/1SDS_Chemical_Safety_2024/preview"
+    ],
+    "🚨 Emergency Procedures": [
+      "https://drive.google.com/file/d/1Fire_Emergency_Rolling/preview",
+      "https://drive.google.com/file/d/1FirstAid_SteelPlant/preview"
+    ],
+    "📜 Regulatory Docs": [],
+    "🌡️ Temperature Control": [],
+    "⚙️ Process Parameters": [],
+    "📊 Quality Assurance": []
+  },
+  "💡 TLL": {
+    "💻 PLC Schematics": [
+      "https://drive.google.com/file/d/1PLC_Siemens_S7_Diagram/preview"
+    ],
+    "⚡ Motor Control Centers": [],
+    "📐 CAD Drawings": [
+      "https://drive.google.com/file/d/1CAD_Drawing_Mill_v2/preview"
+    ],
+    "🔧 Maintenance Manuals": [],
+    "📈 Production Logs": [],
+    "⚙️ Process Optimization": []
+  },
+  "🛡️ SLITER": {
+    "🧪 Chemical Handling": [
+      "https://drive.google.com/file/d/1SDS_Chemical_Safety_2024/preview"
+    ],
+    "🚨 Emergency Procedures": [
+      "https://drive.google.com/file/d/1Fire_Emergency_Rolling/preview",
+      "https://drive.google.com/file/d/1FirstAid_SteelPlant/preview"
+    ],
+    "📜 Regulatory Docs": [],
+    "⚙️ Blade Maintenance": [],
+    "📊 Quality Control": [],
+    "📈 Production Reports": []
+  }
+};
+
+// ==================== SAFARI / MOBILE PDF FIX ====================
+
+/**
+ * Detects if the current device is running iOS Safari or any
+ * mobile browser that struggles with heavy Google Drive iframes.
+ */
+function isMobileSafari() {
+  const ua = navigator.userAgent;
+  const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+  const isAndroidMobile = /Android/.test(ua) && /Mobile/.test(ua);
+  return isIOS || isAndroidMobile;
 }
 
-async function loadFromIndexedDB() {
-    const folderReq = db.transaction('folderStructure', 'readonly').objectStore('folderStructure').get('structure');
-    folderReq.onsuccess = () => {
-        if (folderReq.result) {
-            fileSystem = folderReq.result.value;
-        } else {
-            fileSystem = {
-                "REMELT":{"A":{},"B":{},"C":{},"D":{},"E":{},"F":{},"G":{},"H":{},"I":{},"J":{},"K":{},"L":{},"M":{},"N":{},"O":{},"P":{},"Q":{},"R":{},"S":{},"T":{},"U":{},"V":{},"W":{},"X":{},"Y":{},"Z":{}},
-                "CASTER":{"Quality Reports":{},"Mechanical":{},"Maintenance":{},"Production Data":{},"Testing":{},"Checklists":{},"Safety":{},"Training":{}},
-                "HRM":{"Employee Records":{},"Attendance":{},"Performance":{},"Training Logs":{},"Safety Compliance":{},"Policies":{},"Reports":{},"Certifications":{}},
-                "CRM":{"PLC Programs":{},"CAD Drawings":{},"Electrical":{},"SCADA":{},"Automation":{},"Reports":{},"Configurations":{},"Manuals":{}},
-                "ANNEALING":{"Temperature Control":{},"Process Parameters":{},"Quality Assurance":{},"Maintenance":{},"Safety":{},"Production Logs":{},"Testing":{},"SOP Documents":{}},
-                "TLL":{"PLC Programs":{},"CAD Drawings":{},"Maintenance":{},"Production Logs":{},"Process Optimization":{},"Quality Reports":{},"Manuals":{},"Safety":{}},
-                "SLITTER":{"Blade Maintenance":{},"Quality Control":{},"Production Reports":{},"Mechanical":{},"Safety":{},"Checklists":{},"Training":{},"Testing":{}},
-                "UTILITY":{"Power Supply":{},"Water System":{},"Compressed Air":{},"HVAC":{},"Reports":{},"Safety":{},"Manuals":{},"Testing":{}}
-            };
-            saveFolderStructure();
-        }
-        const fileReq = db.transaction('files', 'readonly').objectStore('files').getAll();
-        fileReq.onsuccess = () => {
-            allFiles = {};
-            for (let item of fileReq.result) {
-                allFiles[item.folderPath] = item.files;
-            }
-            render();
-        };
+/**
+ * Extracts the raw Google Drive file ID from any Drive URL format.
+ */
+function extractDriveFileId(link) {
+  if (!link || typeof link !== 'string') return null;
+  const match = link.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  return match ? match[1] : null;
+}
+
+/**
+ * Builds the lightest possible embed/open URL for the current device.
+ *
+ * Desktop  → standard /preview iframe (unchanged behaviour)
+ * Mobile   → window.open() with the Drive viewer URL, which lets
+ *             the OS handle the PDF natively (no iframe memory crash)
+ */
+function buildOpenStrategy(link) {
+  const fileId = extractDriveFileId(link);
+
+  if (!fileId) {
+    // Not a Drive link – use as-is
+    return { mode: 'iframe', url: link };
+  }
+
+  if (isMobileSafari()) {
+    // Use the lightweight Drive viewer page — Safari opens it in its
+    // own tab and the OS PDF engine handles rendering, no blob memory
+    // pressure on the web view.
+    const viewerUrl = `https://drive.google.com/file/d/${fileId}/view`;
+    return { mode: 'tab', url: viewerUrl };
+  }
+
+  // Desktop: keep the existing preview iframe
+  return { mode: 'iframe', url: `https://drive.google.com/file/d/${fileId}/preview` };
+}
+
+// ==================== END SAFARI / MOBILE PDF FIX ====================
+
+// Beautiful filename extraction
+function getSmartFileName(link) {
+  if (!link || typeof link !== 'string') return "Document.pdf";
+  
+  const cleanLink = link.split('?')[0];
+  const driveMatch = cleanLink.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  
+  if (driveMatch) {
+    let id = driveMatch[1];
+    const nameMap = {
+      "eQ4v4vf": "Burner_Tuning_Guide_v2.1",
+      "MotorGuide": "Motor_Specifications_2024",
+      "GearPro": "Gearbox_Lubrication_Schedule",
+      "LubricationGuide": "Roll_Mill_Lubrication_Manual",
+      "QC_Checklist": "Steel_Inspection_Checklist",
+      "NDT_Ultrasonic": "Ultrasonic_Testing_Procedure",
+      "ISO9001": "ISO_9001_Certificate_2025",
+      "PLC_Siemens": "PLC_Programming_Manual_S7",
+      "SDS_Chemical": "Chemical_Safety_DataSheet",
+      "Fire_Emergency": "Fire_Response_Protocol",
+      "FirstAid": "FirstAid_SteelPlant_Manual",
+      "Cooling": "Cooling_System_Operations",
+      "Maintenance": "Preventive_Maintenance_Schedule",
+      "CAD_Drawing": "CAD_Engineering_Drawings"
     };
-}
-
-function getCurrentFolderObject() { return currentPath.reduce((o,p) => o?.[p], fileSystem); }
-function getFilesForCurrentFolder() { return allFiles[currentPath.join('/')] || []; }
-
-async function addFileToCurrentFolder(file) {
-    const folderPath = currentPath.join('/');
-    if (!allFiles[folderPath]) allFiles[folderPath] = [];
-    const base64 = await new Promise(r => { const rd = new FileReader(); rd.onload = e => r(e.target.result); rd.readAsDataURL(file); });
-    allFiles[folderPath].push({ name: file.name, dataUrl: base64 });
-    await saveAllFilesToDB();
-}
-
-function deleteFileFromFolder(folderPath, fileName) {
-    if (allFiles[folderPath]) {
-        allFiles[folderPath] = allFiles[folderPath].filter(f => f.name !== fileName);
-        if (allFiles[folderPath].length === 0) delete allFiles[folderPath];
-        saveAllFilesToDB();
-        render();
-        showToast(`✅ Deleted "${fileName}"`);
-    }
-}
-
-function renameFileInFolder(folderPath, oldName, newName) {
-    if (allFiles[folderPath]) {
-        const idx = allFiles[folderPath].findIndex(f => f.name === oldName);
-        if (idx !== -1) {
-            if (!newName.toLowerCase().endsWith('.pdf')) newName += '.pdf';
-            allFiles[folderPath][idx].name = newName;
-            saveAllFilesToDB();
-            render();
-            showToast(`✅ Renamed to "${newName}"`);
-        }
-    }
-}
-
-function selectDepartment(d) { 
-    currentPath = [d]; 
-    render(); 
-}
-
-function goBack() { 
-    if(currentPath.length && !isSearchMode) { 
-        currentPath.pop(); 
-        render(); 
-    } else if(isSearchMode) { 
-        clearSearch(); 
-    } 
-}
-
-function triggerUpload() { 
-    document.getElementById('fileInput').click(); 
-}
-
-function clearSearch() { 
-    document.getElementById('searchInput').value = ''; 
-    isSearchMode = false; 
-    document.getElementById('searchInfo').classList.add('hidden'); 
-    document.getElementById('clearSearchBtn').classList.add('hidden'); 
-    render(); 
-}
-
-function searchFiles(q) {
-    if(!q.trim()) return [];
-    const all = [];
-    for(const path in allFiles) {
-        if(allFiles[path]) {
-            allFiles[path].forEach(f => all.push({...f, folder:path}));
-        }
-    }
-    return all.filter(f => f.name.toLowerCase().includes(q.toLowerCase()));
-}
-
-function createCard(title, onClick, isFolder=false, showDel=false, delPath=null, delName=null, showRename=false) {
-    const div = document.createElement('div'); 
-    div.className = 'card';
-    div.innerHTML = `
-        <div class="card-icon"><i class="fas ${isFolder ? 'fa-folder' : 'fa-file-pdf'}" style="color:${isFolder ? '#fbbf24' : '#60a5fa'}"></i></div>
-        <div class="card-filename">${escapeHtml(title)}</div>
-        <div class="card-buttons">
-            ${showRename ? `<button class="rename-file-btn" onclick="event.stopPropagation(); window.renameFile('${delPath}','${escapeHtml(delName)}')"><i class="fas fa-edit"></i> Rename</button>` : ''}
-            ${showDel ? `<button class="delete-btn" onclick="event.stopPropagation(); window.deleteFile('${delPath}','${escapeHtml(delName)}')"><i class="fas fa-trash"></i> Delete</button>` : ''}
-        </div>
-    `;
-    div.onclick = onClick; 
-    return div;
-}
-
-function render() {
-    const query = document.getElementById('searchInput').value.trim().toLowerCase();
-    if(query) {
-        isSearchMode = true;
-        document.getElementById('clearSearchBtn').classList.remove('hidden');
-        const results = searchFiles(query);
-        document.getElementById('searchInfo').classList.remove('hidden');
-        document.getElementById('searchInfo').innerHTML = `<i class="fas fa-search"></i> Found ${results.length} result(s) for "${escapeHtml(query)}" <button onclick="clearSearch()" style="background:none;border:none;color:#60a5fa;cursor:pointer;margin-left:10px;">Clear</button>`;
-        const contentDiv = document.getElementById('content'); 
-        contentDiv.innerHTML = '';
-        document.getElementById('backBtn').classList.remove('hidden');
-        document.getElementById('uploadBtn').classList.add('hidden');
-        document.getElementById('departmentsSection').innerHTML = '';
-        document.getElementById('breadcrumb').innerHTML = '';
-        if(!results.length) {
-            contentDiv.innerHTML = '<div class="empty-state"><i class="fas fa-search"></i><p>No PDFs found.</p></div>';
-        } else {
-            results.forEach(f => contentDiv.appendChild(createCard(f.name, () => openPDF(f.dataUrl, f.name), false)));
-        }
-        updateStats(); 
-        return;
-    }
-    isSearchMode = false;
-    document.getElementById('clearSearchBtn').classList.add('hidden');
-    document.getElementById('searchInfo').classList.add('hidden');
-    document.getElementById('content').innerHTML = '';
-    const folder = getCurrentFolderObject();
-    if(!folder) { 
-        currentPath = []; 
-        render(); 
-        return; 
-    }
-    document.getElementById('backBtn').classList.toggle('hidden', currentPath.length === 0);
     
-    const bcDiv = document.getElementById('breadcrumb');
-    bcDiv.innerHTML = `<div class="breadcrumb-item" onclick="navigateToBreadcrumb(-1)"><i class="fas fa-home"></i> Home</div>`;
-    currentPath.forEach((f,i) => { 
-        bcDiv.innerHTML += `<span class="breadcrumb-separator">/</span><div class="breadcrumb-item" onclick="navigateToBreadcrumb(${i})">${escapeHtml(f)}</div>`; 
-    });
-    
-    if(currentPath.length === 0){
-        let html = '<div class="section-title"><i class="fas fa-building"></i> Departments</div><div class="departments-grid">';
-        for(let dept in fileSystem){
-            const sub = Object.keys(fileSystem[dept]).length;
-            const fcount = allFiles[dept] ? allFiles[dept].length : 0;
-            html += `<div class="dept-card" data-dept="${dept}" onclick="selectDepartment('${dept}')"><div class="dept-oval"><span>${dept}</span></div><div class="dept-arrow"><i class="fas fa-chevron-right"></i></div><div class="dept-info">${sub+fcount} items</div></div>`;
+    for (const [key, value] of Object.entries(nameMap)) {
+      if (id.includes(key)) return `${value}.pdf`;
+    }
+    return `Technical_Doc_${id.slice(-6)}.pdf`;
+  }
+  return "Engineering_Reference.pdf";
+}
+
+// Flatten files for search
+function flattenAllFiles(node, currentPath = []) {
+  let filesList = [];
+  for (let key in node) {
+    const value = node[key];
+    if (Array.isArray(value)) {
+      value.forEach(link => {
+        if (link && typeof link === 'string') {
+          filesList.push({
+            name: getSmartFileName(link),
+            link: link,
+            folderPath: [...currentPath, key].join(" › ")
+          });
         }
-        html += '</div>';
-        document.getElementById('departmentsSection').innerHTML = html;
+      });
+    } else if (value && typeof value === 'object') {
+      filesList.push(...flattenAllFiles(value, [...currentPath, key]));
+    }
+  }
+  return filesList;
+}
+
+let currentPath = [];
+let allFilesCache = null;
+
+function getAllFilesIndex() {
+  if (!allFilesCache) {
+    allFilesCache = flattenAllFiles(fileSystem);
+  }
+  return allFilesCache;
+}
+
+function getCurrentNode() {
+  let node = fileSystem;
+  for (let segment of currentPath) {
+    if (node[segment] && !Array.isArray(node[segment])) {
+      node = node[segment];
     } else {
-        document.getElementById('departmentsSection').innerHTML = '';
+      return null;
     }
-    
-    const isLeaf = Object.keys(folder).length === 0;
-    const isRoot = currentPath.length === 0;
-    document.getElementById('uploadBtn').classList.toggle('hidden', !(isLeaf && !isRoot));
-    
-    const actionDiv = document.createElement('div');
-    actionDiv.className = 'action-bar';
-    if(!isRoot) {
-        actionDiv.innerHTML = `<button class="action-btn" onclick="renameCurrentFolder()"><i class="fas fa-edit"></i> Rename Folder</button><button class="action-btn" onclick="deleteCurrentFolder()"><i class="fas fa-trash-alt"></i> Delete Folder</button><button class="action-btn" onclick="addNewFolder()"><i class="fas fa-plus"></i> Add Subfolder</button>`;
-    } else {
-        actionDiv.innerHTML = `<button class="action-btn" onclick="addNewDepartment()"><i class="fas fa-building"></i> Add Department</button>`;
-    }
-    document.getElementById('content').appendChild(actionDiv);
-    
-    if(!isRoot && !isLeaf) {
-        for(let key in folder) {
-            document.getElementById('content').appendChild(createCard(key, () => { currentPath.push(key); render(); }, true));
-        }
-    }
-    if(isLeaf && !isRoot){
-        const files = getFilesForCurrentFolder();
-        const path = currentPath.join('/');
-        if(!files.length) {
-            document.getElementById('content').innerHTML += '<div class="empty-state"><i class="fas fa-cloud-upload-alt"></i><p>No PDFs yet. Click Upload to add files.</p></div>';
-        } else {
-            files.forEach(f => document.getElementById('content').appendChild(createCard(f.name, () => openPDF(f.dataUrl, f.name), false, true, path, f.name, true)));
-        }
-    }
-    updateStats();
-}
-
-function navigateToBreadcrumb(idx) { 
-    if(idx === -1) {
-        currentPath = []; 
-    } else {
-        currentPath = currentPath.slice(0, idx+1); 
-    }
-    render(); 
-}
-
-function renameCurrentFolder() { 
-    if(!currentPath.length) return;
-    const old = currentPath[currentPath.length-1];
-    const newName = prompt("New folder name:", old);
-    if(newName && newName !== old && newName.trim()){
-        const parent = currentPath.slice(0,-1).reduce((o,p)=>o[p], fileSystem);
-        parent[newName] = parent[old];
-        delete parent[old];
-        const oldPath = currentPath.join('/');
-        const newPath = [...currentPath.slice(0,-1), newName].join('/');
-        if(allFiles[oldPath]){ 
-            allFiles[newPath] = allFiles[oldPath]; 
-            delete allFiles[oldPath]; 
-        }
-        currentPath[currentPath.length-1] = newName;
-        saveFolderStructure(); 
-        saveAllFilesToDB(); 
-        render(); 
-        showToast(`✅ Renamed to "${newName}"`);
-    }
-}
-
-function deleteCurrentFolder() {
-    if(!currentPath.length) return;
-    const name = currentPath[currentPath.length-1];
-    if(confirm(`Delete "${name}" and all contents?`)){
-        const path = currentPath.join('/');
-        delete allFiles[path];
-        const parent = currentPath.slice(0,-1).reduce((o,p)=>o[p], fileSystem);
-        delete parent[name];
-        currentPath.pop();
-        saveFolderStructure(); 
-        saveAllFilesToDB(); 
-        render(); 
-        showToast(`🗑️ Folder "${name}" deleted`);
-    }
-}
-
-function addNewFolder() {
-    const name = prompt("Folder name:");
-    if(name && name.trim()){
-        const cur = getCurrentFolderObject();
-        if(cur && !cur[name]){ 
-            cur[name] = {}; 
-            saveFolderStructure(); 
-            render(); 
-            showToast(`✅ Folder "${name}" created`); 
-        } else {
-            showToast("Exists", true);
-        }
-    }
-}
-
-function addNewDepartment() {
-    const name = prompt("Department name:");
-    if(name && name.trim() && !fileSystem[name]){ 
-        fileSystem[name] = {}; 
-        saveFolderStructure(); 
-        render(); 
-        showToast(`✅ Department "${name}" created`); 
-    } else if(fileSystem[name]) {
-        showToast("Department exists", true);
-    }
+  }
+  return node;
 }
 
 function updateStats() {
-    let folderCount = 0, fileCount = 0;
-    function countFolders(obj) { 
-        for(let k in obj) { 
-            if(typeof obj[k] === 'object') { 
-                folderCount++; 
-                countFolders(obj[k]); 
-            } 
-        } 
+  const allFiles = getAllFilesIndex();
+  const statsBar = document.getElementById("statsBar");
+  const totalPDFs = allFiles.length;
+  const totalFolders = Object.keys(fileSystem).length;
+  
+  let totalSubfolders = 0;
+  function countSubfolders(node) {
+    for (let key in node) {
+      const val = node[key];
+      if (val && typeof val === 'object' && !Array.isArray(val)) {
+        totalSubfolders++;
+        countSubfolders(val);
+      }
     }
-    countFolders(fileSystem);
-    for(let k in allFiles) {
-        if(allFiles[k]) {
-            fileCount += allFiles[k].length;
-        }
+  }
+  countSubfolders(fileSystem);
+  
+  statsBar.innerHTML = `
+    <i class="fas fa-file-pdf"></i> <span>${totalPDFs}</span> Documents
+    <i class="fas fa-folder"></i> <span>${totalFolders}</span> Departments
+    <i class="fas fa-folder-open"></i> <span>${totalSubfolders}</span> Subfolders
+    <i class="fas fa-industry"></i> <span>OARCEL</span> Edition
+  `;
+}
+
+function createCard(icon, title, onClick, className, subtitle = null) {
+  const div = document.createElement("div");
+  div.className = `card ${className}`;
+  div.style.animationDelay = `${Math.random() * 0.2}s`;
+  div.innerHTML = `
+    <div class="card-icon">
+      <i class="${icon}"></i>
+    </div>
+    <div class="card-title">${escapeHtml(title)}</div>
+    ${subtitle ? `<div class="card-subtitle"><i class="fas fa-folder-open"></i> ${escapeHtml(subtitle)}</div>` : '<div class="card-subtitle"><i class="fas fa-file"></i> Click to view</div>'}
+  `;
+  div.onclick = onClick;
+  return div;
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+/**
+ * Opens a PDF using the safest method for the current device.
+ *
+ * Mobile/Safari → opens Drive viewer in a new tab (avoids WebKitBlobResource error 1)
+ * Desktop       → embeds in the existing iframe viewer (original behaviour)
+ */
+function openPdfViewer(link) {
+  if (!link) return;
+
+  const strategy = buildOpenStrategy(link);
+
+  if (strategy.mode === 'tab') {
+    // Mobile: open in new tab — no iframe, no blob memory crash
+    window.open(strategy.url, '_blank', 'noopener,noreferrer');
+    return;
+  }
+
+  // Desktop: use the inline iframe viewer
+  const viewerWrapper = document.getElementById("viewerWrapper");
+  const pdfIframe = document.getElementById("pdfIframe");
+
+  pdfIframe.src = strategy.url;
+  viewerWrapper.style.display = "block";
+  viewerWrapper.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function closeViewer() {
+  const viewerWrapper = document.getElementById("viewerWrapper");
+  const pdfIframe = document.getElementById("pdfIframe");
+  viewerWrapper.style.display = "none";
+  pdfIframe.src = "about:blank";
+}
+
+function goHome() {
+  currentPath = [];
+  document.getElementById("search").value = "";
+  closeViewer();
+  render();
+}
+
+function render() {
+  const contentDiv = document.getElementById("content");
+  const breadcrumbSpan = document.getElementById("breadcrumb");
+  const searchQuery = document.getElementById("search").value.trim().toLowerCase();
+  const viewerWrapper = document.getElementById("viewerWrapper");
+  
+  if (viewerWrapper.style.display === "block") {
+    viewerWrapper.style.display = "none";
+    const iframe = document.getElementById("pdfIframe");
+    if (iframe) iframe.src = "about:blank";
+  }
+  
+  let breadText = `<i class="fas fa-home"></i> Dashboard`;
+  if (currentPath.length > 0) {
+    breadText += ` / ${currentPath.join(" / ")}`;
+  }
+  breadcrumbSpan.innerHTML = breadText;
+  
+  contentDiv.innerHTML = "";
+  
+  // Search mode
+  if (searchQuery !== "") {
+    const allFiles = getAllFilesIndex();
+    const filtered = allFiles.filter(file => 
+      file.name.toLowerCase().includes(searchQuery) || 
+      file.folderPath.toLowerCase().includes(searchQuery)
+    );
+    
+    if (filtered.length === 0) {
+      contentDiv.innerHTML = `<div class="empty-state"><i class="fas fa-search"></i><p>No matching documents found</p></div>`;
+      updateStats();
+      return;
     }
-    document.getElementById('folderCount').textContent = folderCount;
-    document.getElementById('fileCount').textContent = fileCount;
-}
-
-function showToast(msg, isErr = false) {
-    const toast = document.getElementById('toast');
-    toast.querySelector('span').textContent = msg;
-    toast.style.background = isErr ? "linear-gradient(135deg,#ef4444,#dc2626)" : "linear-gradient(135deg,#10b981,#059669)";
-    toast.classList.remove('hidden');
-    setTimeout(() => toast.classList.add('hidden'), 3000);
-}
-
-function escapeHtml(str) { 
-    const div = document.createElement('div'); 
-    div.textContent = str; 
-    return div.innerHTML; 
-}
-
-function toggleTheme() { 
-    document.body.classList.toggle('light-mode'); 
-    localStorage.setItem('oarcel_theme', document.body.classList.contains('light-mode') ? 'light-mode' : ''); 
-    updateThemeIcon(); 
-}
-
-function updateThemeIcon() { 
-    const isDark = !document.body.classList.contains('light-mode'); 
-    const themeBtn = document.getElementById('themeToggle');
-    if(themeBtn) {
-        themeBtn.innerHTML = isDark ? '<i class="fas fa-sun"></i><span>Light</span>' : '<i class="fas fa-moon"></i><span>Dark</span>';
+    
+    filtered.forEach(file => {
+      const displayName = file.name.replace('.pdf', '');
+      const card = createCard(
+        "fas fa-file-pdf", 
+        displayName, 
+        () => openPdfViewer(file.link), 
+        "pdf-card",
+        file.folderPath
+      );
+      contentDiv.appendChild(card);
+    });
+    updateStats();
+    return;
+  }
+  
+  // Folder navigation
+  const currentNode = getCurrentNode();
+  if (!currentNode) {
+    currentPath = [];
+    render();
+    return;
+  }
+  
+  const folderKeys = Object.keys(currentNode).filter(key => {
+    const val = currentNode[key];
+    return val && typeof val === 'object' && !Array.isArray(val);
+  });
+  
+  folderKeys.forEach(folder => {
+    const card = createCard(
+      "fas fa-folder", 
+      folder, 
+      () => {
+        currentPath.push(folder);
+        render();
+      }, 
+      "folder-card"
+    );
+    contentDiv.appendChild(card);
+  });
+  
+  // Render files
+  const allEntries = Object.keys(currentNode);
+  let fileLinks = [];
+  for (let key of allEntries) {
+    const val = currentNode[key];
+    if (Array.isArray(val)) {
+      val.forEach(link => {
+        if (link && typeof link === 'string') fileLinks.push(link);
+      });
     }
+  }
+  
+  if (fileLinks.length === 0 && folderKeys.length === 0) {
+    contentDiv.innerHTML = `<div class="empty-state"><i class="fas fa-folder-open"></i><p>This folder is empty</p></div>`;
+  } else {
+    fileLinks.forEach(link => {
+      const fileName = getSmartFileName(link);
+      const displayName = fileName.replace('.pdf', '');
+      const card = createCard(
+        "fas fa-file-pdf", 
+        displayName, 
+        () => openPdfViewer(link), 
+        "pdf-card"
+      );
+      contentDiv.appendChild(card);
+    });
+  }
+  
+  updateStats();
 }
 
-// Make all functions global
-window.selectDepartment = selectDepartment;
-window.goBack = goBack;
-window.triggerUpload = triggerUpload;
-window.clearSearch = clearSearch;
-window.navigateToBreadcrumb = navigateToBreadcrumb;
-window.renameCurrentFolder = renameCurrentFolder;
-window.deleteCurrentFolder = deleteCurrentFolder;
-window.addNewFolder = addNewFolder;
-window.addNewDepartment = addNewDepartment;
-window.openPDF = openPDF;
-window.renameFile = (p, old) => { 
-    const nu = prompt("New name:", old.replace('.pdf', '')); 
-    if(nu && nu.trim()) renameFileInFolder(p, old, nu.trim()); 
-};
-window.deleteFile = (p, n) => { 
-    if(confirm(`Delete "${n}"?`)) deleteFileFromFolder(p, n); 
-};
+// PWA Installation Prompt
+let deferredPrompt;
+const installPrompt = document.getElementById('installPrompt');
+const installBtn = document.getElementById('installBtn');
+const closeInstallBtn = document.getElementById('closeInstallBtn');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  installPrompt.style.display = 'block';
+});
+
+if (installBtn) {
+  installBtn.addEventListener('click', async () => {
+    installPrompt.style.display = 'none';
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log(`User response: ${outcome}`);
+      deferredPrompt = null;
+    }
+  });
+}
+
+if (closeInstallBtn) {
+  closeInstallBtn.addEventListener('click', () => {
+    installPrompt.style.display = 'none';
+  });
+}
+
+// Event Listeners
+document.getElementById("breadcrumb").addEventListener("click", goHome);
+document.getElementById("closeViewerBtn").addEventListener("click", closeViewer);
+
+// Real-time search with debounce
+let searchTimeout;
+const searchInput = document.getElementById("search");
+searchInput.addEventListener("input", () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    render();
+  }, 180);
+});
+
+// ESC to close viewer
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    const viewerWrap = document.getElementById("viewerWrapper");
+    if (viewerWrap.style.display === "block") {
+      closeViewer();
+    }
+  }
+});
+
+// Network status detection
+window.addEventListener('online', () => {
+  console.log('Back online');
+});
+
+window.addEventListener('offline', () => {
+  console.log('You are offline');
+});
 
 // Initialize
-document.addEventListener('DOMContentLoaded', async () => {
-    const themeBtn = document.getElementById('themeToggle');
-    if(themeBtn) themeBtn.onclick = toggleTheme;
-    
-    if(localStorage.getItem('oarcel_theme') === 'light-mode') {
-        document.body.classList.add('light-mode');
-    }
-    updateThemeIcon();
-    
-    const fileInput = document.getElementById('fileInput');
-    if(fileInput) {
-        fileInput.addEventListener('change', async(e) => {
-            const files = Array.from(e.target.files);
-            for(let f of files) {
-                if(f.type === 'application/pdf') {
-                    await addFileToCurrentFolder(f);
-                }
-            }
-            showToast(`${files.length} PDF(s) saved!`);
-            render();
-            e.target.value = '';
-        });
-    }
-    
-    const searchInput = document.getElementById('searchInput');
-    if(searchInput) {
-        searchInput.addEventListener('input', () => render());
-    }
-    
-    const clearSearchBtn = document.getElementById('clearSearchBtn');
-    if(clearSearchBtn) {
-        clearSearchBtn.addEventListener('click', clearSearch);
-    }
-    
-    const backBtn = document.getElementById('backBtn');
-    if(backBtn) {
-        backBtn.addEventListener('click', goBack);
-    }
-    
-    const uploadBtn = document.getElementById('uploadBtn');
-    if(uploadBtn) {
-        uploadBtn.addEventListener('click', triggerUpload);
-    }
-    
-    try {
-        await initDB();
-        await loadFromIndexedDB();
-    } catch(e) {
-        console.error(e);
-        showToast('Database error', true);
-    }
-});
+render();
