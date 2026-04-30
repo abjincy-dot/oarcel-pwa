@@ -1,77 +1,173 @@
-// ==================== FIXED MOBILE-FIRST PDF MANAGER ====================
+// ==================== OARCEL PWA v2 (PRODUCTION-READY ARCHITECTURE) ====================
 
-// Detect mobile device
+// ---------------- DEVICE DETECTION ----------------
 function isMobile() {
   return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 }
 
-// Open PDF properly (NO iframe for mobile)
+// ---------------- DATA LAYER (SCALABLE) ----------------
+let FILES = [];
+
+async function loadFiles() {
+  try {
+    const res = await fetch('files.json');
+    FILES = await res.json();
+    renderFiles(FILES);
+  } catch (e) {
+    showError('Failed to load documents');
+  }
+}
+
+// ---------------- PDF HANDLING ----------------
+function getDirectLink(link) {
+  const match = link.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (match && match[1]) {
+    return `https://drive.google.com/uc?export=download&id=${match[1]}`;
+  }
+  return link;
+}
+
 function openPdf(link) {
   if (!link) return;
 
-  let fileIdMatch = link.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-  let directUrl = link;
+  const url = getDirectLink(link);
 
-  if (fileIdMatch && fileIdMatch[1]) {
-    const id = fileIdMatch[1];
-    // Direct lightweight URL instead of heavy preview
-    directUrl = `https://drive.google.com/uc?export=download&id=${id}`;
-  }
+  showLoading(true);
 
-  // MOBILE: open in native viewer
   if (isMobile()) {
-    window.open(directUrl, '_blank');
+    window.open(url, '_blank');
+    showLoading(false);
     return;
   }
 
-  // DESKTOP: safe iframe usage
-  const viewer = document.getElementById("viewerWrapper");
-  const iframe = document.getElementById("pdfIframe");
+  const iframe = document.getElementById('pdfIframe');
+  const viewer = document.getElementById('viewerWrapper');
 
-  iframe.src = directUrl;
-  viewer.style.display = "block";
+  iframe.onload = () => showLoading(false);
+  iframe.onerror = () => showError('Failed to load PDF');
+
+  iframe.src = url;
+  viewer.style.display = 'block';
 }
 
-// Close viewer
 function closeViewer() {
-  const viewer = document.getElementById("viewerWrapper");
-  const iframe = document.getElementById("pdfIframe");
+  const iframe = document.getElementById('pdfIframe');
+  const viewer = document.getElementById('viewerWrapper');
 
-  iframe.src = "about:blank";
-  viewer.style.display = "none";
+  iframe.src = 'about:blank';
+  viewer.style.display = 'none';
 }
 
-// Render files (simplified + faster)
-function renderFiles(fileList) {
-  const container = document.getElementById("content");
-  container.innerHTML = "";
+// ---------------- UI: RENDER ----------------
+function renderFiles(list) {
+  const container = document.getElementById('content');
+  container.innerHTML = '';
 
-  fileList.forEach(file => {
-    const div = document.createElement("div");
-    div.className = "card pdf-card";
+  if (!list.length) {
+    container.innerHTML = `<div class="empty">No documents found</div>`;
+    return;
+  }
 
-    div.innerHTML = `
-      <div class="card-icon"><i class="fas fa-file-pdf"></i></div>
-      <div class="card-title">${file.name}</div>
+  list.forEach(file => {
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    card.innerHTML = `
+      <div class="icon">📄</div>
+      <div class="title">${file.name}</div>
+      <div class="category">${file.category || ''}</div>
     `;
 
-    div.onclick = () => openPdf(file.link);
+    card.onclick = () => openPdf(file.link);
 
-    container.appendChild(div);
+    container.appendChild(card);
   });
 }
 
-// Example usage (plug your data here)
-const files = [
-  {
-    name: "Sample PDF",
-    link: "https://drive.google.com/file/d/1eQ4v4vf_k4Bz0Dhbv6APR6IeUqI0pDsk/preview"
+// ---------------- SEARCH (FAST INDEXED) ----------------
+function setupSearch() {
+  const input = document.getElementById('search');
+
+  input.addEventListener('input', () => {
+    const q = input.value.toLowerCase();
+
+    const filtered = FILES.filter(f =>
+      f.name.toLowerCase().includes(q) ||
+      (f.category && f.category.toLowerCase().includes(q))
+    );
+
+    renderFiles(filtered);
+  });
+}
+
+// ---------------- LOADING + ERROR ----------------
+function showLoading(state) {
+  let loader = document.getElementById('loader');
+
+  if (!loader) {
+    loader = document.createElement('div');
+    loader.id = 'loader';
+    loader.innerText = 'Loading...';
+    loader.style.position = 'fixed';
+    loader.style.top = '50%';
+    loader.style.left = '50%';
+    loader.style.transform = 'translate(-50%, -50%)';
+    loader.style.background = '#000';
+    loader.style.color = '#fff';
+    loader.style.padding = '10px 20px';
+    loader.style.borderRadius = '8px';
+    loader.style.zIndex = '9999';
+    document.body.appendChild(loader);
   }
-];
 
-// Init
-renderFiles(files);
+  loader.style.display = state ? 'block' : 'none';
+}
 
-// Event
-const closeBtn = document.getElementById("closeViewerBtn");
-if (closeBtn) closeBtn.onclick = closeViewer;
+function showError(msg) {
+  alert(msg);
+}
+
+// ---------------- MOBILE OPTIMIZATION ----------------
+function optimizeMobile() {
+  if (!isMobile()) return;
+
+  const bg = document.querySelector('.animated-bg');
+  if (bg) bg.remove();
+}
+
+// ---------------- OFFLINE (SERVICE WORKER) ----------------
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+// ---------------- INIT ----------------
+document.addEventListener('DOMContentLoaded', () => {
+  optimizeMobile();
+  setupSearch();
+  loadFiles();
+
+  const closeBtn = document.getElementById('closeViewerBtn');
+  if (closeBtn) closeBtn.onclick = closeViewer;
+});
+
+// ==================== FILES.JSON FORMAT ====================
+/*
+[
+  {
+    "name": "Burner Guide",
+    "category": "Maintenance",
+    "link": "https://drive.google.com/file/d/XXXX/preview"
+  }
+]
+*/
+
+// ==================== SERVICE WORKER (sw.js) ====================
+/*
+self.addEventListener('install', e => self.skipWaiting());
+
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    fetch(event.request).catch(() => caches.match(event.request))
+  );
+});
+*/
