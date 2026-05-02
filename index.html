@@ -49,31 +49,11 @@
     </div>
   </header>
 
-  <!-- Top Bar -->
-  <div class="top-bar">
-    <button id="backBtn" class="btn-back hidden">
-      <i class="fas fa-arrow-left"></i>
-      <span>Back</span>
-    </button>
-    
-    <div class="search-container">
-      <i class="fas fa-search"></i>
-      <input type="text" id="searchInput" placeholder="Search documents..." autocomplete="off">
-      <button id="clearSearchBtn" class="clear-search hidden"><i class="fas fa-times"></i></button>
-    </div>
-    
-    <div class="top-bar-actions">
-      <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme">
-        <div class="theme-icon-wrapper">
-          <i class="fas fa-moon"></i>
-        </div>
-      </button>
-      <button id="uploadBtn" class="btn-upload hidden">
-        <i class="fas fa-cloud-upload-alt"></i>
-        <span>Upload</span>
-      </button>
-    </div>
-    <input type="file" id="fileInput" accept="application/pdf" multiple>
+  <!-- Search Bar (stands alone) -->
+  <div class="search-container">
+    <i class="fas fa-search"></i>
+    <input type="text" id="searchInput" placeholder="Search documents..." autocomplete="off">
+    <button id="clearSearchBtn" class="clear-search hidden"><i class="fas fa-times"></i></button>
   </div>
 
   <!-- Stats -->
@@ -99,8 +79,25 @@
     </div>
   </div>
 
-  <!-- Breadcrumb -->
-  <nav id="breadcrumb" class="breadcrumb"></nav>
+  <!-- Unified Bar: Breadcrumb + Action Buttons (Back, Theme, Upload) -->
+  <div class="breadcrumb-bar">
+    <nav id="breadcrumb" class="breadcrumb"></nav>
+    <div class="breadcrumb-buttons">
+      <button id="backBtn" class="btn-back hidden">
+        <i class="fas fa-arrow-left"></i>
+        <span>Back</span>
+      </button>
+      <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme">
+        <div class="theme-icon-wrapper">
+          <i class="fas fa-moon"></i>
+        </div>
+      </button>
+      <button id="uploadBtn" class="btn-upload hidden">
+        <i class="fas fa-cloud-upload-alt"></i>
+        <span>Upload</span>
+      </button>
+    </div>
+  </div>
 
   <!-- Departments -->
   <div id="departmentsSection"></div>
@@ -128,8 +125,9 @@
   <p>Loading...</p>
 </div>
 
+<!-- Hidden file input -->
+<input type="file" id="fileInput" accept="application/pdf" multiple style="display: none;">
+
 <script src="app.js"></script>
 </body>
 </html>
- 
-
