@@ -1,5 +1,6 @@
 /* ============================================
-   OARCEL Document Manager — Premium Redesign
+   OARCEL Document Manager — Premium Redesign v2
+   Fine-tuned & Attraction Enhancements
    ============================================ */
 
 * {
@@ -91,6 +92,7 @@ body {
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    transition: background 0.3s ease, color 0.2s ease;
 }
 
 body::before {
@@ -101,6 +103,7 @@ body::before {
     background-size: cover;
     background-position: center;
     z-index: -3;
+    transition: opacity 0.3s ease;
 }
 
 /* Ambient Glow Orbs */
@@ -175,6 +178,23 @@ body::before {
     50% { transform: translateY(-50vh) translateX(30px) scale(1.2); opacity: 0.4; }
     90% { opacity: 0.1; }
     100% { transform: translateY(-100vh) translateX(60px) scale(0.5); opacity: 0; }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb {
+    background: var(--accent-blue);
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-purple);
 }
 
 /* ============================================
@@ -602,6 +622,7 @@ body.light-mode #searchInput:focus {
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-sm), inset 0 1px 0 var(--glass-highlight);
+    transition: var(--transition-base);
 }
 
 .stat-item {
@@ -609,6 +630,11 @@ body.light-mode #searchInput:focus {
     align-items: center;
     gap: 14px;
     flex: 1;
+    transition: transform var(--transition-base);
+}
+
+.stat-item:hover {
+    transform: translateY(-2px);
 }
 
 .stat-icon-bg {
@@ -908,7 +934,7 @@ body.light-mode .breadcrumb {
 .dept-card[data-dept="UTILITY"]:hover .dept-info { background: rgba(220, 38, 38, 0.15); color: #f87171; border-color: rgba(220, 38, 38, 0.3); }
 
 /* ============================================
-   CONTENT & CARDS
+   CONTENT & CARDS (with shimmer effect)
    ============================================ */
 
 .content {
@@ -936,6 +962,23 @@ body.light-mode .breadcrumb {
 @keyframes cardEnter {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+/* Shimmer effect on card hover */
+.card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+    transition: left 0.5s ease;
+    pointer-events: none;
+}
+
+.card:hover::after {
+    left: 100%;
 }
 
 .card::before {
@@ -1309,7 +1352,7 @@ body.light-mode .loading-overlay {
 .hidden { display: none !important; }
 
 /* ============================================
-   RESPONSIVE (FIXED)
+   RESPONSIVE (FINE-TUNED)
    ============================================ */
 
 @media (max-width: 640px) {
@@ -1328,11 +1371,10 @@ body.light-mode .loading-overlay {
         flex-wrap: wrap;
     }
     
-    /* Fix: Don't force search to 100% – let it flex naturally */
     .search-container {
         flex: 1;
-        min-width: 140px;    /* enough space to be useful, but not full width */
-        order: 0;            /* keep original order */
+        min-width: 140px;
+        order: 0;
         margin-bottom: 0;
     }
     
@@ -1355,7 +1397,6 @@ body.light-mode .loading-overlay {
         gap: 8px;
     }
     
-    /* Keep upload button hidden by JS, but if shown ensure it fits */
     .btn-upload {
         padding: 8px 14px;
         font-size: 0.75rem;
