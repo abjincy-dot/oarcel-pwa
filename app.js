@@ -81,6 +81,8 @@ async function loadFromIndexedDB() {
             fileSystem = {
                 "REMELT": {
                     "FURNACE 1": { "Data Logs": {} },
+                    
+                    
                     "FURNACE 2": {},
                     "FURNACE 3": {},
                     "FURNACE 4": {},
