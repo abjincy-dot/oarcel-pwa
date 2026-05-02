@@ -1,462 +1,507 @@
 /* ============================================
-   OARCEL — 3D Effects Layer
-   Paste this at the END of your style.css
+   OARCEL Document Manager — Restored Version
+   with responsive fix for Back button
    ============================================ */
 
-/* ============================================
-   GLOBAL 3D STAGE
-   ============================================ */
+* { margin:0; padding:0; box-sizing: border-box; }
 
-.app {
-    perspective: 1200px;
-    transform-style: preserve-3d;
+:root {
+    --bg-deep: #070d1a;
+    --bg-gradient: url("https://raw.githubusercontent.com/abjincy-dot/oarcel-pwa/main/images/wallpaper.jpg");
+    --glass-bg: rgba(15,30,50,0.55);
+    --glass-bg-hover: rgba(20,45,75,0.7);
+    --glass-border: rgba(255,255,255,0.12);
+    --glass-border-hover: rgba(255,255,255,0.22);
+    --glass-highlight: rgba(255,255,255,0.05);
+    --text-primary: #f0f4f8;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --accent-blue: #3b82f6;
+    --accent-purple: #8b5cf6;
+    --accent-cyan: #06b6d4;
+    --accent-rose: #f43f5e;
+    --accent-emerald: #10b981;
+    --card-bg: rgba(12,28,48,0.6);
+    --card-bg-hover: rgba(18,40,68,0.75);
+    --input-bg: rgba(0,0,0,0.35);
+    --shadow-sm: 0 2px 8px rgba(0,0,0,0.2);
+    --shadow-md: 0 4px 20px rgba(0,0,0,0.3);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.4);
+    --radius-sm: 12px;
+    --radius-md: 16px;
+    --radius-lg: 24px;
+    --radius-xl: 32px;
+    --radius-full: 9999px;
+    --transition-base: 0.25s cubic-bezier(0.4,0,0.2,1);
 }
 
-/* ============================================
-   HEADER — 3D Lift on Hover
-   ============================================ */
-
-.header {
-    transform-style: preserve-3d;
-    transform: perspective(800px) rotateX(0deg);
-    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
-                box-shadow var(--transition-base);
-    will-change: transform;
+body.light-mode {
+    --bg-deep: #f1f5f9;
+    --bg-gradient: linear-gradient(165deg,#e2e8f0 0%,#cbd5e1 45%,#b8c5d6 100%);
+    --glass-bg: rgba(255,255,255,0.72);
+    --glass-bg-hover: rgba(255,255,255,0.85);
+    --glass-border: rgba(0,0,0,0.08);
+    --glass-border-hover: rgba(0,0,0,0.15);
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+    --card-bg: rgba(255,255,255,0.75);
+    --card-bg-hover: rgba(255,255,255,0.9);
+    --input-bg: rgba(255,255,255,0.85);
+    --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 20px rgba(0,0,0,0.08);
 }
 
-.header:hover {
-    transform: perspective(800px) rotateX(2deg) translateY(-4px);
-    box-shadow: var(--shadow-lg), var(--shadow-glow),
-                0 20px 60px rgba(59, 130, 246, 0.12),
-                inset 0 1px 0 var(--glass-highlight);
+body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
 }
-
-/* Logo 3D Spin on Hover */
-.logo {
-    transform-style: preserve-3d;
-    transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.header:hover .logo {
-    transform: rotateY(20deg) rotateX(-10deg) scale(1.08);
-}
-
-.logo-inner {
-    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4),
-                0 0 0 1px rgba(255,255,255,0.1),
-                -4px 4px 20px rgba(139, 92, 246, 0.3);
-    transition: box-shadow 0.4s ease, transform 0.4s ease;
-}
-
-.header:hover .logo-inner {
-    box-shadow: 0 8px 30px rgba(59, 130, 246, 0.6),
-                0 0 0 1px rgba(255,255,255,0.15),
-                -8px 8px 30px rgba(139, 92, 246, 0.4),
-                4px -4px 20px rgba(6, 182, 212, 0.3);
-}
-
-/* ============================================
-   STATS BAR — 3D Tilt
-   ============================================ */
-
-.stats-bar {
-    transform-style: preserve-3d;
-    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow var(--transition-base);
-    will-change: transform;
-}
-
-.stats-bar:hover {
-    transform: perspective(600px) rotateX(3deg) translateY(-3px);
-    box-shadow: var(--shadow-md),
-                0 16px 40px rgba(0, 0, 0, 0.2),
-                inset 0 1px 0 var(--glass-highlight);
-}
-
-.stat-icon-bg {
-    transform-style: preserve-3d;
-    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.4s ease;
-}
-
-.stat-item:hover .stat-icon-bg {
-    transform: scale(1.1) rotateY(15deg) rotateX(-10deg);
-    box-shadow: 4px 4px 16px rgba(59, 130, 246, 0.3),
-                -2px -2px 8px rgba(255, 255, 255, 0.05);
-}
-
-/* ============================================
-   DEPARTMENT CARDS — Interactive 3D Tilt
-   JavaScript handles mousemove; CSS handles base
-   ============================================ */
-
-.dept-card {
-    transform-style: preserve-3d;
-    transition: transform 0.15s ease, box-shadow 0.25s ease, background var(--transition-base);
-    will-change: transform;
-}
-
-/* 3D child layers inside dept card */
-.dept-oval {
-    transform-style: preserve-3d;
-    transition: transform 0.2s ease, box-shadow 0.25s ease;
-}
-
-.dept-card:hover .dept-oval {
-    transform: scale(1.04) translateZ(12px);
-}
-
-.dept-arrow {
-    transition: transform 0.25s ease, color var(--transition-base);
-}
-
-.dept-card:hover .dept-arrow {
-    transform: translateX(4px) translateZ(6px);
-}
-
-/* Dept card hover: lift + slight tilt */
-.dept-card:hover {
-    transform: translateX(6px) translateY(-3px) perspective(600px) rotateX(2deg);
-    box-shadow: var(--shadow-md), 0 12px 32px rgba(0, 0, 0, 0.2);
-}
-
-.dept-card:active {
-    transform: translateX(3px) translateY(0px) scale(0.98);
-    transition-duration: 0.1s;
-}
-
-/* ============================================
-   FILE CARDS — 3D Pop with Depth
-   ============================================ */
-
-.card {
-    transform-style: preserve-3d;
-    will-change: transform;
-    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
-                box-shadow 0.25s ease,
-                background var(--transition-base),
-                border-color var(--transition-base);
-}
-
-.card:hover {
-    transform: translateY(-4px) perspective(800px) rotateX(2deg) rotateY(-1deg);
-    box-shadow: var(--shadow-md),
-                0 16px 40px rgba(0, 0, 0, 0.25),
-                0 2px 4px rgba(59, 130, 246, 0.1);
-}
-
-.card:active {
-    transform: translateY(-1px) perspective(800px) rotateX(1deg) scale(0.99);
-    transition-duration: 0.1s;
-}
-
-/* Card icon 3D pop */
-.card-icon {
-    transform-style: preserve-3d;
-    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background var(--transition-base);
-}
-
-.card:hover .card-icon {
-    transform: scale(1.12) translateZ(10px) rotateY(-10deg);
-}
-
-/* Buttons 3D press */
-.card-buttons button {
-    transition: transform 0.15s ease, box-shadow 0.15s ease,
-                background var(--transition-fast), border-color var(--transition-fast),
-                color var(--transition-fast);
-}
-
-.card-buttons button:hover {
-    transform: translateY(-2px) scale(1.04);
-}
-
-.card-buttons button:active {
-    transform: translateY(1px) scale(0.97);
-    box-shadow: none !important;
-}
-
-/* ============================================
-   TOP BAR — Subtle 3D Depth
-   ============================================ */
-
-.top-bar {
-    transform-style: preserve-3d;
-    transition: transform 0.4s ease, box-shadow var(--transition-base);
-}
-
-.top-bar:hover {
-    transform: perspective(600px) translateY(-2px);
-    box-shadow: var(--shadow-md), 0 8px 24px rgba(0,0,0,0.15);
-}
-
-/* Upload + Back button 3D press */
-.btn-upload {
-    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
-                box-shadow 0.2s ease, opacity 0.2s ease;
-    transform-style: preserve-3d;
-}
-
-.btn-upload:hover {
-    transform: translateY(-3px) perspective(400px) rotateX(6deg);
-    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.5),
-                0 2px 4px rgba(0,0,0,0.2),
-                inset 0 1px 0 rgba(255,255,255,0.2);
-}
-
-.btn-upload:active {
-    transform: translateY(1px) scale(0.97);
-    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
-    transition-duration: 0.08s;
-}
-
-.btn-back {
-    transform-style: preserve-3d;
-    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
-}
-
-.btn-back:hover {
-    transform: translateX(-4px) perspective(400px) rotateY(8deg);
-    box-shadow: 4px 4px 16px rgba(59, 130, 246, 0.25);
-}
-
-.btn-back:active {
-    transform: translateX(-1px) scale(0.97);
-    transition-duration: 0.08s;
-}
-
-/* Theme Toggle 3D Spin */
-.theme-toggle {
-    transform-style: preserve-3d;
-    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
-}
-
-.theme-toggle:hover {
-    transform: scale(1.1) rotateY(20deg) rotateZ(10deg);
-    box-shadow: 0 6px 20px rgba(168, 85, 247, 0.35),
-                3px 3px 12px rgba(139, 92, 246, 0.3);
-}
-
-.theme-toggle:active {
-    transform: scale(0.93) rotateZ(-5deg);
-    transition-duration: 0.08s;
-}
-
-/* ============================================
-   ACTION BUTTONS — 3D Press
-   ============================================ */
-
-.action-btn {
-    transform-style: preserve-3d;
-    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
-                background 0.25s ease, box-shadow 0.2s ease, color 0.2s ease;
-    position: relative;
-}
-
-/* 3D bottom face illusion */
-.action-btn::after {
+body::before {
     content: '';
-    position: absolute;
+    position: fixed;
     inset: 0;
-    border-radius: var(--radius-full);
-    background: transparent;
-    box-shadow: 0 4px 0 rgba(0,0,0,0.3);
-    transition: box-shadow 0.2s ease;
+    background: var(--bg-gradient);
+    background-size: cover;
+    z-index: -3;
+}
+.ambient-glow {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
     pointer-events: none;
+    z-index: -2;
+    opacity: 0.4;
+    animation: ambientFloat 20s infinite alternate;
 }
-
-.action-btn:hover {
-    transform: translateY(-3px) perspective(300px) rotateX(8deg);
-    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.35);
+.glow-1 { width:500px; height:500px; top:-10%; left:-5%; background: radial-gradient(circle,rgba(59,130,246,0.25),transparent 70%); }
+.glow-2 { width:400px; height:400px; bottom:-5%; right:-5%; background: radial-gradient(circle,rgba(139,92,246,0.2),transparent 70%); }
+@keyframes ambientFloat {
+    0% { transform:translate(0,0) scale(1); opacity:0.3; }
+    100% { transform:translate(30px,-20px) scale(1.1); opacity:0.5; }
 }
-
-.action-btn:active {
-    transform: translateY(2px);
-    transition-duration: 0.08s;
+.particles-container {
+    position: fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:0;
+    overflow:hidden;
 }
-
-.action-btn:active::after {
-    box-shadow: 0 0px 0 rgba(0,0,0,0.3);
+.particle {
+    position:absolute;
+    background:rgba(255,255,255,0.4);
+    border-radius:50%;
+    animation: floatUp linear infinite;
 }
-
-/* ============================================
-   BREADCRUMB — Floating 3D
-   ============================================ */
-
-.breadcrumb {
-    transform-style: preserve-3d;
-    transition: transform 0.3s ease;
-}
-
-.breadcrumb:hover {
-    transform: perspective(400px) rotateX(4deg) translateY(-2px);
-    box-shadow: var(--shadow-sm), 0 8px 20px rgba(0,0,0,0.15);
-}
-
-.breadcrumb-item {
-    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
-                background var(--transition-fast), color var(--transition-fast);
-}
-
-.breadcrumb-item:hover {
-    transform: translateY(-2px) scale(1.05);
-}
-
-.breadcrumb-item:active {
-    transform: translateY(0) scale(0.97);
-}
-
-/* ============================================
-   AMBIENT GLOW — Enhanced 3D Depth Illusion
-   ============================================ */
-
-.glow-1 {
-    animation: ambientFloat3D1 18s ease-in-out infinite alternate;
-}
-
-.glow-2 {
-    animation: ambientFloat3D2 22s ease-in-out infinite alternate;
-    animation-delay: -5s;
-}
-
-@keyframes ambientFloat3D1 {
-    0%   { transform: translate(0, 0) scale(1) rotateZ(0deg); opacity: 0.3; }
-    33%  { transform: translate(40px, -25px) scale(1.15) rotateZ(5deg); opacity: 0.5; }
-    66%  { transform: translate(-20px, 15px) scale(0.9) rotateZ(-3deg); opacity: 0.35; }
-    100% { transform: translate(20px, -10px) scale(1.05) rotateZ(2deg); opacity: 0.45; }
-}
-
-@keyframes ambientFloat3D2 {
-    0%   { transform: translate(0, 0) scale(1) rotateZ(0deg); opacity: 0.25; }
-    33%  { transform: translate(-30px, 20px) scale(1.1) rotateZ(-4deg); opacity: 0.4; }
-    66%  { transform: translate(15px, -30px) scale(0.95) rotateZ(6deg); opacity: 0.3; }
-    100% { transform: translate(-10px, 10px) scale(1.08) rotateZ(-2deg); opacity: 0.38; }
-}
-
-/* ============================================
-   PARTICLES — 3D Depth via Scale
-   ============================================ */
-
+.particle:nth-child(1) { width:3px; height:3px; top:90%; left:10%; animation-duration:16s; }
+.particle:nth-child(2) { width:4px; height:4px; top:85%; left:30%; animation-duration:20s; animation-delay:2s; }
+.particle:nth-child(3) { width:2px; height:2px; top:95%; left:50%; animation-duration:14s; animation-delay:1s; }
+.particle:nth-child(4) { width:5px; height:5px; top:88%; left:70%; animation-duration:18s; animation-delay:3s; }
+.particle:nth-child(5) { width:3px; height:3px; top:92%; left:85%; animation-duration:22s; animation-delay:0.5s; }
+.particle:nth-child(6) { width:4px; height:4px; top:80%; left:20%; animation-duration:15s; animation-delay:4s; }
+.particle:nth-child(7) { width:2px; height:2px; top:87%; left:60%; animation-duration:19s; animation-delay:1.5s; }
+.particle:nth-child(8) { width:3px; height:3px; top:93%; left:40%; animation-duration:17s; animation-delay:2.5s; }
+.particle:nth-child(9) { width:5px; height:5px; top:82%; left:75%; animation-duration:21s; animation-delay:3.5s; }
+.particle:nth-child(10) { width:2px; height:2px; top:96%; left:15%; animation-duration:13s; animation-delay:5s; }
+.particle:nth-child(11) { width:4px; height:4px; top:89%; left:55%; animation-duration:16s; animation-delay:2s; }
+.particle:nth-child(12) { width:3px; height:3px; top:91%; left:90%; animation-duration:20s; animation-delay:4s; }
 @keyframes floatUp {
-    0%   { transform: translateY(0) translateX(0) scale(0.6) translateZ(0px); opacity: 0; }
-    10%  { opacity: 0.7; }
-    40%  { transform: translateY(-35vh) translateX(20px) scale(1.3) translateZ(30px); opacity: 0.5; }
-    70%  { transform: translateY(-65vh) translateX(45px) scale(0.9) translateZ(10px); opacity: 0.25; }
-    100% { transform: translateY(-100vh) translateX(70px) scale(0.4) translateZ(-10px); opacity: 0; }
+    0% { transform:translateY(0) translateX(0) scale(1); opacity:0; }
+    10% { opacity:0.6; }
+    50% { transform:translateY(-50vh) translateX(30px) scale(1.2); opacity:0.4; }
+    100% { transform:translateY(-100vh) translateX(60px) scale(0.5); opacity:0; }
 }
-
-/* ============================================
-   LOADING SPINNER — 3D Orbital
-   ============================================ */
-
-.loading-spinner {
-    transform-style: preserve-3d;
-    animation: spinnerTilt 4s ease-in-out infinite;
+.app {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 24px 20px 40px;
+    position: relative;
+    z-index: 2;
 }
-
-@keyframes spinnerTilt {
-    0%, 100% { transform: perspective(200px) rotateX(0deg) rotateY(0deg); }
-    25%       { transform: perspective(200px) rotateX(15deg) rotateY(10deg); }
-    50%       { transform: perspective(200px) rotateX(0deg) rotateY(20deg); }
-    75%       { transform: perspective(200px) rotateX(-15deg) rotateY(10deg); }
+.header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 24px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-xl);
+    margin-bottom: 24px;
 }
-
-/* ============================================
-   TOAST — 3D Bounce In
-   ============================================ */
-
+.logo {
+    position: relative;
+    width: 52px;
+    height: 52px;
+}
+.logo-inner {
+    width:100%; height:100%;
+    background: linear-gradient(135deg,#3b82f6,#8b5cf6,#06b6d4);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size:1.5rem;
+    color: white;
+    box-shadow:0 4px 15px rgba(59,130,246,0.4);
+}
+.logo-ring {
+    position: absolute;
+    inset: -4px;
+    border:2px solid transparent;
+    background: linear-gradient(135deg,rgba(59,130,246,0.5),rgba(139,92,246,0.5)) border-box;
+    mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    border-radius: calc(var(--radius-md)+4px);
+}
+.header-title {
+    flex:1;
+}
+.main-line {
+    display: flex;
+    align-items: center;
+    gap:10px;
+    flex-wrap: wrap;
+}
+.header-title h1 {
+    font-size:1.6rem;
+    font-weight:800;
+    background: linear-gradient(135deg,#fff,#bfdbfe,#a5f3fc);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+}
+body.light-mode .header-title h1 {
+    background: linear-gradient(135deg,#0f172a,#1e40af,#7c3aed);
+    -webkit-background-clip:text;
+    background-clip:text;
+}
+.doc-tag {
+    font-size:0.7rem;
+    background:rgba(6,182,212,0.12);
+    padding:4px 10px;
+    border-radius:var(--radius-full);
+    color:var(--accent-cyan);
+}
+.owner-name {
+    font-size:0.8rem;
+    color:var(--text-secondary);
+    display: flex;
+    align-items:center;
+    gap:8px;
+    margin-top:6px;
+}
+.owner-dot {
+    width:8px; height:8px;
+    background:var(--accent-emerald);
+    border-radius:50%;
+    box-shadow:0 0 8px var(--accent-emerald);
+}
+.top-bar {
+    display: flex;
+    align-items: center;
+    gap:12px;
+    padding:10px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    border:1px solid var(--glass-border);
+    border-radius: var(--radius-full);
+    flex-wrap: wrap;
+    margin-bottom:20px;
+}
+.search-container {
+    flex:1;
+    position: relative;
+    min-width: 180px;
+}
+.search-container i {
+    position: absolute;
+    left:16px;
+    top:50%;
+    transform:translateY(-50%);
+    color:var(--text-muted);
+}
+#searchInput {
+    width:100%;
+    padding:12px 40px 12px 44px;
+    border-radius: var(--radius-full);
+    border:1px solid var(--glass-border);
+    background: var(--input-bg);
+    color:var(--text-primary);
+    outline:none;
+}
+.clear-search {
+    position: absolute;
+    right:12px;
+    top:50%;
+    transform:translateY(-50%);
+    background:rgba(255,255,255,0.1);
+    border:none;
+    border-radius:50%;
+    width:24px; height:24px;
+    cursor:pointer;
+    color:var(--text-muted);
+}
+.top-bar-actions {
+    display: flex;
+    gap:10px;
+}
+.btn-back {
+    display: flex;
+    align-items:center;
+    gap:8px;
+    padding:10px 20px;
+    border-radius: var(--radius-full);
+    background: linear-gradient(135deg,rgba(59,130,246,0.15),rgba(139,92,246,0.15));
+    border:1px solid rgba(59,130,246,0.3);
+    color:var(--text-primary);
+    font-weight:600;
+    cursor:pointer;
+}
+.theme-toggle {
+    width:42px; height:42px;
+    border-radius:50%;
+    background: linear-gradient(135deg,rgba(168,85,247,0.15),rgba(236,72,153,0.15));
+    border:1px solid rgba(168,85,247,0.3);
+    color:var(--text-primary);
+    cursor:pointer;
+}
+.btn-upload {
+    display: flex;
+    align-items:center;
+    gap:8px;
+    padding:12px 22px;
+    border-radius: var(--radius-full);
+    background: linear-gradient(135deg,#3b82f6,#7c3aed);
+    color:white;
+    font-weight:600;
+    border:none;
+    cursor:pointer;
+}
+#fileInput { display:none; }
+.stats-bar {
+    display: flex;
+    align-items:center;
+    gap:16px;
+    padding:14px 24px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    border-radius: var(--radius-lg);
+    margin-bottom:20px;
+}
+.stat-item {
+    display: flex;
+    align-items:center;
+    gap:14px;
+    flex:1;
+}
+.stat-icon-bg {
+    width:44px; height:44px;
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg,rgba(59,130,246,0.2),rgba(59,130,246,0.05));
+    display: flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--accent-blue);
+}
+.stat-number {
+    font-size:1.4rem;
+    font-weight:800;
+}
+.stat-data label {
+    font-size:0.7rem;
+    text-transform:uppercase;
+    color:var(--text-muted);
+}
+.stat-divider {
+    width:1px;
+    height:32px;
+    background:var(--glass-border);
+}
+.breadcrumb {
+    display: flex;
+    align-items:center;
+    gap:4px;
+    flex-wrap:wrap;
+    padding:8px 16px;
+    background:rgba(0,0,0,0.25);
+    border-radius: var(--radius-full);
+    width:fit-content;
+    margin-bottom:20px;
+}
+.breadcrumb-item {
+    padding:6px 12px;
+    border-radius: var(--radius-full);
+    cursor:pointer;
+    color:var(--text-secondary);
+}
+.breadcrumb-item:hover {
+    background:rgba(59,130,246,0.1);
+    color:var(--text-primary);
+}
+.departments-grid {
+    display: flex;
+    flex-direction: column;
+    gap:10px;
+    margin-bottom:24px;
+}
+.dept-card {
+    display: flex;
+    align-items:center;
+    gap:16px;
+    padding:6px;
+    border-radius: var(--radius-lg);
+    cursor:pointer;
+}
+.dept-card:hover {
+    background: var(--glass-bg);
+    transform: translateX(6px);
+}
+.dept-oval {
+    padding:12px 28px;
+    border-radius: var(--radius-full);
+    background: linear-gradient(145deg,#2563eb,#1d4ed8);
+    display: flex;
+    align-items:center;
+    gap:10px;
+}
+.dept-oval span { color:white; font-weight:700; }
+.dept-info {
+    background:rgba(0,0,0,0.25);
+    padding:5px 14px;
+    border-radius: var(--radius-full);
+    font-size:0.75rem;
+}
+.dept-arrow {
+    margin-left: auto;
+    color:var(--text-muted);
+}
+/* department colors */
+.dept-card[data-dept="REMELT"] .dept-oval { background: linear-gradient(145deg,#ea580c,#c2410c); }
+.dept-card[data-dept="CASTER"] .dept-oval { background: linear-gradient(145deg,#0d9488,#0f766e); }
+.dept-card[data-dept="HRM"] .dept-oval { background: linear-gradient(145deg,#7c3aed,#6d28d9); }
+.dept-card[data-dept="CRM"] .dept-oval { background: linear-gradient(145deg,#d97706,#b45309); }
+.dept-card[data-dept="ANNEALING"] .dept-oval { background: linear-gradient(145deg,#db2777,#be185d); }
+.dept-card[data-dept="TLL"] .dept-oval { background: linear-gradient(145deg,#0891b2,#0e7490); }
+.dept-card[data-dept="SLITTER"] .dept-oval { background: linear-gradient(145deg,#4f46e5,#4338ca); }
+.dept-card[data-dept="UTILITY"] .dept-oval { background: linear-gradient(145deg,#dc2626,#b91c1c); }
+.content {
+    display: flex;
+    flex-direction: column;
+    gap:10px;
+}
+.card {
+    background: var(--card-bg);
+    backdrop-filter: blur(14px);
+    padding:14px 18px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items:center;
+    gap:14px;
+    border:1px solid var(--glass-border);
+    transition: var(--transition-base);
+}
+.card:hover {
+    background: var(--card-bg-hover);
+    transform: translateY(-2px);
+}
+.card-icon {
+    width:40px; height:40px;
+    border-radius: var(--radius-sm);
+    background: linear-gradient(135deg,rgba(59,130,246,0.15),rgba(139,92,246,0.1));
+    display: flex;
+    align-items:center;
+    justify-content:center;
+}
+.card-filename {
+    flex:1;
+    font-weight:500;
+}
+.card-buttons {
+    display: flex;
+    gap:8px;
+}
+.card-buttons button {
+    padding:6px 12px;
+    border-radius: var(--radius-full);
+    font-size:0.7rem;
+    font-weight:600;
+    border:none;
+    cursor:pointer;
+}
+.rename-file-btn {
+    background:rgba(59,130,246,0.12);
+    color:#93c5fd;
+}
+.delete-btn {
+    background:rgba(244,63,94,0.12);
+    color:#fda4af;
+}
+.action-bar {
+    display: flex;
+    gap:10px;
+    justify-content: center;
+    padding:12px;
+    background: var(--glass-bg);
+    border-radius: var(--radius-full);
+    margin-bottom:16px;
+}
+.action-btn {
+    background:rgba(20,40,60,0.7);
+    border:1px solid var(--glass-border);
+    padding:10px 20px;
+    border-radius: var(--radius-full);
+    color:var(--text-primary);
+    font-weight:600;
+    cursor:pointer;
+}
+.empty-state {
+    text-align:center;
+    padding:48px 24px;
+    background: var(--card-bg);
+    border-radius: var(--radius-lg);
+}
 .toast {
-    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.35s ease;
+    position:fixed;
+    bottom:32px;
+    left:50%;
+    transform: translateX(-50%) translateY(100px);
+    background: linear-gradient(135deg,#10b981,#059669);
+    color:white;
+    padding:14px 24px;
+    border-radius: var(--radius-full);
+    z-index:1100;
+    transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    opacity:0;
 }
-
 .toast.show {
-    transform: translateX(-50%) translateY(0) perspective(400px) rotateX(0deg);
-    animation: toastBounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    transform: translateX(-50%) translateY(0);
+    opacity:1;
 }
-
-@keyframes toastBounce {
-    from {
-        transform: translateX(-50%) translateY(60px) perspective(400px) rotateX(-20deg) scale(0.8);
-        opacity: 0;
-    }
-    to {
-        transform: translateX(-50%) translateY(0) perspective(400px) rotateX(0deg) scale(1);
-        opacity: 1;
-    }
+.loading-overlay {
+    position:fixed;
+    inset:0;
+    background:rgba(7,13,26,0.85);
+    backdrop-filter:blur(8px);
+    z-index:2000;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    gap:20px;
 }
+.hidden { display:none !important; }
 
-/* ============================================
-   EMPTY STATE — 3D Icon Float
-   ============================================ */
-
-.empty-state i {
-    animation: emptyFloat3D 3s ease-in-out infinite;
-    display: block;
+@media (max-width: 640px) {
+    .app { padding:16px 14px; }
+    .search-container { flex:1; min-width:140px; }
+    .btn-back { padding:8px 14px; }
+    .theme-toggle { width:38px; height:38px; }
+    .card-buttons button { padding:6px 12px; }
 }
-
-@keyframes emptyFloat3D {
-    0%, 100% { transform: perspective(200px) rotateY(0deg) translateY(0px) scale(1); opacity: 0.5; }
-    33%       { transform: perspective(200px) rotateY(15deg) translateY(-6px) scale(1.05); opacity: 0.65; }
-    66%       { transform: perspective(200px) rotateY(-10deg) translateY(-3px) scale(0.97); opacity: 0.55; }
-}
-
-/* ============================================
-   SECTION TITLE — 3D Underline Pull
-   ============================================ */
-
-.section-title {
-    transition: transform 0.3s ease;
-}
-
-.section-title:hover {
-    transform: perspective(300px) translateZ(4px);
-}
-
-.section-title i {
-    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.section-title:hover i {
-    transform: rotateY(20deg) scale(1.2);
-}
-
-/* ============================================
-   CARD STAGGER — 3D Entry Animation
-   ============================================ */
-
-@keyframes cardEnter {
-    from {
-        opacity: 0;
-        transform: perspective(600px) rotateX(20deg) translateY(20px) scale(0.96);
-    }
-    to {
-        opacity: 1;
-        transform: perspective(600px) rotateX(0deg) translateY(0) scale(1);
-    }
-}
-
-/* ============================================
-   REDUCED MOTION — Accessibility
-   ============================================ */
-
-@media (prefers-reduced-motion: reduce) {
-    .header,
-    .stats-bar,
-    .dept-card,
-    .card,
-    .btn-upload,
-    .btn-back,
-    .theme-toggle,
-    .action-btn,
-    .breadcrumb,
-    .logo,
-    .loading-spinner {
-        transform: none !important;
-        transition: opacity 0.2s ease, background 0.2s ease !important;
-    }
-
-    @keyframes floatUp {
-        from { opacity: 0; }
-        10%  { opacity: 0.5; }
-        90%  { opacity: 0.1; }
-        to   { opacity: 0; transform: translateY(-100vh); }
-    }
+@media (max-width: 380px) {
+    .card-buttons { flex-direction: column; }
+    .dept-info { display: none; }
 }
