@@ -55,16 +55,30 @@ function saveAllFilesToDB() {
     tx.commit();
 }
 
-// Helper to ensure a subfolder exists inside FURNACE 1
-function ensureFurnace1Subfolder() {
-    // Navigate to REMELT -> FURNACE 1
+// Helper: ensure multiple "Data Log X" folders inside FURNACE 1
+function ensureFurnace1DataLogs() {
     if (fileSystem["REMELT"] && fileSystem["REMELT"]["FURNACE 1"]) {
         const furnace1 = fileSystem["REMELT"]["FURNACE 1"];
-        // If "Data Logs" doesn't exist, add it as an empty folder
+        let changed = false;
+
+        // Create Data Log 1 through Data Log 20
+        for (let i = 1; i <= 20; i++) {
+            const folderName = `Data Log ${i}`;
+            if (!furnace1[folderName]) {
+                furnace1[folderName] = {};
+                changed = true;
+            }
+        }
+
+        // Also keep the old "Data Logs" if someone still uses it (optional)
         if (!furnace1["Data Logs"]) {
             furnace1["Data Logs"] = {};
+            changed = true;
+        }
+
+        if (changed) {
             saveFolderStructure();
-            showToast("✅ Added 'Data Logs' folder inside FURNACE 1");
+            showToast("✅ Added Data Log 1‑20 folders inside FURNACE 1");
         }
     }
 }
@@ -74,15 +88,18 @@ async function loadFromIndexedDB() {
     folderReq.onsuccess = () => {
         if (folderReq.result) {
             fileSystem = folderReq.result.value;
-            // AFTER loading existing structure, add the missing subfolder if needed
-            ensureFurnace1Subfolder();
+            // Add missing Data Log folders (1‑20) if needed
+            ensureFurnace1DataLogs();
         } else {
-            // Fresh install: create full structure with "Data Logs" inside FURNACE 1
+            // Fresh install: create full structure with Data Log 1‑20 + Data Logs inside FURNACE 1
+            const furnace1Content = { "Data Logs": {} };
+            for (let i = 1; i <= 20; i++) {
+                furnace1Content[`Data Log ${i}`] = {};
+            }
+            
             fileSystem = {
                 "REMELT": {
-                    "FURNACE 1": { "Data Logs": {} },
-                    
-                    
+                    "FURNACE 1": furnace1Content,
                     "FURNACE 2": {},
                     "FURNACE 3": {},
                     "FURNACE 4": {},
