@@ -66,7 +66,7 @@ async function loadFromIndexedDB() {
             fileSystem = folderReq.result.value;
         } else {
             fileSystem = {
-                "REMELT":{"FURNACE 1":SIPHON{},
+                "REMELT":{"FURNACE 1":{},
                     
                     
                     
