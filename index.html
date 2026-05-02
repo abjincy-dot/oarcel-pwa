@@ -17,116 +17,54 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<!-- Animated Background Particles -->
 <div class="particles-container">
   <div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div>
   <div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div>
   <div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div>
 </div>
-
-<!-- Ambient Glow Orbs -->
 <div class="ambient-glow glow-1"></div>
 <div class="ambient-glow glow-2"></div>
 
 <div class="app">
-  <!-- Header -->
   <header class="header">
     <div class="logo">
-      <div class="logo-inner">
-        <i class="fas fa-folder-open"></i>
-      </div>
+      <div class="logo-inner"><i class="fas fa-folder-open"></i></div>
       <div class="logo-ring"></div>
     </div>
     <div class="header-title">
-      <div class="main-line">
-        <h1>OARCEL</h1>
-        <span class="doc-tag"><i class="fas fa-shield-alt"></i> Document Manager</span>
-      </div>
-      <div class="owner-name">
-        <span class="owner-dot"></span>
-        <span>𝒜𝒷𝒾𝓈𝒽 𝑅𝒶𝒿𝒶𝓃</span>
-      </div>
+      <div class="main-line"><h1>OARCEL</h1><span class="doc-tag"><i class="fas fa-shield-alt"></i> Document Manager</span></div>
+      <div class="owner-name"><span class="owner-dot"></span><span>𝒜𝒷𝒾𝓈𝒽 𝑅𝒶𝒿𝒶𝓃</span></div>
     </div>
   </header>
 
-  <!-- Top Bar -->
   <div class="top-bar">
-    <button id="backBtn" class="btn-back hidden">
-      <i class="fas fa-arrow-left"></i>
-      <span>Back</span>
-    </button>
-    
+    <button id="backBtn" class="btn-back hidden"><i class="fas fa-arrow-left"></i><span>Back</span></button>
     <div class="search-container">
       <i class="fas fa-search"></i>
-      <input type="text" id="searchInput" placeholder="Search documents..." autocomplete="off">
+      <input type="text" id="searchInput" placeholder="Search documents...">
       <button id="clearSearchBtn" class="clear-search hidden"><i class="fas fa-times"></i></button>
     </div>
-    
     <div class="top-bar-actions">
-      <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme">
-        <div class="theme-icon-wrapper">
-          <i class="fas fa-moon"></i>
-        </div>
-      </button>
-      <button id="uploadBtn" class="btn-upload hidden">
-        <i class="fas fa-cloud-upload-alt"></i>
-        <span>Upload</span>
-      </button>
+      <button id="themeToggle" class="theme-toggle"><div class="theme-icon-wrapper"><i class="fas fa-moon"></i></div></button>
+      <button id="uploadBtn" class="btn-upload"><i class="fas fa-cloud-upload-alt"></i><span>Upload</span></button>
     </div>
     <input type="file" id="fileInput" accept="application/pdf" multiple>
   </div>
 
-  <!-- Stats -->
   <div class="stats-bar">
-    <div class="stat-item">
-      <div class="stat-icon-bg">
-        <i class="fas fa-folder"></i>
-      </div>
-      <div class="stat-data">
-        <span id="folderCount" class="stat-number">0</span>
-        <label>Folders</label>
-      </div>
-    </div>
+    <div class="stat-item"><div class="stat-icon-bg"><i class="fas fa-folder"></i></div><div class="stat-data"><span id="folderCount" class="stat-number">0</span><label>Folders</label></div></div>
     <div class="stat-divider"></div>
-    <div class="stat-item">
-      <div class="stat-icon-bg stat-icon-files">
-        <i class="fas fa-file-pdf"></i>
-      </div>
-      <div class="stat-data">
-        <span id="fileCount" class="stat-number">0</span>
-        <label>Documents</label>
-      </div>
-    </div>
+    <div class="stat-item"><div class="stat-icon-bg stat-icon-files"><i class="fas fa-file-pdf"></i></div><div class="stat-data"><span id="fileCount" class="stat-number">0</span><label>Documents</label></div></div>
   </div>
 
-  <!-- Breadcrumb -->
   <nav id="breadcrumb" class="breadcrumb"></nav>
-
-  <!-- Departments -->
   <div id="departmentsSection"></div>
-
-  <!-- Search Info -->
   <div id="searchInfo" class="search-result-info hidden"></div>
-
-  <!-- Content -->
   <div id="content" class="content"></div>
 </div>
 
-<!-- Toast -->
-<div id="toast" class="toast hidden">
-  <div class="toast-icon"><i class="fas fa-check-circle"></i></div>
-  <span></span>
-</div>
-
-<!-- Loading Overlay -->
-<div id="loadingOverlay" class="loading-overlay hidden">
-  <div class="loading-spinner">
-    <div class="spinner-ring"></div>
-    <div class="spinner-ring"></div>
-    <div class="spinner-ring"></div>
-  </div>
-  <p>Loading...</p>
-</div>
+<div id="toast" class="toast hidden"><div class="toast-icon"><i class="fas fa-check-circle"></i></div><span></span></div>
+<div id="loadingOverlay" class="loading-overlay hidden"><div class="loading-spinner"><div class="spinner-ring"></div><div class="spinner-ring"></div><div class="spinner-ring"></div></div><p>Loading...</p></div>
 
 <script src="app.js"></script>
 </body>
