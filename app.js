@@ -9,17 +9,13 @@ let isSearchMode = false;
 
 // ==================== PDF VIEWER - Opens in new tab for full multi-page support ====================
 function openPDF(dataUrl, fileName) {
-    // Show toast notification
     showToast(`Opening ${fileName}...`);
-    
-    // Convert dataUrl to blob and open in new tab
     fetch(dataUrl)
         .then(response => response.blob())
         .then(blob => {
             const blobUrl = URL.createObjectURL(blob);
             window.open(blobUrl, '_blank');
             showToast(`PDF opened in new tab. Close tab to return.`);
-            // Clean up after 1 minute
             setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
         })
         .catch(err => {
@@ -59,16 +55,32 @@ function saveAllFilesToDB() {
     tx.commit();
 }
 
+// Helper to ensure a subfolder exists inside FURNACE 1
+function ensureFurnace1Subfolder() {
+    // Navigate to REMELT -> FURNACE 1
+    if (fileSystem["REMELT"] && fileSystem["REMELT"]["FURNACE 1"]) {
+        const furnace1 = fileSystem["REMELT"]["FURNACE 1"];
+        // If "Data Logs" doesn't exist, add it as an empty folder
+        if (!furnace1["Data Logs"]) {
+            furnace1["Data Logs"] = {};
+            saveFolderStructure();
+            showToast("✅ Added 'Data Logs' folder inside FURNACE 1");
+        }
+    }
+}
+
 async function loadFromIndexedDB() {
     const folderReq = db.transaction('folderStructure', 'readonly').objectStore('folderStructure').get('structure');
     folderReq.onsuccess = () => {
         if (folderReq.result) {
             fileSystem = folderReq.result.value;
+            // AFTER loading existing structure, add the missing subfolder if needed
+            ensureFurnace1Subfolder();
         } else {
-            // ***** MODIFICATION: Added a subfolder "Data Logs" inside FURNACE 1 *****
+            // Fresh install: create full structure with "Data Logs" inside FURNACE 1
             fileSystem = {
                 "REMELT": {
-                    "FURNACE 1": { "Data Logs": {} },   // <-- Folder added inside FURNACE 1
+                    "FURNACE 1": { "Data Logs": {} },
                     "FURNACE 2": {},
                     "FURNACE 3": {},
                     "FURNACE 4": {},
