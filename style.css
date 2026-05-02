@@ -1309,7 +1309,7 @@ body.light-mode .loading-overlay {
 .hidden { display: none !important; }
 
 /* ============================================
-   RESPONSIVE
+   RESPONSIVE (FIXED)
    ============================================ */
 
 @media (max-width: 640px) {
@@ -1322,13 +1322,45 @@ body.light-mode .loading-overlay {
     .logo { width: 44px; height: 44px; }
     .logo-inner { font-size: 1.2rem; }
     
-    .top-bar { padding: 8px; gap: 8px; }
-    .btn-back, .btn-upload { padding: 8px 16px; font-size: 0.8rem; }
-    .theme-toggle { width: 38px; height: 38px; }
+    .top-bar {
+        padding: 8px 12px;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
     
-    .search-container { min-width: 100%; order: -1; margin-bottom: 4px; }
-    .top-bar { flex-wrap: wrap; }
-    .top-bar-actions { margin-left: auto; }
+    /* Fix: Don't force search to 100% – let it flex naturally */
+    .search-container {
+        flex: 1;
+        min-width: 140px;    /* enough space to be useful, but not full width */
+        order: 0;            /* keep original order */
+        margin-bottom: 0;
+    }
+    
+    .btn-back {
+        padding: 8px 14px;
+        font-size: 0.8rem;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+    
+    .theme-toggle {
+        width: 38px;
+        height: 38px;
+        flex-shrink: 0;
+    }
+    
+    .top-bar-actions {
+        margin-left: auto;
+        flex-shrink: 0;
+        gap: 8px;
+    }
+    
+    /* Keep upload button hidden by JS, but if shown ensure it fits */
+    .btn-upload {
+        padding: 8px 14px;
+        font-size: 0.75rem;
+        white-space: nowrap;
+    }
     
     .stats-bar { padding: 12px 18px; gap: 12px; }
     .stat-icon-bg { width: 38px; height: 38px; font-size: 1rem; }
@@ -1355,6 +1387,3 @@ body.light-mode .loading-overlay {
     .card-buttons button { padding: 6px 10px; width: 100%; justify-content: center; }
     .dept-info { display: none; }
 }
-  
-
-This is my css
