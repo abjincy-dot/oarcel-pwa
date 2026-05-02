@@ -66,11 +66,7 @@ async function loadFromIndexedDB() {
             fileSystem = folderReq.result.value;
         } else {
             fileSystem = {
-                "REMELT":{"FURNACE 1":{},
-                    
-                    
-                    
-                    "FURNACE 2":{},"FURNACE 3":{},"FURNACE 4":{},"FURNACE 5":{},"ACD":{},"DBF":{},"ROD FEEDER":{},"LAUNDER HEATERS":{},"LAUNDER PANEL ":{},"HPU 1":{},"HPU 2":{},"M":{},"N":{},"O":{},"P":{},"Q":{},"R":{},"S":{},"T":{},"U":{},"V":{},"W":{},"X":{},"Y":{},"Z":{}},
+                "REMELT":{"FURNACE 1":{},"FURNACE 2":{},"FURNACE 3":{},"FURNACE 4":{},"FURNACE 5":{},"ACD":{},"DBF":{},"ROD FEEDER":{},"LAUNDER HEATERS":{},"LAUNDER PANEL ":{},"HPU 1":{},"HPU 2":{},"M":{},"N":{},"O":{},"P":{},"Q":{},"R":{},"S":{},"T":{},"U":{},"V":{},"W":{},"X":{},"Y":{},"Z":{}},
                 "CASTER":{"Quality Reports":{},"Mechanical":{},"Maintenance":{},"Production Data":{},"Testing":{},"Checklists":{},"Safety":{},"Training":{}},
                 "HRM":{"Employee Records":{},"Attendance":{},"Performance":{},"Training Logs":{},"Safety Compliance":{},"Policies":{},"Reports":{},"Certifications":{}},
                 "CRM":{"PLC Programs":{},"CAD Drawings":{},"Electrical":{},"SCADA":{},"Automation":{},"Reports":{},"Configurations":{},"Manuals":{}},
