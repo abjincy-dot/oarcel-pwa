@@ -63,44 +63,20 @@ async function loadFromIndexedDB() {
             fileSystem = folderReq.result.value;
             // No automatic addition – you have full control to rename
         } else {
-            // Fresh install: create full structure with Data Log 1‑20 (static, no loop later)
+            // Fresh install: create full structure with static Data Log 1‑20
             const furnace1Content = {
-                "Data Log 1": {},
-                "Data Log 2": {},
-                "Data Log 3": {},
-                "Data Log 4": {},
-                "Data Log 5": {},
-                "Data Log 6": {},
-                "Data Log 7": {},
-                "Data Log 8": {},
-                "Data Log 9": {},
-                "Data Log 10": {},
-                "Data Log 11": {},
-                "Data Log 12": {},
-                "Data Log 13": {},
-                "Data Log 14": {},
-                "Data Log 15": {},
-                "Data Log 16": {},
-                "Data Log 17": {},
-                "Data Log 18": {},
-                "Data Log 19": {},
-                "Data Log 20": {},
+                "Data Log 1": {}, "Data Log 2": {}, "Data Log 3": {}, "Data Log 4": {}, "Data Log 5": {},
+                "Data Log 6": {}, "Data Log 7": {}, "Data Log 8": {}, "Data Log 9": {}, "Data Log 10": {},
+                "Data Log 11": {}, "Data Log 12": {}, "Data Log 13": {}, "Data Log 14": {}, "Data Log 15": {},
+                "Data Log 16": {}, "Data Log 17": {}, "Data Log 18": {}, "Data Log 19": {}, "Data Log 20": {},
                 "Data Logs": {}   // optional legacy
             };
             fileSystem = {
                 "REMELT": {
                     "FURNACE 1": furnace1Content,
-                    "FURNACE 2": {},
-                    "FURNACE 3": {},
-                    "FURNACE 4": {},
-                    "FURNACE 5": {},
-                    "ACD": {},
-                    "DBF": {},
-                    "ROD FEEDER": {},
-                    "LAUNDER HEATERS": {},
-                    "LAUNDER PANEL ": {},
-                    "HPU 1": {},
-                    "HPU 2": {},
+                    "FURNACE 2": {}, "FURNACE 3": {}, "FURNACE 4": {}, "FURNACE 5": {},
+                    "ACD": {}, "DBF": {}, "ROD FEEDER": {}, "LAUNDER HEATERS": {}, "LAUNDER PANEL ": {},
+                    "HPU 1": {}, "HPU 2": {},
                     "M": {}, "N": {}, "O": {}, "P": {}, "Q": {}, "R": {}, "S": {}, "T": {}, "U": {}, "V": {}, "W": {}, "X": {}, "Y": {}, "Z": {}
                 },
                 "CASTER":{"Quality Reports":{},"Mechanical":{},"Maintenance":{},"Production Data":{},"Testing":{},"Checklists":{},"Safety":{},"Training":{}},
@@ -158,7 +134,7 @@ function renameFileInFolder(folderPath, oldName, newName) {
     }
 }
 
-// Rename any folder (updates fileSystem and allFiles keys)
+// Rename any folder (used by action bar's "Rename This Folder")
 function renameFolder(parentPath, oldName, newName) {
     if (!newName || newName.trim() === "") return;
     newName = newName.trim();
@@ -227,24 +203,21 @@ function searchFiles(q) {
     return all.filter(f => f.name.toLowerCase().includes(q.toLowerCase()));
 }
 
-// createCard with Rename button for folders
+// createCard – folders have NO rename/delete buttons; only files get rename+delete
 function createCard(title, onClick, isFolder=false, showDel=false, delPath=null, delName=null, showRename=false) {
     const div = document.createElement('div'); 
     div.className = 'card';
-    let renameButton = '';
-    if (isFolder) {
-        const parentPath = currentPath.join('/');
-        renameButton = `<button class="rename-folder-btn" onclick="event.stopPropagation(); window.renameFolderPrompt('${parentPath}','${escapeHtml(title)}')"><i class="fas fa-edit"></i> Rename</button>`;
-    } else if (showRename) {
-        renameButton = `<button class="rename-file-btn" onclick="event.stopPropagation(); window.renameFile('${delPath}','${escapeHtml(delName)}')"><i class="fas fa-edit"></i> Rename</button>`;
+    let buttonsHtml = '';
+    if (!isFolder && showRename) {
+        buttonsHtml += `<button class="rename-file-btn" onclick="event.stopPropagation(); window.renameFile('${delPath}','${escapeHtml(delName)}')"><i class="fas fa-edit"></i> Rename</button>`;
+    }
+    if (!isFolder && showDel) {
+        buttonsHtml += `<button class="delete-btn" onclick="event.stopPropagation(); window.deleteFile('${delPath}','${escapeHtml(delName)}')"><i class="fas fa-trash"></i> Delete</button>`;
     }
     div.innerHTML = `
         <div class="card-icon"><i class="fas ${isFolder ? 'fa-folder' : 'fa-file-pdf'}" style="color:${isFolder ? '#fbbf24' : '#60a5fa'}"></i></div>
         <div class="card-filename">${escapeHtml(title)}</div>
-        <div class="card-buttons">
-            ${renameButton}
-            ${showDel ? `<button class="delete-btn" onclick="event.stopPropagation(); window.deleteFile('${delPath}','${escapeHtml(delName)}')"><i class="fas fa-trash"></i> Delete</button>` : ''}
-        </div>
+        <div class="card-buttons">${buttonsHtml}</div>
     `;
     div.onclick = onClick; 
     return div;
@@ -316,7 +289,7 @@ function render() {
     }
     document.getElementById('content').appendChild(actionDiv);
     
-    // Display folders (with rename button on each)
+    // Display folders (no buttons on folders)
     if(!isRoot && !isLeaf) {
         for(let key in folder) {
             const folderCard = createCard(key, () => { currentPath.push(key); render(); }, true);
@@ -462,12 +435,6 @@ window.renameFile = (p, old) => {
 };
 window.deleteFile = (p, n) => { 
     if(confirm(`Delete "${n}"?`)) deleteFileFromFolder(p, n); 
-};
-window.renameFolderPrompt = (parentPath, oldName) => {
-    const newName = prompt("New folder name:", oldName);
-    if (newName && newName.trim() && newName !== oldName) {
-        renameFolder(parentPath, oldName, newName.trim());
-    }
 };
 
 // Initialize
