@@ -7,7 +7,7 @@ let fileSystem = {};
 let currentPath = [];
 let isSearchMode = false;
 
-// ==================== PDF VIEWER - Opens in new tab for full multi-page support ====================
+// ==================== PDF VIEWER - Opens in new tab ====================
 function openPDF(dataUrl, fileName) {
     showToast(`Opening ${fileName}...`);
     fetch(dataUrl)
@@ -55,13 +55,11 @@ function saveAllFilesToDB() {
     tx.commit();
 }
 
-// Helper: ensure multiple "Data Log X" folders inside FURNACE 1
+// Helper: ensure Data Log 1‑20 folders inside FURNACE 1
 function ensureFurnace1DataLogs() {
     if (fileSystem["REMELT"] && fileSystem["REMELT"]["FURNACE 1"]) {
         const furnace1 = fileSystem["REMELT"]["FURNACE 1"];
         let changed = false;
-
-        // Create Data Log 1 through Data Log 20
         for (let i = 1; i <= 20; i++) {
             const folderName = `Data Log ${i}`;
             if (!furnace1[folderName]) {
@@ -69,13 +67,10 @@ function ensureFurnace1DataLogs() {
                 changed = true;
             }
         }
-
-        // Also keep the old "Data Logs" if someone still uses it (optional)
         if (!furnace1["Data Logs"]) {
             furnace1["Data Logs"] = {};
             changed = true;
         }
-
         if (changed) {
             saveFolderStructure();
             showToast("✅ Added Data Log 1‑20 folders inside FURNACE 1");
@@ -88,15 +83,12 @@ async function loadFromIndexedDB() {
     folderReq.onsuccess = () => {
         if (folderReq.result) {
             fileSystem = folderReq.result.value;
-            // Add missing Data Log folders (1‑20) if needed
             ensureFurnace1DataLogs();
         } else {
-            // Fresh install: create full structure with Data Log 1‑20 + Data Logs inside FURNACE 1
             const furnace1Content = { "Data Logs": {} };
             for (let i = 1; i <= 20; i++) {
                 furnace1Content[`Data Log ${i}`] = {};
             }
-            
             fileSystem = {
                 "REMELT": {
                     "FURNACE 1": furnace1Content,
@@ -111,20 +103,7 @@ async function loadFromIndexedDB() {
                     "LAUNDER PANEL ": {},
                     "HPU 1": {},
                     "HPU 2": {},
-                    "M": {},
-                    "N": {},
-                    "O": {},
-                    "P": {},
-                    "Q": {},
-                    "R": {},
-                    "S": {},
-                    "T": {},
-                    "U": {},
-                    "V": {},
-                    "W": {},
-                    "X": {},
-                    "Y": {},
-                    "Z": {}
+                    "M": {}, "N": {}, "O": {}, "P": {}, "Q": {}, "R": {}, "S": {}, "T": {}, "U": {}, "V": {}, "W": {}, "X": {}, "Y": {}, "Z": {}
                 },
                 "CASTER":{"Quality Reports":{},"Mechanical":{},"Maintenance":{},"Production Data":{},"Testing":{},"Checklists":{},"Safety":{},"Training":{}},
                 "HRM":{"Employee Records":{},"Attendance":{},"Performance":{},"Training Logs":{},"Safety Compliance":{},"Policies":{},"Reports":{},"Certifications":{}},
@@ -181,6 +160,42 @@ function renameFileInFolder(folderPath, oldName, newName) {
     }
 }
 
+// NEW: Rename any folder (updates fileSystem and allFiles keys)
+function renameFolder(parentPath, oldName, newName) {
+    if (!newName || newName.trim() === "") return;
+    newName = newName.trim();
+    // Navigate to parent folder object
+    let parent = fileSystem;
+    if (parentPath.length > 0) {
+        parent = parentPath.split('/').reduce((o, p) => o?.[p], fileSystem);
+    }
+    if (parent && parent[oldName]) {
+        // Move the folder content
+        parent[newName] = parent[oldName];
+        delete parent[oldName];
+        // Update allFiles keys: oldPath -> newPath
+        const oldFolderPath = parentPath ? `${parentPath}/${oldName}` : oldName;
+        const newFolderPath = parentPath ? `${parentPath}/${newName}` : newName;
+        if (allFiles[oldFolderPath]) {
+            allFiles[newFolderPath] = allFiles[oldFolderPath];
+            delete allFiles[oldFolderPath];
+        }
+        // Also update any subfolders' paths in allFiles (if files exist deeper)
+        const prefix = oldFolderPath + '/';
+        for (const fullPath in allFiles) {
+            if (fullPath.startsWith(prefix)) {
+                const newFullPath = fullPath.replace(prefix, newFolderPath + '/');
+                allFiles[newFullPath] = allFiles[fullPath];
+                delete allFiles[fullPath];
+            }
+        }
+        saveFolderStructure();
+        saveAllFilesToDB();
+        render();
+        showToast(`✅ Folder renamed to "${newName}"`);
+    }
+}
+
 function selectDepartment(d) { 
     currentPath = [d]; 
     render(); 
@@ -218,14 +233,23 @@ function searchFiles(q) {
     return all.filter(f => f.name.toLowerCase().includes(q.toLowerCase()));
 }
 
-function createCard(title, onClick, isFolder=false, showDel=false, delPath=null, delName=null, showRename=false) {
+// Updated createCard: adds Rename button for folders
+function createCard(title, onClick, isFolder=false, showDel=false, delPath=null, delName=null, showRename=false, folderParentPath=null) {
     const div = document.createElement('div'); 
     div.className = 'card';
+    let renameButton = '';
+    if (isFolder) {
+        // For folders, add rename button using the new renameFolder function
+        const parentPath = currentPath.join('/');
+        renameButton = `<button class="rename-folder-btn" onclick="event.stopPropagation(); window.renameFolderPrompt('${parentPath}','${escapeHtml(title)}')"><i class="fas fa-edit"></i> Rename</button>`;
+    } else if (showRename) {
+        renameButton = `<button class="rename-file-btn" onclick="event.stopPropagation(); window.renameFile('${delPath}','${escapeHtml(delName)}')"><i class="fas fa-edit"></i> Rename</button>`;
+    }
     div.innerHTML = `
         <div class="card-icon"><i class="fas ${isFolder ? 'fa-folder' : 'fa-file-pdf'}" style="color:${isFolder ? '#fbbf24' : '#60a5fa'}"></i></div>
         <div class="card-filename">${escapeHtml(title)}</div>
         <div class="card-buttons">
-            ${showRename ? `<button class="rename-file-btn" onclick="event.stopPropagation(); window.renameFile('${delPath}','${escapeHtml(delName)}')"><i class="fas fa-edit"></i> Rename</button>` : ''}
+            ${renameButton}
             ${showDel ? `<button class="delete-btn" onclick="event.stopPropagation(); window.deleteFile('${delPath}','${escapeHtml(delName)}')"><i class="fas fa-trash"></i> Delete</button>` : ''}
         </div>
     `;
@@ -293,15 +317,17 @@ function render() {
     const actionDiv = document.createElement('div');
     actionDiv.className = 'action-bar';
     if(!isRoot) {
-        actionDiv.innerHTML = `<button class="action-btn" onclick="renameCurrentFolder()"><i class="fas fa-edit"></i> Rename Folder</button><button class="action-btn" onclick="deleteCurrentFolder()"><i class="fas fa-trash-alt"></i> Delete Folder</button><button class="action-btn" onclick="addNewFolder()"><i class="fas fa-plus"></i> Add Subfolder</button>`;
+        actionDiv.innerHTML = `<button class="action-btn" onclick="renameCurrentFolder()"><i class="fas fa-edit"></i> Rename This Folder</button><button class="action-btn" onclick="deleteCurrentFolder()"><i class="fas fa-trash-alt"></i> Delete This Folder</button><button class="action-btn" onclick="addNewFolder()"><i class="fas fa-plus"></i> Add Subfolder</button>`;
     } else {
         actionDiv.innerHTML = `<button class="action-btn" onclick="addNewDepartment()"><i class="fas fa-building"></i> Add Department</button>`;
     }
     document.getElementById('content').appendChild(actionDiv);
     
+    // Display folders (with rename button on each)
     if(!isRoot && !isLeaf) {
         for(let key in folder) {
-            document.getElementById('content').appendChild(createCard(key, () => { currentPath.push(key); render(); }, true));
+            const folderCard = createCard(key, () => { currentPath.push(key); render(); }, true);
+            document.getElementById('content').appendChild(folderCard);
         }
     }
     if(isLeaf && !isRoot){
@@ -330,20 +356,8 @@ function renameCurrentFolder() {
     const old = currentPath[currentPath.length-1];
     const newName = prompt("New folder name:", old);
     if(newName && newName !== old && newName.trim()){
-        const parent = currentPath.slice(0,-1).reduce((o,p)=>o[p], fileSystem);
-        parent[newName] = parent[old];
-        delete parent[old];
-        const oldPath = currentPath.join('/');
-        const newPath = [...currentPath.slice(0,-1), newName].join('/');
-        if(allFiles[oldPath]){ 
-            allFiles[newPath] = allFiles[oldPath]; 
-            delete allFiles[oldPath]; 
-        }
-        currentPath[currentPath.length-1] = newName;
-        saveFolderStructure(); 
-        saveAllFilesToDB(); 
-        render(); 
-        showToast(`✅ Renamed to "${newName}"`);
+        const parentPath = currentPath.slice(0,-1).join('/');
+        renameFolder(parentPath, old, newName.trim());
     }
 }
 
@@ -438,7 +452,7 @@ function updateThemeIcon() {
     }
 }
 
-// Make all functions global
+// Expose global functions
 window.selectDepartment = selectDepartment;
 window.goBack = goBack;
 window.triggerUpload = triggerUpload;
@@ -455,6 +469,12 @@ window.renameFile = (p, old) => {
 };
 window.deleteFile = (p, n) => { 
     if(confirm(`Delete "${n}"?`)) deleteFileFromFolder(p, n); 
+};
+window.renameFolderPrompt = (parentPath, oldName) => {
+    const newName = prompt("New folder name:", oldName);
+    if (newName && newName.trim() && newName !== oldName) {
+        renameFolder(parentPath, oldName, newName.trim());
+    }
 };
 
 // Initialize
