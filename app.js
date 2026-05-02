@@ -7,7 +7,7 @@ let fileSystem = {};
 let currentPath = [];
 let isSearchMode = false;
 
-// ==================== PDF VIEWER - Opens in new tab for full multi-page support ====================
+// ==================== PDF VIEWER - Opens in new tab ====================
 function openPDF(dataUrl, fileName) {
     showToast(`Opening ${fileName}...`);
     fetch(dataUrl)
@@ -43,6 +43,22 @@ function saveFolderStructure() {
     tx.objectStore('folderStructure').put({ key: 'structure', value: fileSystem });
     tx.commit();
 }
+
+function saveFlag(key, value) {
+    const tx = db.transaction('folderStructure', 'readwrite');
+    tx.objectStore('folderStructure').put({ key: key, value: value });
+    tx.commit();
+}
+
+function getFlag(key) {
+    return new Promise((resolve) => {
+        const tx = db.transaction('folderStructure', 'readonly');
+        const req = tx.objectStore('folderStructure').get(key);
+        req.onsuccess = () => resolve(req.result ? req.result.value : null);
+        req.onerror = () => resolve(null);
+    });
+}
+
 function saveAllFilesToDB() {
     const tx = db.transaction('files', 'readwrite');
     const store = tx.objectStore('files');
@@ -55,13 +71,14 @@ function saveAllFilesToDB() {
     tx.commit();
 }
 
-// Helper: ensure multiple "Data Log X" folders inside FURNACE 1
-function ensureFurnace1DataLogs() {
+// One‑time creation of Data Log 1‑20 inside FURNACE 1
+async function ensureFurnace1DataLogsOnce() {
+    const alreadyDone = await getFlag('dataLogsInitialized');
+    if (alreadyDone) return; // never run again
+
     if (fileSystem["REMELT"] && fileSystem["REMELT"]["FURNACE 1"]) {
         const furnace1 = fileSystem["REMELT"]["FURNACE 1"];
         let changed = false;
-
-        // Create Data Log 1 through Data Log 20
         for (let i = 1; i <= 20; i++) {
             const folderName = `Data Log ${i}`;
             if (!furnace1[folderName]) {
@@ -69,34 +86,33 @@ function ensureFurnace1DataLogs() {
                 changed = true;
             }
         }
-
-        // Also keep the old "Data Logs" if someone still uses it (optional)
+        // optional: keep old "Data Logs" for compatibility
         if (!furnace1["Data Logs"]) {
             furnace1["Data Logs"] = {};
             changed = true;
         }
-
         if (changed) {
             saveFolderStructure();
             showToast("✅ Added Data Log 1‑20 folders inside FURNACE 1");
         }
+        // Set flag so this never runs again
+        saveFlag('dataLogsInitialized', true);
     }
 }
 
 async function loadFromIndexedDB() {
     const folderReq = db.transaction('folderStructure', 'readonly').objectStore('folderStructure').get('structure');
-    folderReq.onsuccess = () => {
+    folderReq.onsuccess = async () => {
         if (folderReq.result) {
             fileSystem = folderReq.result.value;
-            // Add missing Data Log folders (1‑20) if needed
-            ensureFurnace1DataLogs();
+            // Run the one‑time creator (will skip if already done)
+            await ensureFurnace1DataLogsOnce();
         } else {
-            // Fresh install: create full structure with Data Log 1‑20 + Data Logs inside FURNACE 1
+            // Fresh install: create full structure with Data Log 1‑20
             const furnace1Content = { "Data Logs": {} };
             for (let i = 1; i <= 20; i++) {
                 furnace1Content[`Data Log ${i}`] = {};
             }
-            
             fileSystem = {
                 "REMELT": {
                     "FURNACE 1": furnace1Content,
@@ -111,20 +127,7 @@ async function loadFromIndexedDB() {
                     "LAUNDER PANEL ": {},
                     "HPU 1": {},
                     "HPU 2": {},
-                    "M": {},
-                    "N": {},
-                    "O": {},
-                    "P": {},
-                    "Q": {},
-                    "R": {},
-                    "S": {},
-                    "T": {},
-                    "U": {},
-                    "V": {},
-                    "W": {},
-                    "X": {},
-                    "Y": {},
-                    "Z": {}
+                    "M": {}, "N": {}, "O": {}, "P": {}, "Q": {}, "R": {}, "S": {}, "T": {}, "U": {}, "V": {}, "W": {}, "X": {}, "Y": {}, "Z": {}
                 },
                 "CASTER":{"Quality Reports":{},"Mechanical":{},"Maintenance":{},"Production Data":{},"Testing":{},"Checklists":{},"Safety":{},"Training":{}},
                 "HRM":{"Employee Records":{},"Attendance":{},"Performance":{},"Training Logs":{},"Safety Compliance":{},"Policies":{},"Reports":{},"Certifications":{}},
@@ -135,6 +138,8 @@ async function loadFromIndexedDB() {
                 "UTILITY":{"Power Supply":{},"Water System":{},"Compressed Air":{},"HVAC":{},"Reports":{},"Safety":{},"Manuals":{},"Testing":{}}
             };
             saveFolderStructure();
+            // For fresh install, also set the flag so future loads don't recreate
+            saveFlag('dataLogsInitialized', true);
         }
         const fileReq = db.transaction('files', 'readonly').objectStore('files').getAll();
         fileReq.onsuccess = () => {
@@ -181,6 +186,38 @@ function renameFileInFolder(folderPath, oldName, newName) {
     }
 }
 
+// Rename any folder (updates fileSystem and allFiles keys)
+function renameFolder(parentPath, oldName, newName) {
+    if (!newName || newName.trim() === "") return;
+    newName = newName.trim();
+    let parent = fileSystem;
+    if (parentPath.length > 0) {
+        parent = parentPath.split('/').reduce((o, p) => o?.[p], fileSystem);
+    }
+    if (parent && parent[oldName]) {
+        parent[newName] = parent[oldName];
+        delete parent[oldName];
+        const oldFolderPath = parentPath ? `${parentPath}/${oldName}` : oldName;
+        const newFolderPath = parentPath ? `${parentPath}/${newName}` : newName;
+        if (allFiles[oldFolderPath]) {
+            allFiles[newFolderPath] = allFiles[oldFolderPath];
+            delete allFiles[oldFolderPath];
+        }
+        const prefix = oldFolderPath + '/';
+        for (const fullPath in allFiles) {
+            if (fullPath.startsWith(prefix)) {
+                const newFullPath = fullPath.replace(prefix, newFolderPath + '/');
+                allFiles[newFullPath] = allFiles[fullPath];
+                delete allFiles[fullPath];
+            }
+        }
+        saveFolderStructure();
+        saveAllFilesToDB();
+        render();
+        showToast(`✅ Folder renamed to "${newName}"`);
+    }
+}
+
 function selectDepartment(d) { 
     currentPath = [d]; 
     render(); 
@@ -218,14 +255,22 @@ function searchFiles(q) {
     return all.filter(f => f.name.toLowerCase().includes(q.toLowerCase()));
 }
 
-function createCard(title, onClick, isFolder=false, showDel=false, delPath=null, delName=null, showRename=false) {
+// createCard with Rename button for folders
+function createCard(title, onClick, isFolder=false, showDel=false, delPath=null, delName=null, showRename=false, folderParentPath=null) {
     const div = document.createElement('div'); 
     div.className = 'card';
+    let renameButton = '';
+    if (isFolder) {
+        const parentPath = currentPath.join('/');
+        renameButton = `<button class="rename-folder-btn" onclick="event.stopPropagation(); window.renameFolderPrompt('${parentPath}','${escapeHtml(title)}')"><i class="fas fa-edit"></i> Rename</button>`;
+    } else if (showRename) {
+        renameButton = `<button class="rename-file-btn" onclick="event.stopPropagation(); window.renameFile('${delPath}','${escapeHtml(delName)}')"><i class="fas fa-edit"></i> Rename</button>`;
+    }
     div.innerHTML = `
         <div class="card-icon"><i class="fas ${isFolder ? 'fa-folder' : 'fa-file-pdf'}" style="color:${isFolder ? '#fbbf24' : '#60a5fa'}"></i></div>
         <div class="card-filename">${escapeHtml(title)}</div>
         <div class="card-buttons">
-            ${showRename ? `<button class="rename-file-btn" onclick="event.stopPropagation(); window.renameFile('${delPath}','${escapeHtml(delName)}')"><i class="fas fa-edit"></i> Rename</button>` : ''}
+            ${renameButton}
             ${showDel ? `<button class="delete-btn" onclick="event.stopPropagation(); window.deleteFile('${delPath}','${escapeHtml(delName)}')"><i class="fas fa-trash"></i> Delete</button>` : ''}
         </div>
     `;
@@ -260,253 +305,3 @@ function render() {
     document.getElementById('searchInfo').classList.add('hidden');
     document.getElementById('content').innerHTML = '';
     const folder = getCurrentFolderObject();
-    if(!folder) { 
-        currentPath = []; 
-        render(); 
-        return; 
-    }
-    document.getElementById('backBtn').classList.toggle('hidden', currentPath.length === 0);
-    
-    const bcDiv = document.getElementById('breadcrumb');
-    bcDiv.innerHTML = `<div class="breadcrumb-item" onclick="navigateToBreadcrumb(-1)"><i class="fas fa-home"></i> Home</div>`;
-    currentPath.forEach((f,i) => { 
-        bcDiv.innerHTML += `<span class="breadcrumb-separator">/</span><div class="breadcrumb-item" onclick="navigateToBreadcrumb(${i})">${escapeHtml(f)}</div>`; 
-    });
-    
-    if(currentPath.length === 0){
-        let html = '<div class="section-title"><i class="fas fa-building"></i> Departments</div><div class="departments-grid">';
-        for(let dept in fileSystem){
-            const sub = Object.keys(fileSystem[dept]).length;
-            const fcount = allFiles[dept] ? allFiles[dept].length : 0;
-            html += `<div class="dept-card" data-dept="${dept}" onclick="selectDepartment('${dept}')"><div class="dept-oval"><span>${dept}</span></div><div class="dept-arrow"><i class="fas fa-chevron-right"></i></div><div class="dept-info">${sub+fcount} items</div></div>`;
-        }
-        html += '</div>';
-        document.getElementById('departmentsSection').innerHTML = html;
-    } else {
-        document.getElementById('departmentsSection').innerHTML = '';
-    }
-    
-    const isLeaf = Object.keys(folder).length === 0;
-    const isRoot = currentPath.length === 0;
-    document.getElementById('uploadBtn').classList.toggle('hidden', !(isLeaf && !isRoot));
-    
-    const actionDiv = document.createElement('div');
-    actionDiv.className = 'action-bar';
-    if(!isRoot) {
-        actionDiv.innerHTML = `<button class="action-btn" onclick="renameCurrentFolder()"><i class="fas fa-edit"></i> Rename Folder</button><button class="action-btn" onclick="deleteCurrentFolder()"><i class="fas fa-trash-alt"></i> Delete Folder</button><button class="action-btn" onclick="addNewFolder()"><i class="fas fa-plus"></i> Add Subfolder</button>`;
-    } else {
-        actionDiv.innerHTML = `<button class="action-btn" onclick="addNewDepartment()"><i class="fas fa-building"></i> Add Department</button>`;
-    }
-    document.getElementById('content').appendChild(actionDiv);
-    
-    if(!isRoot && !isLeaf) {
-        for(let key in folder) {
-            document.getElementById('content').appendChild(createCard(key, () => { currentPath.push(key); render(); }, true));
-        }
-    }
-    if(isLeaf && !isRoot){
-        const files = getFilesForCurrentFolder();
-        const path = currentPath.join('/');
-        if(!files.length) {
-            document.getElementById('content').innerHTML += '<div class="empty-state"><i class="fas fa-cloud-upload-alt"></i><p>No PDFs yet. Click Upload to add files.</p></div>';
-        } else {
-            files.forEach(f => document.getElementById('content').appendChild(createCard(f.name, () => openPDF(f.dataUrl, f.name), false, true, path, f.name, true)));
-        }
-    }
-    updateStats();
-}
-
-function navigateToBreadcrumb(idx) { 
-    if(idx === -1) {
-        currentPath = []; 
-    } else {
-        currentPath = currentPath.slice(0, idx+1); 
-    }
-    render(); 
-}
-
-function renameCurrentFolder() { 
-    if(!currentPath.length) return;
-    const old = currentPath[currentPath.length-1];
-    const newName = prompt("New folder name:", old);
-    if(newName && newName !== old && newName.trim()){
-        const parent = currentPath.slice(0,-1).reduce((o,p)=>o[p], fileSystem);
-        parent[newName] = parent[old];
-        delete parent[old];
-        const oldPath = currentPath.join('/');
-        const newPath = [...currentPath.slice(0,-1), newName].join('/');
-        if(allFiles[oldPath]){ 
-            allFiles[newPath] = allFiles[oldPath]; 
-            delete allFiles[oldPath]; 
-        }
-        currentPath[currentPath.length-1] = newName;
-        saveFolderStructure(); 
-        saveAllFilesToDB(); 
-        render(); 
-        showToast(`✅ Renamed to "${newName}"`);
-    }
-}
-
-function deleteCurrentFolder() {
-    if(!currentPath.length) return;
-    const name = currentPath[currentPath.length-1];
-    if(confirm(`Delete "${name}" and all contents?`)){
-        const path = currentPath.join('/');
-        delete allFiles[path];
-        const parent = currentPath.slice(0,-1).reduce((o,p)=>o[p], fileSystem);
-        delete parent[name];
-        currentPath.pop();
-        saveFolderStructure(); 
-        saveAllFilesToDB(); 
-        render(); 
-        showToast(`🗑️ Folder "${name}" deleted`);
-    }
-}
-
-function addNewFolder() {
-    const name = prompt("Folder name:");
-    if(name && name.trim()){
-        const cur = getCurrentFolderObject();
-        if(cur && !cur[name]){ 
-            cur[name] = {}; 
-            saveFolderStructure(); 
-            render(); 
-            showToast(`✅ Folder "${name}" created`); 
-        } else {
-            showToast("Exists", true);
-        }
-    }
-}
-
-function addNewDepartment() {
-    const name = prompt("Department name:");
-    if(name && name.trim() && !fileSystem[name]){ 
-        fileSystem[name] = {}; 
-        saveFolderStructure(); 
-        render(); 
-        showToast(`✅ Department "${name}" created`); 
-    } else if(fileSystem[name]) {
-        showToast("Department exists", true);
-    }
-}
-
-function updateStats() {
-    let folderCount = 0, fileCount = 0;
-    function countFolders(obj) { 
-        for(let k in obj) { 
-            if(typeof obj[k] === 'object') { 
-                folderCount++; 
-                countFolders(obj[k]); 
-            } 
-        } 
-    }
-    countFolders(fileSystem);
-    for(let k in allFiles) {
-        if(allFiles[k]) {
-            fileCount += allFiles[k].length;
-        }
-    }
-    document.getElementById('folderCount').textContent = folderCount;
-    document.getElementById('fileCount').textContent = fileCount;
-}
-
-function showToast(msg, isErr = false) {
-    const toast = document.getElementById('toast');
-    toast.querySelector('span').textContent = msg;
-    toast.style.background = isErr ? "linear-gradient(135deg,#ef4444,#dc2626)" : "linear-gradient(135deg,#10b981,#059669)";
-    toast.classList.remove('hidden');
-    setTimeout(() => toast.classList.add('hidden'), 3000);
-}
-
-function escapeHtml(str) { 
-    const div = document.createElement('div'); 
-    div.textContent = str; 
-    return div.innerHTML; 
-}
-
-function toggleTheme() { 
-    document.body.classList.toggle('light-mode'); 
-    localStorage.setItem('oarcel_theme', document.body.classList.contains('light-mode') ? 'light-mode' : ''); 
-    updateThemeIcon(); 
-}
-
-function updateThemeIcon() { 
-    const isDark = !document.body.classList.contains('light-mode'); 
-    const themeBtn = document.getElementById('themeToggle');
-    if(themeBtn) {
-        themeBtn.innerHTML = isDark ? '<i class="fas fa-sun"></i><span>Light</span>' : '<i class="fas fa-moon"></i><span>Dark</span>';
-    }
-}
-
-// Make all functions global
-window.selectDepartment = selectDepartment;
-window.goBack = goBack;
-window.triggerUpload = triggerUpload;
-window.clearSearch = clearSearch;
-window.navigateToBreadcrumb = navigateToBreadcrumb;
-window.renameCurrentFolder = renameCurrentFolder;
-window.deleteCurrentFolder = deleteCurrentFolder;
-window.addNewFolder = addNewFolder;
-window.addNewDepartment = addNewDepartment;
-window.openPDF = openPDF;
-window.renameFile = (p, old) => { 
-    const nu = prompt("New name:", old.replace('.pdf', '')); 
-    if(nu && nu.trim()) renameFileInFolder(p, old, nu.trim()); 
-};
-window.deleteFile = (p, n) => { 
-    if(confirm(`Delete "${n}"?`)) deleteFileFromFolder(p, n); 
-};
-
-// Initialize
-document.addEventListener('DOMContentLoaded', async () => {
-    const themeBtn = document.getElementById('themeToggle');
-    if(themeBtn) themeBtn.onclick = toggleTheme;
-    
-    if(localStorage.getItem('oarcel_theme') === 'light-mode') {
-        document.body.classList.add('light-mode');
-    }
-    updateThemeIcon();
-    
-    const fileInput = document.getElementById('fileInput');
-    if(fileInput) {
-        fileInput.addEventListener('change', async(e) => {
-            const files = Array.from(e.target.files);
-            for(let f of files) {
-                if(f.type === 'application/pdf') {
-                    await addFileToCurrentFolder(f);
-                }
-            }
-            showToast(`${files.length} PDF(s) saved!`);
-            render();
-            e.target.value = '';
-        });
-    }
-    
-    const searchInput = document.getElementById('searchInput');
-    if(searchInput) {
-        searchInput.addEventListener('input', () => render());
-    }
-    
-    const clearSearchBtn = document.getElementById('clearSearchBtn');
-    if(clearSearchBtn) {
-        clearSearchBtn.addEventListener('click', clearSearch);
-    }
-    
-    const backBtn = document.getElementById('backBtn');
-    if(backBtn) {
-        backBtn.addEventListener('click', goBack);
-    }
-    
-    const uploadBtn = document.getElementById('uploadBtn');
-    if(uploadBtn) {
-        uploadBtn.addEventListener('click', triggerUpload);
-    }
-    
-    try {
-        await initDB();
-        await loadFromIndexedDB();
-    } catch(e) {
-        console.error(e);
-        showToast('Database error', true);
-    }
-});
