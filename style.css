@@ -1,6 +1,5 @@
 /* ============================================
-   OARCEL Document Manager — Premium Redesign v2
-   Fine-tuned & Attraction Enhancements
+   OARCEL Document Manager — Premium Redesign
    ============================================ */
 
 * {
@@ -92,7 +91,6 @@ body {
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    transition: background 0.3s ease, color 0.2s ease;
 }
 
 body::before {
@@ -103,7 +101,6 @@ body::before {
     background-size: cover;
     background-position: center;
     z-index: -3;
-    transition: opacity 0.3s ease;
 }
 
 /* Ambient Glow Orbs */
@@ -178,23 +175,6 @@ body::before {
     50% { transform: translateY(-50vh) translateX(30px) scale(1.2); opacity: 0.4; }
     90% { opacity: 0.1; }
     100% { transform: translateY(-100vh) translateX(60px) scale(0.5); opacity: 0; }
-}
-
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-}
-::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 10px;
-}
-::-webkit-scrollbar-thumb {
-    background: var(--accent-blue);
-    border-radius: 10px;
-}
-::-webkit-scrollbar-thumb:hover {
-    background: var(--accent-purple);
 }
 
 /* ============================================
@@ -622,7 +602,6 @@ body.light-mode #searchInput:focus {
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-sm), inset 0 1px 0 var(--glass-highlight);
-    transition: var(--transition-base);
 }
 
 .stat-item {
@@ -630,11 +609,6 @@ body.light-mode #searchInput:focus {
     align-items: center;
     gap: 14px;
     flex: 1;
-    transition: transform var(--transition-base);
-}
-
-.stat-item:hover {
-    transform: translateY(-2px);
 }
 
 .stat-icon-bg {
@@ -934,7 +908,7 @@ body.light-mode .breadcrumb {
 .dept-card[data-dept="UTILITY"]:hover .dept-info { background: rgba(220, 38, 38, 0.15); color: #f87171; border-color: rgba(220, 38, 38, 0.3); }
 
 /* ============================================
-   CONTENT & CARDS (with shimmer effect)
+   CONTENT & CARDS
    ============================================ */
 
 .content {
@@ -962,23 +936,6 @@ body.light-mode .breadcrumb {
 @keyframes cardEnter {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
-}
-
-/* Shimmer effect on card hover */
-.card::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
-    transition: left 0.5s ease;
-    pointer-events: none;
-}
-
-.card:hover::after {
-    left: 100%;
 }
 
 .card::before {
@@ -1352,7 +1309,7 @@ body.light-mode .loading-overlay {
 .hidden { display: none !important; }
 
 /* ============================================
-   RESPONSIVE (FINE-TUNED)
+   RESPONSIVE
    ============================================ */
 
 @media (max-width: 640px) {
@@ -1365,43 +1322,13 @@ body.light-mode .loading-overlay {
     .logo { width: 44px; height: 44px; }
     .logo-inner { font-size: 1.2rem; }
     
-    .top-bar {
-        padding: 8px 12px;
-        gap: 8px;
-        flex-wrap: wrap;
-    }
+    .top-bar { padding: 8px; gap: 8px; }
+    .btn-back, .btn-upload { padding: 8px 16px; font-size: 0.8rem; }
+    .theme-toggle { width: 38px; height: 38px; }
     
-    .search-container {
-        flex: 1;
-        min-width: 140px;
-        order: 0;
-        margin-bottom: 0;
-    }
-    
-    .btn-back {
-        padding: 8px 14px;
-        font-size: 0.8rem;
-        white-space: nowrap;
-        flex-shrink: 0;
-    }
-    
-    .theme-toggle {
-        width: 38px;
-        height: 38px;
-        flex-shrink: 0;
-    }
-    
-    .top-bar-actions {
-        margin-left: auto;
-        flex-shrink: 0;
-        gap: 8px;
-    }
-    
-    .btn-upload {
-        padding: 8px 14px;
-        font-size: 0.75rem;
-        white-space: nowrap;
-    }
+    .search-container { min-width: 100%; order: -1; margin-bottom: 4px; }
+    .top-bar { flex-wrap: wrap; }
+    .top-bar-actions { margin-left: auto; }
     
     .stats-bar { padding: 12px 18px; gap: 12px; }
     .stat-icon-bg { width: 38px; height: 38px; font-size: 1rem; }
@@ -1428,3 +1355,6 @@ body.light-mode .loading-overlay {
     .card-buttons button { padding: 6px 10px; width: 100%; justify-content: center; }
     .dept-info { display: none; }
 }
+  
+
+This is my css
