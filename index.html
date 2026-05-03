@@ -1,1 +1,490 @@
-yy
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+<title>OARCEL | Document Manager</title>
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="OARCEL">
+<meta name="theme-color" content="#0a1128">
+<link rel="apple-touch-icon" href="https://img.icons8.com/fluency/192/folder-invoices.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ============================================
+   COMPLETE CSS (FIXED MOBILE LAYOUT)
+   ============================================ */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --bg-deep: #070d1a;
+    --glass-bg: rgba(15, 30, 50, 0.55);
+    --glass-border: rgba(255, 255, 255, 0.12);
+    --text-primary: #f0f4f8;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --accent-blue: #3b82f6;
+    --accent-purple: #8b5cf6;
+    --accent-rose: #f43f5e;
+    --card-bg: rgba(12, 28, 48, 0.6);
+    --input-bg: rgba(0, 0, 0, 0.35);
+    --radius-sm: 12px;
+    --radius-md: 16px;
+    --radius-lg: 24px;
+    --radius-full: 9999px;
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+    --transition-base: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body.light-mode {
+    --bg-deep: #f1f5f9;
+    --glass-bg: rgba(255, 255, 255, 0.72);
+    --glass-border: rgba(0, 0, 0, 0.08);
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --card-bg: rgba(255, 255, 255, 0.75);
+    --input-bg: rgba(255, 255, 255, 0.85);
+}
+
+body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.app {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* Header */
+.header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--glass-border);
+    margin-bottom: 20px;
+}
+
+.logo {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    color: white;
+}
+
+.header-title h1 {
+    font-size: 1.4rem;
+    font-weight: 700;
+}
+
+.doc-tag {
+    font-size: 0.65rem;
+    background: rgba(6, 182, 212, 0.15);
+    padding: 4px 8px;
+    border-radius: var(--radius-full);
+    margin-left: 8px;
+}
+
+.owner-name {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+/* Search */
+.search-container {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.search-container i {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+}
+
+#searchInput {
+    width: 100%;
+    padding: 14px 40px 14px 44px;
+    border-radius: var(--radius-full);
+    border: 1px solid var(--glass-border);
+    background: var(--input-bg);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    outline: none;
+}
+
+.clear-search {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+/* Stats */
+.stats-bar {
+    display: flex;
+    gap: 20px;
+    padding: 14px 20px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--glass-border);
+    margin-bottom: 20px;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.stat-icon-bg {
+    width: 44px;
+    height: 44px;
+    background: rgba(59, 130, 246, 0.15);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stat-number {
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.stat-data label {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+}
+
+/* Unified Breadcrumb Bar (oval with buttons) */
+.breadcrumb-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+    padding: 8px 16px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    border-radius: var(--radius-full);
+    border: 1px solid var(--glass-border);
+}
+
+/* Breadcrumb - can scroll */
+#breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    flex: 1;
+    font-size: 0.85rem;
+    overflow-x: auto;
+    padding: 4px 0;
+}
+
+.breadcrumb-item {
+    cursor: pointer;
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+    background: rgba(255,255,255,0.05);
+    white-space: nowrap;
+}
+
+.breadcrumb-separator {
+    color: var(--text-muted);
+}
+
+/* Buttons group */
+.breadcrumb-buttons {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.btn-back, .theme-toggle, .btn-upload {
+    padding: 8px 16px;
+    border-radius: var(--radius-full);
+    border: 1px solid var(--glass-border);
+    background: var(--card-bg);
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 0.8rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: var(--transition-base);
+}
+
+.btn-back:hover, .theme-toggle:hover, .btn-upload:hover {
+    transform: translateY(-2px);
+    background: var(--accent-blue);
+    color: white;
+    border-color: transparent;
+}
+
+/* Departments */
+.departments-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 24px;
+}
+
+.dept-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 8px;
+    cursor: pointer;
+    border-radius: var(--radius-md);
+    transition: var(--transition-base);
+}
+
+.dept-card:hover {
+    background: var(--glass-bg);
+    transform: translateX(6px);
+}
+
+.dept-oval {
+    padding: 10px 24px;
+    border-radius: var(--radius-full);
+    background: linear-gradient(145deg, #2563eb, #1d4ed8);
+    color: white;
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+
+.dept-arrow {
+    margin-left: auto;
+    color: var(--text-muted);
+}
+
+.dept-info {
+    font-size: 0.7rem;
+    background: rgba(0,0,0,0.2);
+    padding: 4px 12px;
+    border-radius: var(--radius-full);
+}
+
+/* Cards */
+.content {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.card {
+    background: var(--card-bg);
+    border-radius: var(--radius-md);
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    border: 1px solid var(--glass-border);
+    cursor: pointer;
+    transition: var(--transition-base);
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    background: var(--glass-bg);
+}
+
+.card-icon {
+    width: 40px;
+    height: 40px;
+    background: rgba(59, 130, 246, 0.15);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.card-filename {
+    flex: 1;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.card-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.card-buttons button {
+    padding: 6px 12px;
+    border-radius: var(--radius-full);
+    border: none;
+    font-size: 0.7rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.rename-file-btn {
+    background: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
+}
+
+.delete-btn {
+    background: rgba(244, 63, 94, 0.2);
+    color: #fda4af;
+}
+
+/* Action Bar */
+.action-bar {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 20px;
+    padding: 12px;
+    background: var(--glass-bg);
+    border-radius: var(--radius-full);
+}
+
+.action-btn {
+    padding: 10px 20px;
+    border-radius: var(--radius-full);
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--text-primary);
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Toast */
+.toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #10b981;
+    color: white;
+    padding: 12px 24px;
+    border-radius: var(--radius-full);
+    z-index: 1000;
+    transition: 0.3s;
+}
+
+.hidden { display: none !important; }
+
+/* Mobile adjustments */
+@media (max-width: 640px) {
+    body { padding: 12px; }
+    .breadcrumb-bar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        padding: 12px;
+    }
+    .breadcrumb-buttons {
+        justify-content: center;
+    }
+    .btn-back, .theme-toggle, .btn-upload {
+        padding: 8px 14px;
+        font-size: 0.75rem;
+    }
+    .card { flex-wrap: wrap; }
+    .card-buttons { margin-left: auto; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Header -->
+  <header class="header">
+    <div class="logo"><i class="fas fa-folder-open"></i></div>
+    <div class="header-title">
+      <div><h1>OARCEL <span class="doc-tag">Document Manager</span></h1></div>
+      <div class="owner-name"><span>●</span> Abish Rajan</div>
+    </div>
+  </header>
+
+  <!-- Search -->
+  <div class="search-container">
+    <i class="fas fa-search"></i>
+    <input type="text" id="searchInput" placeholder="Search documents...">
+    <button id="clearSearchBtn" class="clear-search hidden"><i class="fas fa-times"></i></button>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-bar">
+    <div class="stat-item"><div class="stat-icon-bg"><i class="fas fa-folder"></i></div><div><span id="folderCount" class="stat-number">0</span><div><label>Folders</label></div></div></div>
+    <div class="stat-item"><div class="stat-icon-bg"><i class="fas fa-file-pdf"></i></div><div><span id="fileCount" class="stat-number">0</span><div><label>Documents</label></div></div></div>
+  </div>
+
+  <!-- Unified Bar: Breadcrumb + Buttons -->
+  <div class="breadcrumb-bar">
+    <nav id="breadcrumb" class="breadcrumb">
+      <!-- JS will fill breadcrumb -->
+    </nav>
+    <div class="breadcrumb-buttons">
+      <button id="backBtn" class="btn-back hidden"><i class="fas fa-arrow-left"></i> <span>Back</span></button>
+      <button id="themeToggle" class="theme-toggle"><i class="fas fa-moon"></i> <span>Light</span></button>
+      <button id="uploadBtn" class="btn-upload hidden"><i class="fas fa-upload"></i> <span>Upload</span></button>
+    </div>
+  </div>
+
+  <!-- Departments & Content -->
+  <div id="departmentsSection"></div>
+  <div id="searchInfo" class="search-result-info hidden"></div>
+  <div id="content" class="content"></div>
+</div>
+
+<input type="file" id="fileInput" accept="application/pdf" multiple style="display:none">
+<div id="toast" class="toast hidden"><span></span></div>
+
+<script>
+// ==================== YOUR FULL JAVASCRIPT HERE ====================
+// (Copy your complete app.js content below)
+// Make sure to include all functions: initDB, render, renameFolder, etc.
+// For brevity, I'm showing only the structure – but you must paste your working JS.
+
+// IMPORTANT: Paste your existing app.js code here (the final version with renameFolder, etc.)
+// If you don't have it, let me know and I'll provide the complete JS.
+
+// For now, a placeholder:
+console.log("App ready – paste your full JavaScript here");
+</script>
+</body>
+</html>
