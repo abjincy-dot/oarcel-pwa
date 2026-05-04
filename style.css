@@ -949,3 +949,19 @@ body.light-mode .header-title h1 {
 .content {
     gap: 3px !important;   /* reduces space between cards */
 }
+/* Make card backgrounds more visible */
+.card {
+    background: rgba(12, 28, 48, 0.92) !important;
+}
+
+body.light-mode .card {
+    background: rgba(255, 255, 255, 0.96) !important;
+}
+/* Change background color of folder cards */
+.card {
+    background: #of172a !important;   /* solid dark blue-gray */
+    border-radius: 12px !important;
+}
+body.light-mode .card {
+    background: #e2e8f0 !important;   /* light gray */
+}
