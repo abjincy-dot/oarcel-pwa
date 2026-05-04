@@ -687,8 +687,8 @@ body.light-mode .header-title h1 {
 .card:hover::after { left: 100%; }
 
 .card-icon {
-    width: 40px;
-    height: 40px;
+    width: 32px;
+    height: 32px;
     border-radius: var(--radius-sm);
     background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(139, 92, 246, 0.1));
     border: 1px solid rgba(59, 130, 246, 0.2);
@@ -763,11 +763,11 @@ body.light-mode .header-title h1 {
 
 .action-bar {
     display: flex;
-    gap: 10px;
+    gap: 6px;
     padding: 12px;
     flex-wrap: wrap;
     justify-content: center;
-    margin-bottom: 16px;
+    margin-bottom: 8px;
     background: var(--glass-bg);
     border-radius: var(--radius-full);
     border: 1px solid var(--glass-border);
@@ -777,7 +777,7 @@ body.light-mode .header-title h1 {
 .action-btn {
     background: rgba(20, 40, 60, 0.7);
     border: 1px solid var(--glass-border);
-    padding: 10px 20px;
+    padding: 6px 16px;
     border-radius: var(--radius-full);
     color: var(--text-primary);
     cursor: pointer;
@@ -923,9 +923,29 @@ body.light-mode .header-title h1 {
     .card-buttons { margin-top: 8px; width: 100%; justify-content: flex-end; }
     .toast { white-space: normal; max-width: 90%; text-align: center; }
 }
-
+.section-title {
+    margin-bottom: 8px !important;
+    line-height: 1.3 !important;
+}
 @media (max-width: 380px) {
     .card-buttons { flex-direction: column; gap: 6px; }
     .card-buttons button { width: 100%; justify-content: center; }
     .dept-info { display: none; }
+}
+/* Reduce card height */
+.card {
+    padding: 3px 10px !important;   /* was 14px 18px – much shorter */
+    gap: 6px !important;
+}
+
+.card-icon {
+    width: 20px !important;
+    height: 20px !important;
+}
+
+.card-icon i {
+    font-size: 0.9rem !important;
+}
+.content {
+    gap: 3px !important;   /* reduces space between cards */
 }
