@@ -180,7 +180,6 @@ function createCard(title, onClick, isFolder = false, showDel = false, delPath =
 function render() {
     const query = document.getElementById('searchInput').value.trim().toLowerCase();
     
-    // Search mode
     if (query) {
         isSearchMode = true;
         document.getElementById('clearSearchBtn').classList.remove('hidden');
@@ -202,7 +201,6 @@ function render() {
         return;
     }
     
-    // Normal mode
     isSearchMode = false;
     document.getElementById('clearSearchBtn').classList.add('hidden');
     document.getElementById('searchInfo').classList.add('hidden');
@@ -211,18 +209,17 @@ function render() {
     const folder = getCurrentFolderObject();
     if (!folder) { currentPath = []; render(); return; }
     
-    // Back button visibility
     document.getElementById('backBtn').classList.toggle('hidden', currentPath.length === 0);
     
-    // Breadcrumb
     const bcDiv = document.getElementById('breadcrumb');
     bcDiv.innerHTML = `<div class="breadcrumb-item" onclick="navigateToBreadcrumb(-1)"><i class="fas fa-home"></i> Home</div>`;
     currentPath.forEach((f, i) => {
         bcDiv.innerHTML += `<span class="breadcrumb-separator">/</span><div class="breadcrumb-item" onclick="navigateToBreadcrumb(${i})">${escapeHtml(f)}</div>`;
     });
     
-    // Departments view (root level)
-    if (currentPath.length === 0) {
+    const isRoot = currentPath.length === 0;
+    
+    if (isRoot) {
         let html = '<div class="section-title"><i class="fas fa-building"></i> Departments</div><div class="departments-grid">';
         for (let dept in fileSystem) {
             const sub = Object.keys(fileSystem[dept]).length;
@@ -231,16 +228,20 @@ function render() {
         }
         html += '</div>';
         document.getElementById('departmentsSection').innerHTML = html;
+        document.getElementById('uploadBtn').classList.add('hidden');
     } else {
         document.getElementById('departmentsSection').innerHTML = '';
     }
     
-    // FIXED: Upload button now shows in ALL folders (both leaf and non-leaf)
-    // The condition now checks if we're NOT at root level
-    const isRoot = currentPath.length === 0;
-    document.getElementById('uploadBtn').classList.toggle('hidden', isRoot);
+    const hasSubfolders = Object.keys(folder).length > 0;
+    const isLeafFolder = !isRoot && !hasSubfolders;
     
-    // Action buttons bar
+    if (isLeafFolder) {
+        document.getElementById('uploadBtn').classList.remove('hidden');
+    } else {
+        document.getElementById('uploadBtn').classList.add('hidden');
+    }
+    
     const actionDiv = document.createElement('div');
     actionDiv.className = 'action-bar';
     if (!isRoot) {
@@ -254,22 +255,20 @@ function render() {
     }
     document.getElementById('content').appendChild(actionDiv);
     
-    // Display subfolders (if any)
-    const isLeaf = Object.keys(folder).length === 0;
-    if (!isRoot && !isLeaf) {
+    if (!isRoot && hasSubfolders) {
         for (let key in folder) {
             document.getElementById('content').appendChild(createCard(key, () => { currentPath.push(key); render(); }, true));
         }
     }
     
-    // Display files in current folder (if any)
-    const files = getFilesForCurrentFolder();
-    const path = currentPath.join('/');
-    if (files.length) {
-        files.forEach(f => document.getElementById('content').appendChild(createCard(f.name, () => openPDF(f.dataUrl, f.name), false, true, path, f.name, true)));
-    } else if (!isRoot && isLeaf) {
-        // Empty folder - show empty state
-        document.getElementById('content').innerHTML += '<div class="empty-state"><i class="fas fa-cloud-upload-alt"></i><p>No PDFs yet. Click Upload to add files.</p></div>';
+    if (isLeafFolder) {
+        const files = getFilesForCurrentFolder();
+        const path = currentPath.join('/');
+        if (files.length) {
+            files.forEach(f => document.getElementById('content').appendChild(createCard(f.name, () => openPDF(f.dataUrl, f.name), false, true, path, f.name, true)));
+        } else {
+            document.getElementById('content').innerHTML += '<div class="empty-state"><i class="fas fa-cloud-upload-alt"></i><p>No PDFs yet. Click Upload to add files.</p></div>';
+        }
     }
     
     updateStats();
@@ -370,7 +369,6 @@ function updateThemeIcon() {
     if (themeBtn) { themeBtn.innerHTML = `<div class="theme-icon-wrapper"><i class="fas ${isDark ? 'fa-sun' : 'fa-moon'}"></i></div>`; }
 }
 
-// Make functions global
 window.selectDepartment = selectDepartment;
 window.goBack = goBack;
 window.triggerUpload = triggerUpload;
@@ -384,7 +382,6 @@ window.openPDF = openPDF;
 window.renameFile = (p, old) => { const nu = prompt("New name:", old.replace('.pdf', '')); if (nu && nu.trim()) renameFileInFolder(p, old, nu.trim()); };
 window.deleteFile = (p, n) => { if (confirm(`Delete "${n}"?`)) deleteFileFromFolder(p, n); };
 
-// Initialize
 document.addEventListener('DOMContentLoaded', async () => {
     const themeBtn = document.getElementById('themeToggle');
     if (themeBtn) themeBtn.onclick = toggleTheme;
