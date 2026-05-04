@@ -1026,3 +1026,33 @@ body.light-mode .card {
     max-width: 100%;
     box-sizing: border-box;
 }
+/* Fix Upload button on mobile – make it a clean circle/pill */
+@media (max-width: 560px) {
+    .btn-upload {
+        padding: 10px !important;
+        width: 44px !important;
+        height: 44px !important;
+        border-radius: 50% !important;
+        justify-content: center !important;
+        align-items: center !important;
+    }
+    
+    .btn-upload span {
+        display: none !important;  /* hide the word "Upload" */
+    }
+    
+    .btn-upload i {
+        margin: 0 !important;
+        font-size: 1.2rem !important;
+    }
+    
+    /* Also make the theme toggle a perfect circle */
+    .theme-toggle {
+        width: 44px !important;
+        height: 44px !important;
+        border-radius: 50% !important;
+        padding: 0 !important;
+        justify-content: center !important;
+        align-items: center !important;
+    }
+}
