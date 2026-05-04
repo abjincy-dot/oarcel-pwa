@@ -1,478 +1,512 @@
-// OARCEL Document Manager - Full Functional Script with Persistence
+// ==================== INDEXEDDB CORE ====================
+const DB_NAME = 'OarcelDB';
+const DB_VERSION = 4;
+let db = null;
+let allFiles = {};
+let fileSystem = {};
+let currentPath = [];
+let isSearchMode = false;
 
-// ----- Storage Keys -----
-const STORAGE_KEY = 'oarcel_document_manager';
+// ==================== PDF VIEWER - Opens in new tab for full multi-page support ====================
+function openPDF(dataUrl, fileName) {
+    showToast(`Opening ${fileName}...`);
+    fetch(dataUrl)
+        .then(response => response.blob())
+        .then(blob => {
+            const blobUrl = URL.createObjectURL(blob);
+            window.open(blobUrl, '_blank');
+            showToast(`PDF opened in new tab. Close tab to return.`);
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+        })
+        .catch(err => {
+            console.error('PDF error:', err);
+            showToast(`Failed to open PDF: ${err.message}`, true);
+        });
+}
 
-// Default structure (8 departments with sample subfolders)
-const defaultData = {
-    "REMELT": { folders: ["FURNACE 1", "FURNACE 2", "FURNACE 3"], files: { "FURNACE 1": [], "FURNACE 2": [], "FURNACE 3": [] } },
-    "CASTER": { folders: ["MOLD A", "MOLD B"], files: { "MOLD A": [], "MOLD B": [] } },
-    "HRM": { folders: ["POLICIES", "EMPLOYEES"], files: { "POLICIES": [], "EMPLOYEES": [] } },
-    "CRM": { folders: ["CUSTOMERS", "LEADS"], files: { "CUSTOMERS": [], "LEADS": [] } },
-    "ANNEALING": { folders: ["OVEN 1", "OVEN 2"], files: { "OVEN 1": [], "OVEN 2": [] } },
-    "TLL": { folders: ["LOGISTICS"], files: { "LOGISTICS": [] } },
-    "SLITTER": { folders: ["BLADE SETUP"], files: { "BLADE SETUP": [] } },
-    "UTILITY": { folders: ["POWER", "WATER"], files: { "POWER": [], "WATER": [] } }
-};
+// ==================== INDEXEDDB FUNCTIONS ====================
+function initDB() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => { db = request.result; resolve(); };
+        request.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains('files')) db.createObjectStore('files', { keyPath: 'id' });
+            if (!db.objectStoreNames.contains('folderStructure')) db.createObjectStore('folderStructure', { keyPath: 'key' });
+        };
+    });
+}
 
-// Load or initialize data
-let documentData = { ...defaultData };
-let currentDept = null;
-let currentFolder = null;
-let searchQuery = '';
-
-function loadData() {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-        try {
-            const parsed = JSON.parse(saved);
-            // merge with default structure to ensure new depts/folders exist
-            for (let dept in defaultData) {
-                if (!parsed[dept]) parsed[dept] = JSON.parse(JSON.stringify(defaultData[dept]));
-                else {
-                    if (!parsed[dept].folders) parsed[dept].folders = defaultData[dept].folders;
-                    if (!parsed[dept].files) parsed[dept].files = {};
-                    defaultData[dept].folders.forEach(f => {
-                        if (!parsed[dept].files[f]) parsed[dept].files[f] = [];
-                    });
-                }
-            }
-            documentData = parsed;
-        } catch(e) { console.warn(e); }
-    } else {
-        documentData = JSON.parse(JSON.stringify(defaultData));
+function saveFolderStructure() {
+    const tx = db.transaction('folderStructure', 'readwrite');
+    tx.objectStore('folderStructure').put({ key: 'structure', value: fileSystem });
+    tx.commit();
+}
+function saveAllFilesToDB() {
+    const tx = db.transaction('files', 'readwrite');
+    const store = tx.objectStore('files');
+    store.clear();
+    for (const folderPath in allFiles) {
+        if (allFiles[folderPath] && allFiles[folderPath].length > 0) {
+            store.put({ id: folderPath, folderPath, files: allFiles[folderPath] });
+        }
     }
-    saveData();
+    tx.commit();
 }
 
-function saveData() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(documentData));
+// Helper: ensure multiple "Data Log X" folders inside FURNACE 1
+function ensureFurnace1DataLogs() {
+    if (fileSystem["REMELT"] && fileSystem["REMELT"]["FURNACE 1"]) {
+        const furnace1 = fileSystem["REMELT"]["FURNACE 1"];
+        let changed = false;
+
+        // Create Data Log 1 through Data Log 20
+        for (let i = 1; i <= 20; i++) {
+            const folderName = `Data Log ${i}`;
+            if (!furnace1[folderName]) {
+                furnace1[folderName] = {};
+                changed = true;
+            }
+        }
+
+        // Also keep the old "Data Logs" if someone still uses it (optional)
+        if (!furnace1["Data Logs"]) {
+            furnace1["Data Logs"] = {};
+            changed = true;
+        }
+
+        if (changed) {
+            saveFolderStructure();
+            showToast("✅ Added Data Log 1‑20 folders inside FURNACE 1");
+        }
+    }
 }
 
-// ----- Helper Functions -----
-function showToast(msg, isError = false) {
-    const toast = document.getElementById('toast');
-    if (!toast) return;
-    toast.querySelector('span').innerText = msg;
-    toast.classList.add('show');
-    if (isError) toast.classList.add('error');
-    else toast.classList.remove('error');
-    setTimeout(() => toast.classList.remove('show'), 2500);
+async function loadFromIndexedDB() {
+    const folderReq = db.transaction('folderStructure', 'readonly').objectStore('folderStructure').get('structure');
+    folderReq.onsuccess = () => {
+        if (folderReq.result) {
+            fileSystem = folderReq.result.value;
+            // Add missing Data Log folders (1‑20) if needed
+            ensureFurnace1DataLogs();
+        } else {
+            // Fresh install: create full structure with Data Log 1‑20 + Data Logs inside FURNACE 1
+            const furnace1Content = { "Data Logs": {} };
+            for (let i = 1; i <= 20; i++) {
+                furnace1Content[`Data Log ${i}`] = {};
+            }
+            
+            fileSystem = {
+                "REMELT": {
+                    "FURNACE 1": furnace1Content,
+                    "FURNACE 2": {},
+                    "FURNACE 3": {},
+                    "FURNACE 4": {},
+                    "FURNACE 5": {},
+                    "ACD": {},
+                    "DBF": {},
+                    "ROD FEEDER": {},
+                    "LAUNDER HEATERS": {},
+                    "LAUNDER PANEL ": {},
+                    "HPU 1": {},
+                    "HPU 2": {},
+                    "M": {},
+                    "N": {},
+                    "O": {},
+                    "P": {},
+                    "Q": {},
+                    "R": {},
+                    "S": {},
+                    "T": {},
+                    "U": {},
+                    "V": {},
+                    "W": {},
+                    "X": {},
+                    "Y": {},
+                    "Z": {}
+                },
+                "CASTER":{"Quality Reports":{},"Mechanical":{},"Maintenance":{},"Production Data":{},"Testing":{},"Checklists":{},"Safety":{},"Training":{}},
+                "HRM":{"Employee Records":{},"Attendance":{},"Performance":{},"Training Logs":{},"Safety Compliance":{},"Policies":{},"Reports":{},"Certifications":{}},
+                "CRM":{"PLC Programs":{},"CAD Drawings":{},"Electrical":{},"SCADA":{},"Automation":{},"Reports":{},"Configurations":{},"Manuals":{}},
+                "ANNEALING":{"Temperature Control":{},"Process Parameters":{},"Quality Assurance":{},"Maintenance":{},"Safety":{},"Production Logs":{},"Testing":{},"SOP Documents":{}},
+                "TLL":{"PLC Programs":{},"CAD Drawings":{},"Maintenance":{},"Production Logs":{},"Process Optimization":{},"Quality Reports":{},"Manuals":{},"Safety":{}},
+                "SLITTER":{"Blade Maintenance":{},"Quality Control":{},"Production Reports":{},"Mechanical":{},"Safety":{},"Checklists":{},"Training":{},"Testing":{}},
+                "UTILITY":{"Power Supply":{},"Water System":{},"Compressed Air":{},"HVAC":{},"Reports":{},"Safety":{},"Manuals":{},"Testing":{}}
+            };
+            saveFolderStructure();
+        }
+        const fileReq = db.transaction('files', 'readonly').objectStore('files').getAll();
+        fileReq.onsuccess = () => {
+            allFiles = {};
+            for (let item of fileReq.result) {
+                allFiles[item.folderPath] = item.files;
+            }
+            render();
+        };
+    };
 }
 
-function showLoading(show) {
-    const loader = document.getElementById('loadingOverlay');
-    if (loader) loader.classList.toggle('hidden', !show);
+function getCurrentFolderObject() { return currentPath.reduce((o,p) => o?.[p], fileSystem); }
+function getFilesForCurrentFolder() { return allFiles[currentPath.join('/')] || []; }
+
+async function addFileToCurrentFolder(file) {
+    const folderPath = currentPath.join('/');
+    if (!allFiles[folderPath]) allFiles[folderPath] = [];
+    const base64 = await new Promise(r => { const rd = new FileReader(); rd.onload = e => r(e.target.result); rd.readAsDataURL(file); });
+    allFiles[folderPath].push({ name: file.name, dataUrl: base64 });
+    await saveAllFilesToDB();
+}
+
+function deleteFileFromFolder(folderPath, fileName) {
+    if (allFiles[folderPath]) {
+        allFiles[folderPath] = allFiles[folderPath].filter(f => f.name !== fileName);
+        if (allFiles[folderPath].length === 0) delete allFiles[folderPath];
+        saveAllFilesToDB();
+        render();
+        showToast(`✅ Deleted "${fileName}"`);
+    }
+}
+
+function renameFileInFolder(folderPath, oldName, newName) {
+    if (allFiles[folderPath]) {
+        const idx = allFiles[folderPath].findIndex(f => f.name === oldName);
+        if (idx !== -1) {
+            if (!newName.toLowerCase().endsWith('.pdf')) newName += '.pdf';
+            allFiles[folderPath][idx].name = newName;
+            saveAllFilesToDB();
+            render();
+            showToast(`✅ Renamed to "${newName}"`);
+        }
+    }
+}
+
+function selectDepartment(d) { 
+    currentPath = [d]; 
+    render(); 
+}
+
+function goBack() { 
+    if(currentPath.length && !isSearchMode) { 
+        currentPath.pop(); 
+        render(); 
+    } else if(isSearchMode) { 
+        clearSearch(); 
+    } 
+}
+
+function triggerUpload() { 
+    document.getElementById('fileInput').click(); 
+}
+
+function clearSearch() { 
+    document.getElementById('searchInput').value = ''; 
+    isSearchMode = false; 
+    document.getElementById('searchInfo').classList.add('hidden'); 
+    document.getElementById('clearSearchBtn').classList.add('hidden'); 
+    render(); 
+}
+
+function searchFiles(q) {
+    if(!q.trim()) return [];
+    const all = [];
+    for(const path in allFiles) {
+        if(allFiles[path]) {
+            allFiles[path].forEach(f => all.push({...f, folder:path}));
+        }
+    }
+    return all.filter(f => f.name.toLowerCase().includes(q.toLowerCase()));
+}
+
+function createCard(title, onClick, isFolder=false, showDel=false, delPath=null, delName=null, showRename=false) {
+    const div = document.createElement('div'); 
+    div.className = 'card';
+    div.innerHTML = `
+        <div class="card-icon"><i class="fas ${isFolder ? 'fa-folder' : 'fa-file-pdf'}" style="color:${isFolder ? '#fbbf24' : '#60a5fa'}"></i></div>
+        <div class="card-filename">${escapeHtml(title)}</div>
+        <div class="card-buttons">
+            ${showRename ? `<button class="rename-file-btn" onclick="event.stopPropagation(); window.renameFile('${delPath}','${escapeHtml(delName)}')"><i class="fas fa-edit"></i> Rename</button>` : ''}
+            ${showDel ? `<button class="delete-btn" onclick="event.stopPropagation(); window.deleteFile('${delPath}','${escapeHtml(delName)}')"><i class="fas fa-trash"></i> Delete</button>` : ''}
+        </div>
+    `;
+    div.onclick = onClick; 
+    return div;
+}
+
+function render() {
+    const query = document.getElementById('searchInput').value.trim().toLowerCase();
+    if(query) {
+        isSearchMode = true;
+        document.getElementById('clearSearchBtn').classList.remove('hidden');
+        const results = searchFiles(query);
+        document.getElementById('searchInfo').classList.remove('hidden');
+        document.getElementById('searchInfo').innerHTML = `<i class="fas fa-search"></i> Found ${results.length} result(s) for "${escapeHtml(query)}" <button onclick="clearSearch()" style="background:none;border:none;color:#60a5fa;cursor:pointer;margin-left:10px;">Clear</button>`;
+        const contentDiv = document.getElementById('content'); 
+        contentDiv.innerHTML = '';
+        document.getElementById('backBtn').classList.remove('hidden');
+        document.getElementById('uploadBtn').classList.add('hidden');
+        document.getElementById('departmentsSection').innerHTML = '';
+        document.getElementById('breadcrumb').innerHTML = '';
+        if(!results.length) {
+            contentDiv.innerHTML = '<div class="empty-state"><i class="fas fa-search"></i><p>No PDFs found.</p></div>';
+        } else {
+            results.forEach(f => contentDiv.appendChild(createCard(f.name, () => openPDF(f.dataUrl, f.name), false)));
+        }
+        updateStats(); 
+        return;
+    }
+    isSearchMode = false;
+    document.getElementById('clearSearchBtn').classList.add('hidden');
+    document.getElementById('searchInfo').classList.add('hidden');
+    document.getElementById('content').innerHTML = '';
+    const folder = getCurrentFolderObject();
+    if(!folder) { 
+        currentPath = []; 
+        render(); 
+        return; 
+    }
+    document.getElementById('backBtn').classList.toggle('hidden', currentPath.length === 0);
+    
+    const bcDiv = document.getElementById('breadcrumb');
+    bcDiv.innerHTML = `<div class="breadcrumb-item" onclick="navigateToBreadcrumb(-1)"><i class="fas fa-home"></i> Home</div>`;
+    currentPath.forEach((f,i) => { 
+        bcDiv.innerHTML += `<span class="breadcrumb-separator">/</span><div class="breadcrumb-item" onclick="navigateToBreadcrumb(${i})">${escapeHtml(f)}</div>`; 
+    });
+    
+    if(currentPath.length === 0){
+        let html = '<div class="section-title"><i class="fas fa-building"></i> Departments</div><div class="departments-grid">';
+        for(let dept in fileSystem){
+            const sub = Object.keys(fileSystem[dept]).length;
+            const fcount = allFiles[dept] ? allFiles[dept].length : 0;
+            html += `<div class="dept-card" data-dept="${dept}" onclick="selectDepartment('${dept}')"><div class="dept-oval"><span>${dept}</span></div><div class="dept-arrow"><i class="fas fa-chevron-right"></i></div><div class="dept-info">${sub+fcount} items</div></div>`;
+        }
+        html += '</div>';
+        document.getElementById('departmentsSection').innerHTML = html;
+    } else {
+        document.getElementById('departmentsSection').innerHTML = '';
+    }
+    
+    const isLeaf = Object.keys(folder).length === 0;
+    const isRoot = currentPath.length === 0;
+    document.getElementById('uploadBtn').classList.toggle('hidden', !(isLeaf && !isRoot));
+    
+    const actionDiv = document.createElement('div');
+    actionDiv.className = 'action-bar';
+    if(!isRoot) {
+        actionDiv.innerHTML = `<button class="action-btn" onclick="renameCurrentFolder()"><i class="fas fa-edit"></i> Rename Folder</button><button class="action-btn" onclick="deleteCurrentFolder()"><i class="fas fa-trash-alt"></i> Delete Folder</button><button class="action-btn" onclick="addNewFolder()"><i class="fas fa-plus"></i> Add Subfolder</button>`;
+    } else {
+        actionDiv.innerHTML = `<button class="action-btn" onclick="addNewDepartment()"><i class="fas fa-building"></i> Add Department</button>`;
+    }
+    document.getElementById('content').appendChild(actionDiv);
+    
+    if(!isRoot && !isLeaf) {
+        for(let key in folder) {
+            document.getElementById('content').appendChild(createCard(key, () => { currentPath.push(key); render(); }, true));
+        }
+    }
+    if(isLeaf && !isRoot){
+        const files = getFilesForCurrentFolder();
+        const path = currentPath.join('/');
+        if(!files.length) {
+            document.getElementById('content').innerHTML += '<div class="empty-state"><i class="fas fa-cloud-upload-alt"></i><p>No PDFs yet. Click Upload to add files.</p></div>';
+        } else {
+            files.forEach(f => document.getElementById('content').appendChild(createCard(f.name, () => openPDF(f.dataUrl, f.name), false, true, path, f.name, true)));
+        }
+    }
+    updateStats();
+}
+
+function navigateToBreadcrumb(idx) { 
+    if(idx === -1) {
+        currentPath = []; 
+    } else {
+        currentPath = currentPath.slice(0, idx+1); 
+    }
+    render(); 
+}
+
+function renameCurrentFolder() { 
+    if(!currentPath.length) return;
+    const old = currentPath[currentPath.length-1];
+    const newName = prompt("New folder name:", old);
+    if(newName && newName !== old && newName.trim()){
+        const parent = currentPath.slice(0,-1).reduce((o,p)=>o[p], fileSystem);
+        parent[newName] = parent[old];
+        delete parent[old];
+        const oldPath = currentPath.join('/');
+        const newPath = [...currentPath.slice(0,-1), newName].join('/');
+        if(allFiles[oldPath]){ 
+            allFiles[newPath] = allFiles[oldPath]; 
+            delete allFiles[oldPath]; 
+        }
+        currentPath[currentPath.length-1] = newName;
+        saveFolderStructure(); 
+        saveAllFilesToDB(); 
+        render(); 
+        showToast(`✅ Renamed to "${newName}"`);
+    }
+}
+
+function deleteCurrentFolder() {
+    if(!currentPath.length) return;
+    const name = currentPath[currentPath.length-1];
+    if(confirm(`Delete "${name}" and all contents?`)){
+        const path = currentPath.join('/');
+        delete allFiles[path];
+        const parent = currentPath.slice(0,-1).reduce((o,p)=>o[p], fileSystem);
+        delete parent[name];
+        currentPath.pop();
+        saveFolderStructure(); 
+        saveAllFilesToDB(); 
+        render(); 
+        showToast(`🗑️ Folder "${name}" deleted`);
+    }
+}
+
+function addNewFolder() {
+    const name = prompt("Folder name:");
+    if(name && name.trim()){
+        const cur = getCurrentFolderObject();
+        if(cur && !cur[name]){ 
+            cur[name] = {}; 
+            saveFolderStructure(); 
+            render(); 
+            showToast(`✅ Folder "${name}" created`); 
+        } else {
+            showToast("Exists", true);
+        }
+    }
+}
+
+function addNewDepartment() {
+    const name = prompt("Department name:");
+    if(name && name.trim() && !fileSystem[name]){ 
+        fileSystem[name] = {}; 
+        saveFolderStructure(); 
+        render(); 
+        showToast(`✅ Department "${name}" created`); 
+    } else if(fileSystem[name]) {
+        showToast("Department exists", true);
+    }
 }
 
 function updateStats() {
-    let folderCount = 0;
-    let fileCount = 0;
-    for (let dept in documentData) {
-        folderCount += documentData[dept].folders.length;
-        for (let f in documentData[dept].files) {
-            fileCount += documentData[dept].files[f].length;
+    let folderCount = 0, fileCount = 0;
+    function countFolders(obj) { 
+        for(let k in obj) { 
+            if(typeof obj[k] === 'object') { 
+                folderCount++; 
+                countFolders(obj[k]); 
+            } 
+        } 
+    }
+    countFolders(fileSystem);
+    for(let k in allFiles) {
+        if(allFiles[k]) {
+            fileCount += allFiles[k].length;
         }
     }
-    document.getElementById('folderCount').innerText = folderCount;
-    document.getElementById('fileCount').innerText = fileCount;
+    document.getElementById('folderCount').textContent = folderCount;
+    document.getElementById('fileCount').textContent = fileCount;
 }
 
-// ----- Rendering -----
-function renderDepartments() {
-    const container = document.getElementById('departmentsSection');
-    if (!container) return;
-    const depts = Object.keys(documentData);
-    container.innerHTML = `<div class="departments-grid">` +
-        depts.map(dept => `
-            <div class="dept-card" data-dept="${dept}">
-                <div class="dept-oval"><i class="fas fa-building"></i><span>${dept}</span></div>
-                <div class="dept-arrow"><i class="fas fa-chevron-right"></i></div>
-                <div class="dept-info">${documentData[dept].folders.length} folders</div>
-            </div>
-        `).join('') +
-        `</div>`;
-    document.querySelectorAll('.dept-card').forEach(card => {
-        card.addEventListener('click', () => {
-            currentDept = card.getAttribute('data-dept');
-            currentFolder = null;
-            searchQuery = '';
-            document.getElementById('searchInput').value = '';
-            updateSearchInfo();
-            updateBreadcrumb();
-            renderCurrentView();
-            updateBackButton();
-        });
-    });
+function showToast(msg, isErr = false) {
+    const toast = document.getElementById('toast');
+    toast.querySelector('span').textContent = msg;
+    toast.style.background = isErr ? "linear-gradient(135deg,#ef4444,#dc2626)" : "linear-gradient(135deg,#10b981,#059669)";
+    toast.classList.remove('hidden');
+    setTimeout(() => toast.classList.add('hidden'), 3000);
 }
 
-function renderCurrentView() {
-    const contentDiv = document.getElementById('content');
-    if (!contentDiv) return;
-    if (searchQuery) {
-        renderSearchResults();
-        return;
-    }
-    if (!currentDept) {
-        contentDiv.innerHTML = '<div class="empty-state"><i class="fas fa-folder-open"></i><p>Select a department from above</p></div>';
-        return;
-    }
-    const dept = documentData[currentDept];
-    if (!dept) return;
-    if (!currentFolder) {
-        // Show folders
-        contentDiv.innerHTML = `
-            <div class="action-bar">
-                <button class="action-btn" id="addFolderBtn"><i class="fas fa-plus"></i> Add Subfolder</button>
-            </div>
-            <div class="departments-grid">
-                ${dept.folders.map(folder => `
-                    <div class="dept-card" data-folder="${folder}">
-                        <div class="dept-oval"><i class="fas fa-folder"></i><span>${folder}</span></div>
-                        <div class="dept-arrow"><i class="fas fa-chevron-right"></i></div>
-                        <div class="dept-info">${dept.files[folder]?.length || 0} files</div>
-                    </div>
-                `).join('')}
-            </div>
-        `;
-        document.querySelectorAll('[data-folder]').forEach(el => {
-            el.addEventListener('click', () => {
-                currentFolder = el.getAttribute('data-folder');
-                updateBreadcrumb();
-                renderCurrentView();
-                updateBackButton();
-            });
-        });
-        const addBtn = document.getElementById('addFolderBtn');
-        if (addBtn) addBtn.onclick = () => {
-            const newName = prompt('Enter subfolder name:');
-            if (newName && !dept.folders.includes(newName)) {
-                dept.folders.push(newName);
-                dept.files[newName] = [];
-                saveData();
-                renderCurrentView();
-                updateStats();
-                updateBreadcrumb();
-                showToast(`Folder "${newName}" created`);
-            } else if (newName) showToast('Folder already exists', true);
-        };
-    } else {
-        // Show files in folder
-        const files = dept.files[currentFolder] || [];
-        if (files.length === 0) {
-            contentDiv.innerHTML = `
-                <div class="action-bar">
-                    <button class="action-btn" id="uploadFileBtn"><i class="fas fa-upload"></i> Upload Document</button>
-                    <button class="action-btn" id="renameFolderBtn"><i class="fas fa-edit"></i> Rename Folder</button>
-                    <button class="action-btn" id="deleteFolderBtn"><i class="fas fa-trash"></i> Delete Folder</button>
-                </div>
-                <div class="empty-state"><i class="fas fa-file-pdf"></i><p>No documents in this folder</p></div>
-            `;
-        } else {
-            contentDiv.innerHTML = `
-                <div class="action-bar">
-                    <button class="action-btn" id="uploadFileBtn"><i class="fas fa-upload"></i> Upload Document</button>
-                    <button class="action-btn" id="renameFolderBtn"><i class="fas fa-edit"></i> Rename Folder</button>
-                    <button class="action-btn" id="deleteFolderBtn"><i class="fas fa-trash"></i> Delete Folder</button>
-                </div>
-                ${files.map((file, idx) => `
-                    <div class="card" data-file-index="${idx}">
-                        <div class="card-icon"><i class="fas fa-file-pdf"></i></div>
-                        <div class="card-filename">${escapeHtml(file.name)}</div>
-                        <div class="card-buttons">
-                            <button class="rename-file-btn"><i class="fas fa-pen"></i> Rename</button>
-                            <button class="delete-btn"><i class="fas fa-trash"></i> Delete</button>
-                        </div>
-                    </div>
-                `).join('')}
-            `;
-        }
-        // attach event handlers
-        document.getElementById('uploadFileBtn')?.addEventListener('click', () => document.getElementById('fileInput').click());
-        document.getElementById('renameFolderBtn')?.addEventListener('click', () => {
-            const newName = prompt('New folder name:', currentFolder);
-            if (newName && newName !== currentFolder && !dept.folders.includes(newName)) {
-                const index = dept.folders.indexOf(currentFolder);
-                if (index !== -1) dept.folders[index] = newName;
-                dept.files[newName] = dept.files[currentFolder];
-                delete dept.files[currentFolder];
-                currentFolder = newName;
-                saveData();
-                renderCurrentView();
-                updateBreadcrumb();
-                updateStats();
-                showToast(`Folder renamed to "${newName}"`);
-            } else if (newName === currentFolder) { /* no change */ }
-            else if (newName) showToast('Folder name already exists', true);
-        });
-        document.getElementById('deleteFolderBtn')?.addEventListener('click', () => {
-            if (confirm(`Delete folder "${currentFolder}" and all its documents?`)) {
-                const idx = dept.folders.indexOf(currentFolder);
-                if (idx !== -1) dept.folders.splice(idx,1);
-                delete dept.files[currentFolder];
-                currentFolder = null;
-                saveData();
-                renderCurrentView();
-                updateBreadcrumb();
-                updateStats();
-                showToast('Folder deleted');
-            }
-        });
-        // file rename/delete
-        document.querySelectorAll('.rename-file-btn').forEach((btn, i) => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const fileObj = files[i];
-                const newName = prompt('New file name (without .pdf):', fileObj.name.replace('.pdf',''));
-                if (newName && newName.trim()) {
-                    fileObj.name = newName.trim() + '.pdf';
-                    saveData();
-                    renderCurrentView();
-                    showToast('File renamed');
-                }
-            });
-        });
-        document.querySelectorAll('.delete-btn').forEach((btn, i) => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                if (confirm(`Delete "${files[i].name}"?`)) {
-                    files.splice(i,1);
-                    saveData();
-                    renderCurrentView();
-                    updateStats();
-                    showToast('File deleted');
-                }
-            });
-        });
+function escapeHtml(str) { 
+    const div = document.createElement('div'); 
+    div.textContent = str; 
+    return div.innerHTML; 
+}
+
+function toggleTheme() { 
+    document.body.classList.toggle('light-mode'); 
+    localStorage.setItem('oarcel_theme', document.body.classList.contains('light-mode') ? 'light-mode' : ''); 
+    updateThemeIcon(); 
+}
+
+function updateThemeIcon() { 
+    const isDark = !document.body.classList.contains('light-mode'); 
+    const themeBtn = document.getElementById('themeToggle');
+    if(themeBtn) {
+        themeBtn.innerHTML = isDark ? '<i class="fas fa-sun"></i><span>Light</span>' : '<i class="fas fa-moon"></i><span>Dark</span>';
     }
 }
 
-function renderSearchResults() {
-    const contentDiv = document.getElementById('content');
-    const query = searchQuery.toLowerCase();
-    let results = [];
-    for (let dept in documentData) {
-        for (let folder in documentData[dept].files) {
-            const files = documentData[dept].files[folder];
-            files.forEach(file => {
-                if (file.name.toLowerCase().includes(query)) {
-                    results.push({ dept, folder, file });
-                }
-            });
-        }
+// Make all functions global
+window.selectDepartment = selectDepartment;
+window.goBack = goBack;
+window.triggerUpload = triggerUpload;
+window.clearSearch = clearSearch;
+window.navigateToBreadcrumb = navigateToBreadcrumb;
+window.renameCurrentFolder = renameCurrentFolder;
+window.deleteCurrentFolder = deleteCurrentFolder;
+window.addNewFolder = addNewFolder;
+window.addNewDepartment = addNewDepartment;
+window.openPDF = openPDF;
+window.renameFile = (p, old) => { 
+    const nu = prompt("New name:", old.replace('.pdf', '')); 
+    if(nu && nu.trim()) renameFileInFolder(p, old, nu.trim()); 
+};
+window.deleteFile = (p, n) => { 
+    if(confirm(`Delete "${n}"?`)) deleteFileFromFolder(p, n); 
+};
+
+// Initialize
+document.addEventListener('DOMContentLoaded', async () => {
+    const themeBtn = document.getElementById('themeToggle');
+    if(themeBtn) themeBtn.onclick = toggleTheme;
+    
+    if(localStorage.getItem('oarcel_theme') === 'light-mode') {
+        document.body.classList.add('light-mode');
     }
-    if (results.length === 0) {
-        contentDiv.innerHTML = `<div class="empty-state"><i class="fas fa-search"></i><p>No documents match "${escapeHtml(searchQuery)}"</p></div>`;
-        return;
-    }
-    contentDiv.innerHTML = results.map(res => `
-        <div class="card" data-dept="${res.dept}" data-folder="${res.folder}" data-file="${res.file.name}">
-            <div class="card-icon"><i class="fas fa-file-pdf"></i></div>
-            <div class="card-filename">${escapeHtml(res.file.name)} <span style="font-size:0.7rem; opacity:0.7;">in ${res.dept} / ${res.folder}</span></div>
-            <div class="card-buttons">
-                <button class="open-file-btn"><i class="fas fa-eye"></i> Open</button>
-            </div>
-        </div>
-    `).join('');
-    document.querySelectorAll('.card').forEach(card => {
-        card.addEventListener('click', (e) => {
-            if (e.target.closest('.open-file-btn')) {
-                const dept = card.getAttribute('data-dept');
-                const folder = card.getAttribute('data-folder');
-                const fileName = card.getAttribute('data-file');
-                const fileObj = documentData[dept]?.files[folder]?.find(f => f.name === fileName);
-                if (fileObj && fileObj.data) {
-                    const byteCharacters = atob(fileObj.data);
-                    const byteNumbers = new Array(byteCharacters.length);
-                    for (let i = 0; i < byteCharacters.length; i++) byteNumbers[i] = byteCharacters.charCodeAt(i);
-                    const byteArray = new Uint8Array(byteNumbers);
-                    const blob = new Blob([byteArray], { type: 'application/pdf' });
-                    const url = URL.createObjectURL(blob);
-                    window.open(url, '_blank');
-                    URL.revokeObjectURL(url);
-                } else {
-                    showToast('File data not found', true);
-                }
-            }
-        });
-    });
-}
-
-function updateBreadcrumb() {
-    const bc = document.getElementById('breadcrumb');
-    if (!bc) return;
-    let html = `<div class="breadcrumb-item" data-breadcrumb="home"><i class="fas fa-home"></i> Home</div>`;
-    if (currentDept) {
-        html += `<span class="breadcrumb-separator"><i class="fas fa-chevron-right"></i></span><div class="breadcrumb-item" data-breadcrumb="dept">${escapeHtml(currentDept)}</div>`;
-    }
-    if (currentFolder) {
-        html += `<span class="breadcrumb-separator"><i class="fas fa-chevron-right"></i></span><div class="breadcrumb-item" data-breadcrumb="folder">${escapeHtml(currentFolder)}</div>`;
-    }
-    bc.innerHTML = html;
-    bc.querySelectorAll('.breadcrumb-item').forEach(el => {
-        el.addEventListener('click', () => {
-            const type = el.getAttribute('data-breadcrumb');
-            if (type === 'home') {
-                currentDept = null;
-                currentFolder = null;
-                searchQuery = '';
-                document.getElementById('searchInput').value = '';
-                updateSearchInfo();
-                renderDepartments();
-                renderCurrentView();
-                updateBreadcrumb();
-                updateBackButton();
-            } else if (type === 'dept') {
-                currentFolder = null;
-                renderCurrentView();
-                updateBreadcrumb();
-                updateBackButton();
-            } else if (type === 'folder') {
-                // already there
-            }
-        });
-    });
-}
-
-function updateBackButton() {
-    const backBtn = document.getElementById('backBtn');
-    if (backBtn) {
-        if (currentDept || currentFolder || searchQuery) backBtn.classList.remove('hidden');
-        else backBtn.classList.add('hidden');
-    }
-}
-
-function updateSearchInfo() {
-    const infoDiv = document.getElementById('searchInfo');
-    if (searchQuery) {
-        infoDiv.innerHTML = `<i class="fas fa-search"></i> Showing results for "${escapeHtml(searchQuery)}" <button id="clearSearch">Clear</button>`;
-        infoDiv.classList.remove('hidden');
-        document.getElementById('clearSearch')?.addEventListener('click', () => {
-            searchQuery = '';
-            document.getElementById('searchInput').value = '';
-            updateSearchInfo();
-            renderCurrentView();
-            updateBreadcrumb();
-            updateBackButton();
-        });
-    } else {
-        infoDiv.classList.add('hidden');
-    }
-}
-
-function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/[&<>]/g, function(m) {
-        if (m === '&') return '&amp;';
-        if (m === '<') return '&lt;';
-        if (m === '>') return '&gt;';
-        return m;
-    });
-}
-
-// ----- File Upload Handling (store as base64 in localStorage) -----
-function handleFileUpload(files) {
-    if (!currentDept || !currentFolder) {
-        showToast('Please select a folder first', true);
-        return;
-    }
-    for (let file of files) {
-        if (file.type !== 'application/pdf') {
-            showToast(`${file.name} is not a PDF`, true);
-            continue;
-        }
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const base64 = e.target.result.split(',')[1];
-            const fileObj = { name: file.name, data: base64 };
-            documentData[currentDept].files[currentFolder].push(fileObj);
-            saveData();
-            updateStats();
-            renderCurrentView();
-            showToast(`Uploaded ${file.name}`);
-        };
-        reader.readAsDataURL(file);
-    }
-}
-
-// ----- Initialization -----
-document.addEventListener('DOMContentLoaded', () => {
-    loadData();
-    updateStats();
-    renderDepartments();
-    renderCurrentView();
-    updateBreadcrumb();
-    updateBackButton();
-
-    // Theme toggle
-    const savedTheme = localStorage.getItem('oarcel-theme');
-    if (savedTheme === 'light') document.body.classList.add('light-mode');
-    document.getElementById('themeToggle')?.addEventListener('click', () => {
-        document.body.classList.toggle('light-mode');
-        localStorage.setItem('oarcel-theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
-    });
-
-    // Search
-    const searchInput = document.getElementById('searchInput');
-    const clearSearchBtn = document.getElementById('clearSearchBtn');
-    searchInput.addEventListener('input', (e) => {
-        const val = e.target.value.trim();
-        if (val.length > 0) {
-            searchQuery = val;
-            updateSearchInfo();
-            renderCurrentView();
-            updateBackButton();
-            clearSearchBtn.classList.remove('hidden');
-        } else {
-            searchQuery = '';
-            updateSearchInfo();
-            renderCurrentView();
-            updateBackButton();
-            clearSearchBtn.classList.add('hidden');
-        }
-    });
-    clearSearchBtn.addEventListener('click', () => {
-        searchInput.value = '';
-        searchQuery = '';
-        updateSearchInfo();
-        renderCurrentView();
-        updateBackButton();
-        clearSearchBtn.classList.add('hidden');
-    });
-
-    // Back button
-    document.getElementById('backBtn')?.addEventListener('click', () => {
-        if (searchQuery) {
-            searchQuery = '';
-            searchInput.value = '';
-            updateSearchInfo();
-            renderCurrentView();
-            updateBackButton();
-        } else if (currentFolder) {
-            currentFolder = null;
-            renderCurrentView();
-            updateBreadcrumb();
-            updateBackButton();
-        } else if (currentDept) {
-            currentDept = null;
-            renderDepartments();
-            renderCurrentView();
-            updateBreadcrumb();
-            updateBackButton();
-        }
-    });
-
-    // Upload button
+    updateThemeIcon();
+    
     const fileInput = document.getElementById('fileInput');
-    document.getElementById('uploadBtn')?.addEventListener('click', () => {
-        if (!currentDept || !currentFolder) {
-            showToast('Please open a folder first', true);
-            return;
-        }
-        fileInput.click();
-    });
-    fileInput.addEventListener('change', (e) => {
-        if (e.target.files.length) handleFileUpload(Array.from(e.target.files));
-        fileInput.value = '';
-    });
+    if(fileInput) {
+        fileInput.addEventListener('change', async(e) => {
+            const files = Array.from(e.target.files);
+            for(let f of files) {
+                if(f.type === 'application/pdf') {
+                    await addFileToCurrentFolder(f);
+                }
+            }
+            showToast(`${files.length} PDF(s) saved!`);
+            render();
+            e.target.value = '';
+        });
+    }
+    
+    const searchInput = document.getElementById('searchInput');
+    if(searchInput) {
+        searchInput.addEventListener('input', () => render());
+    }
+    
+    const clearSearchBtn = document.getElementById('clearSearchBtn');
+    if(clearSearchBtn) {
+        clearSearchBtn.addEventListener('click', clearSearch);
+    }
+    
+    const backBtn = document.getElementById('backBtn');
+    if(backBtn) {
+        backBtn.addEventListener('click', goBack);
+    }
+    
+    const uploadBtn = document.getElementById('uploadBtn');
+    if(uploadBtn) {
+        uploadBtn.addEventListener('click', triggerUpload);
+    }
+    
+    try {
+        await initDB();
+        await loadFromIndexedDB();
+    } catch(e) {
+        console.error(e);
+        showToast('Database error', true);
+    }
 });
