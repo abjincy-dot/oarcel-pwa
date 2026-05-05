@@ -1056,3 +1056,49 @@ body.light-mode .card {
         align-items: center !important;
     }
 }
+function toggleFolder(element) {
+  const parentLi = element.closest('.tree-item');
+  const childrenContainer = parentLi.querySelector('.tree-children');
+  if (childrenContainer) {
+    const isVisible = childrenContainer.style.display !== 'none';
+    childrenContainer.style.display = isVisible ? 'none' : 'block';
+    // also rotate chevron icon
+    const chevron = element.querySelector('.toggle-icon');
+    if (chevron) chevron.style.transform = isVisible ? 'rotate(0deg)' : 'rotate(90deg)';
+  }
+}
+/* Center upload button (without changing HTML) */
+/* Make actions container full width and center items */
+.top-bar-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+}
+
+/* Keep buttons normal (remove fixed 
+/* Make actions container full width and center items */
+.top-bar-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+}
+
+/* Keep buttons normal (remove fixed hacks) */
+.btn-upload {
+    position: static !important;
+    transform: none !important;
+}
+
+/* Ensure back button stays left */
+.btn-back {
+    margin-right: auto;
+}
+
+/* Ensure theme stays right */
+#themeToggle {
+    margin-left: auto;
+}
