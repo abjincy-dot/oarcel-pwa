@@ -1,4 +1,4 @@
-* ============================================
+/* ============================================
    OARCEL Document Manager — Smooth 3D Effects
    ============================================ */
 
@@ -937,8 +937,8 @@ body.light-mode .header-title h1 {
 }
 /* Reduce card height */
 .card {
-    padding: 1px 10px !important;   /* was 14px 18px – much shorter */
-    gap: 6px !important;
+    padding: 3px 1px !important;   /* was 14px 18px – much shorter */
+    gap: 1px !important;
 }
 
 .card-icon {
@@ -1101,4 +1101,57 @@ function toggleFolder(element) {
 /* Ensure theme stays right */
 #themeToggle {
     margin-left: auto;
+}
+/* ===== REDUCE CARD HEIGHT ON MOBILE ===== */
+@media (max-width: 640px) {
+    /* Compact folder/file cards */
+    .card {
+        padding: 8px 12px !important;   /* was 14px 18px → much shorter */
+        gap: 10px !important;
+    }
+    
+    .card-icon {
+        width: 28px !important;
+        height: 28px !important;
+    }
+    
+    .card-icon i {
+        font-size: 0.9rem !important;
+    }
+    
+    .card-filename {
+        font-size: 0.85rem !important;
+        font-weight: 500;
+    }
+    
+    .card-buttons button {
+        padding: 5px 10px !important;
+        font-size: 0.7rem !important;
+    }
+    
+    /* Reduce action bar height */
+    .action-bar {
+        padding: 6px 10px !important;
+        gap: 6px !important;
+        margin-bottom: 12px !important;
+    }
+    
+    .action-btn {
+        padding: 5px 12px !important;
+        font-size: 0.75rem !important;
+        gap: 5px !important;
+    }
+    
+    /* Even tighter for very small screens */
+    @media (max-width: 480px) {
+        .card {
+            padding: 6px 10px !important;
+        }
+        .card-buttons {
+            gap: 4px !important;
+        }
+        .card-buttons button {
+            padding: 4px 8px !important;
+        }
+    }
 }
