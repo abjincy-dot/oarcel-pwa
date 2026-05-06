@@ -1155,3 +1155,43 @@ function toggleFolder(element) {
         }
     }
 }
+/* Increase top bar height for better visual balance */
+.top-bar {
+    padding: 14px 20px !important;  /* was 10px 18px — gives more breathing room */
+    gap: 14px !important;
+}
+
+/* Slightly adjust buttons to match new height (optional, keeps proportions) */
+.btn-back {
+    padding: 12px 22px !important;
+}
+
+.search-container #searchInput {
+    padding: 13px 45px 13px 48px !important;
+}
+
+.theme-toggle {
+    width: 48px !important;
+    height: 48px !important;
+}
+
+.btn-upload {
+    padding: 11px 26px !important;
+}
+
+/* On mobile, keep it slightly taller but still compact */
+@media (max-width: 640px) {
+    .top-bar {
+        padding: 12px 16px !important;
+    }
+    .btn-back {
+        padding: 10px 18px !important;
+    }
+    .theme-toggle {
+        width: 44px !important;
+        height: 44px !important;
+    }
+    .btn-upload {
+        padding: 9px 20px !important;
+    }
+}
