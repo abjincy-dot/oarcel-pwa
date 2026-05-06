@@ -1,4 +1,4 @@
-/ ==================== INDEXEDDB CORE ====================
+// ==================== INDEXEDDB CORE ====================
 const DB_NAME = 'OarcelDB';
 const DB_VERSION = 4;
 let db = null;
