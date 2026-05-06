@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-<title>OARCEL | Document Manager</title>
+<title>OARCEL | 3D Document Manager</title>
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -14,7 +14,1006 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+<style>
+/* ============================================
+   OARCEL Document Manager — Full 3D Depth
+   ============================================ */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --bg-deep: #070d1a;
+    --bg-gradient: url("https://raw.githubusercontent.com/abjincy-dot/oarcel-pwa/main/images/wallpaper.jpg");
+    --glass-bg: rgba(15, 30, 50, 0.55);
+    --glass-bg-hover: rgba(20, 45, 75, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.12);
+    --glass-border-hover: rgba(255, 255, 255, 0.22);
+    --glass-highlight: rgba(255, 255, 255, 0.05);
+    --text-primary: #f0f4f8;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --accent-blue: #3b82f6;
+    --accent-purple: #8b5cf6;
+    --accent-cyan: #06b6d4;
+    --accent-rose: #f43f5e;
+    --accent-emerald: #10b981;
+    --card-bg: rgba(12, 28, 48, 0.6);
+    --card-bg-hover: rgba(18, 40, 68, 0.75);
+    --input-bg: rgba(0, 0, 0, 0.35);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
+    --shadow-glow: 0 0 40px rgba(59, 130, 246, 0.15);
+    --shadow-3d: 0 10px 40px rgba(0, 0, 0, 0.5);
+    --radius-sm: 12px;
+    --radius-md: 16px;
+    --radius-lg: 24px;
+    --radius-xl: 32px;
+    --radius-full: 9999px;
+    --transition-fast: 0.15s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+    --transition-base: 0.2s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+    --transition-bounce: 0.35s cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+
+body.light-mode {
+    --bg-deep: #f1f5f9;
+    --bg-gradient: linear-gradient(165deg, #e2e8f0 0%, #cbd5e1 45%, #b8c5d6 100%);
+    --glass-bg: rgba(255, 255, 255, 0.72);
+    --glass-bg-hover: rgba(255, 255, 255, 0.85);
+    --glass-border: rgba(0, 0, 0, 0.08);
+    --glass-border-hover: rgba(0, 0, 0, 0.15);
+    --glass-highlight: rgba(255, 255, 255, 0.5);
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+    --card-bg: rgba(255, 255, 255, 0.75);
+    --card-bg-hover: rgba(255, 255, 255, 0.9);
+    --input-bg: rgba(255, 255, 255, 0.85);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.1);
+    --shadow-3d: 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    min-height: 100vh;
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    overflow-x: hidden;
+    line-height: 1.5;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: var(--bg-gradient);
+    background-size: cover;
+    background-position: center;
+    z-index: -3;
+}
+
+.ambient-glow {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    pointer-events: none;
+    z-index: -2;
+    opacity: 0.4;
+    animation: ambientFloat 20s ease-in-out infinite alternate;
+}
+
+.glow-1 {
+    width: 500px;
+    height: 500px;
+    top: -10%;
+    left: -5%;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.25), transparent 70%);
+    animation-duration: 18s;
+}
+
+.glow-2 {
+    width: 400px;
+    height: 400px;
+    bottom: -5%;
+    right: -5%;
+    background: radial-gradient(circle, rgba(139, 92, 246, 0.2), transparent 70%);
+    animation-duration: 22s;
+    animation-delay: -5s;
+}
+
+@keyframes ambientFloat {
+    0% { transform: translate(0, 0) scale(1); opacity: 0.3; }
+    50% { transform: translate(30px, -20px) scale(1.08); opacity: 0.5; }
+    100% { transform: translate(-20px, 15px) scale(0.98); opacity: 0.35; }
+}
+
+.particles-container {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+}
+
+.particle {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 50%;
+    pointer-events: none;
+    animation: floatUp linear infinite;
+}
+
+@keyframes floatUp {
+    0% { transform: translateY(0) scale(1); opacity: 0; }
+    10% { opacity: 0.6; }
+    50% { transform: translateY(-50vh) scale(1.2); opacity: 0.4; }
+    90% { opacity: 0.1; }
+    100% { transform: translateY(-100vh) scale(0.5); opacity: 0; }
+}
+
+.app {
+    position: relative;
+    z-index: 2;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 24px 20px 40px;
+    animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Header (unchanged) */
+.header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding: 18px 24px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md), inset 0 1px 0 var(--glass-highlight);
+    transition: all var(--transition-base);
+}
+
+.header:hover {
+    border-color: var(--glass-border-hover);
+    box-shadow: var(--shadow-lg), var(--shadow-glow);
+    transform: translateY(-2px);
+}
+
+.logo {
+    position: relative;
+    width: 52px;
+    height: 52px;
+    flex-shrink: 0;
+    transition: transform var(--transition-bounce);
+}
+
+.logo-inner {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6, #06b6d4);
+    background-size: 200% 200%;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+    animation: gradientShift 6s ease infinite;
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+    transition: transform var(--transition-bounce);
+}
+
+.logo:hover .logo-inner {
+    transform: scale(1.05);
+    box-shadow: 0 12px 35px rgba(59, 130, 246, 0.6);
+}
+
+@keyframes gradientShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+.logo-ring {
+    position: absolute;
+    inset: -4px;
+    border-radius: calc(var(--radius-md) + 4px);
+    border: 2px solid transparent;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.5), rgba(139, 92, 246, 0.5)) border-box;
+    -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: ringPulse 3s ease-in-out infinite;
+}
+
+@keyframes ringPulse {
+    0%, 100% { opacity: 0.6; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.02); }
+}
+
+.header-title h1 {
+    font-size: 1.6rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #fff, #bfdbfe, #a5f3fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+body.light-mode .header-title h1 {
+    background: linear-gradient(135deg, #0f172a, #1e40af, #7c3aed);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.doc-tag {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--accent-cyan);
+    background: rgba(6, 182, 212, 0.12);
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border: 1px solid rgba(6, 182, 212, 0.2);
+    text-transform: uppercase;
+}
+
+.owner-name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.owner-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--accent-emerald);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--accent-emerald);
+    animation: dotPulse 2s ease-in-out infinite;
+}
+
+@keyframes dotPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(0.85); }
+}
+
+/* Top bar (taller, blue back button) */
+.top-bar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+    padding: 14px 20px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-full);
+    transition: all var(--transition-base);
+}
+
+.top-bar:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-back {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    border: none;
+    color: white;
+    padding: 12px 22px;
+    border-radius: 40px;
+    backdrop-filter: blur(12px);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    transition: all var(--transition-base);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.btn-back:hover {
+    transform: translateX(-3px);
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.6);
+}
+
+.search-container {
+    flex: 1;
+    position: relative;
+    min-width: 180px;
+}
+
+.search-container > i {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+}
+
+#searchInput {
+    width: 100%;
+    padding: 13px 45px 13px 48px;
+    border-radius: var(--radius-full);
+    border: 1px solid var(--glass-border);
+    background: var(--input-bg);
+    color: var(--text-primary);
+    outline: none;
+    font-size: 0.9rem;
+    transition: all var(--transition-base);
+}
+
+#searchInput:focus {
+    border-color: rgba(59, 130, 246, 0.5);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.clear-search {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+}
+
+.clear-search:hover {
+    background: rgba(244, 63, 94, 0.2);
+    color: var(--accent-rose);
+}
+
+.top-bar-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.theme-toggle {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(236, 72, 153, 0.15));
+    border: 1px solid rgba(168, 85, 247, 0.4);
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-base);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.theme-toggle:hover {
+    transform: scale(1.08);
+    border-color: rgba(168, 85, 247, 0.7);
+    box-shadow: 0 8px 20px rgba(168, 85, 247, 0.4);
+}
+
+.theme-toggle i {
+    font-size: 1.3rem;
+    color: #fbbf24;
+}
+
+body.light-mode .theme-toggle i {
+    color: #8b5cf6;
+}
+
+.btn-upload {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 26px;
+    background: linear-gradient(135deg, #3b82f6, #7c3aed);
+    border: none;
+    border-radius: var(--radius-full);
+    color: white;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all var(--transition-base);
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+}
+
+.btn-upload:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(59, 130, 246, 0.6);
+}
+
+.btn-upload i {
+    font-size: 1rem;
+}
+
+#fileInput { display: none; }
+
+/* Stats bar (unchanged) */
+.stats-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding: 14px 24px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex: 1;
+}
+
+.stat-icon-bg {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(59, 130, 246, 0.05));
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent-blue);
+    font-size: 1.1rem;
+    transition: all var(--transition-base);
+}
+
+.stat-item:hover .stat-icon-bg {
+    transform: scale(1.08);
+    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+}
+
+.stat-icon-files {
+    background: linear-gradient(135deg, rgba(244, 63, 94, 0.2), rgba(244, 63, 94, 0.05));
+    border-color: rgba(244, 63, 94, 0.2);
+    color: var(--accent-rose);
+}
+
+.stat-number {
+    font-size: 1.4rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.stat-data label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.stat-divider {
+    width: 1px;
+    height: 32px;
+    background: var(--glass-border);
+}
+
+/* Breadcrumb (unchanged) */
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+    padding: 8px 16px;
+    background: rgba(0, 0, 0, 0.25);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-full);
+    width: fit-content;
+}
+
+.breadcrumb-item {
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: var(--radius-full);
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.breadcrumb-item:hover {
+    color: var(--text-primary);
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.breadcrumb-item:first-child {
+    color: var(--accent-blue);
+}
+
+/* Section title */
+.section-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin: 0 0 16px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+.section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--glass-border), transparent);
+}
+
+/* ========== 3D DEPARTMENT CARDS ========== */
+.departments-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.dept-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    cursor: pointer;
+    border-radius: var(--radius-lg);
+    transition: all var(--transition-base);
+    transform: translateY(-1px);
+}
+
+.dept-oval {
+    padding: 12px 28px;
+    border-radius: 60px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 
+        0 12px 20px -10px rgba(0, 0, 0, 0.4),
+        0 4px 8px -4px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Department specific gradients with 3D depth */
+.dept-card[data-dept="REMELT"] .dept-oval { background: linear-gradient(145deg, #ea580c, #b91c0c); }
+.dept-card[data-dept="CASTER"] .dept-oval { background: linear-gradient(145deg, #0d9488, #0b6b62); }
+.dept-card[data-dept="HRM"] .dept-oval { background: linear-gradient(145deg, #7c3aed, #5b21b6); }
+.dept-card[data-dept="CRM"] .dept-oval { background: linear-gradient(145deg, #d97706, #b45309); }
+.dept-card[data-dept="ANNEALING"] .dept-oval { background: linear-gradient(145deg, #db2777, #be185d); }
+.dept-card[data-dept="TLL"] .dept-oval { background: linear-gradient(145deg, #0891b2, #0e7490); }
+.dept-card[data-dept="SLITTER"] .dept-oval { background: linear-gradient(145deg, #4f46e5, #4338ca); }
+.dept-card[data-dept="UTILITY"] .dept-oval { background: linear-gradient(145deg, #dc2626, #b91c1c); }
+
+.dept-card:hover .dept-oval {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 
+        0 20px 28px -12px rgba(0, 0, 0, 0.5),
+        0 8px 12px -6px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.dept-card:active .dept-oval {
+    transform: translateY(2px) scale(0.98);
+    transition: 0.05s linear;
+    box-shadow: 
+        0 6px 12px -6px rgba(0, 0, 0, 0.3),
+        inset 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.dept-oval span {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: white;
+    text-shadow: 0 1px 1px rgba(0,0,0,0.3);
+}
+
+.dept-arrow {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    transition: all var(--transition-base);
+    margin-left: auto;
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3));
+}
+
+.dept-card:hover .dept-arrow {
+    color: var(--accent-blue);
+    transform: translateX(4px);
+}
+
+.dept-info {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    padding: 5px 14px;
+    border-radius: var(--radius-full);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 2px 5px rgba(0,0,0,0.2);
+}
+
+/* Light mode department cards */
+body.light-mode .dept-oval {
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 
+        0 12px 20px -10px rgba(0, 0, 0, 0.2),
+        0 4px 8px -4px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+body.light-mode .dept-card:hover .dept-oval {
+    box-shadow: 
+        0 20px 28px -12px rgba(0, 0, 0, 0.25),
+        0 8px 12px -6px rgba(0, 0, 0, 0.15);
+}
+
+body.light-mode .dept-info {
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    color: #475569;
+}
+
+/* ========== 3D FOLDER CARDS (existing) ========== */
+.content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.card {
+    background: linear-gradient(145deg, #1e2a47, #141f38);
+    backdrop-filter: none;
+    padding: 10px 16px;
+    border-radius: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+    animation: cardEnter 0.3s ease-out backwards;
+    box-shadow: 
+        0 20px 30px -15px rgba(0, 0, 0, 0.5),
+        0 8px 12px -6px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.card:hover {
+    transform: translateY(-6px);
+    background: linear-gradient(145deg, #25365e, #18243f);
+    box-shadow: 
+        0 28px 40px -18px rgba(0, 0, 0, 0.6),
+        0 12px 18px -8px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.card:active {
+    transform: translateY(2px);
+    transition: 0.05s linear;
+    box-shadow: 
+        0 8px 16px -8px rgba(0, 0, 0, 0.4),
+        inset 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+body.light-mode .card {
+    background: linear-gradient(145deg, #ffffff, #e9eef3);
+    box-shadow: 
+        0 20px 30px -15px rgba(0, 0, 0, 0.2),
+        0 8px 12px -6px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+body.light-mode .card:hover {
+    background: linear-gradient(145deg, #ffffff, #e2e8f0);
+    transform: translateY(-6px);
+    box-shadow: 
+        0 28px 40px -18px rgba(0, 0, 0, 0.3),
+        0 12px 18px -8px rgba(0, 0, 0, 0.2);
+}
+
+.card-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.15));
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-base);
+}
+
+.card:hover .card-icon {
+    transform: scale(1.1);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(139, 92, 246, 0.25));
+}
+
+.card-icon i {
+    font-size: 1.1rem;
+    color: var(--accent-blue);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.card-filename {
+    flex: 1;
+    font-size: 0.9rem;
+    font-weight: 500;
+    word-break: break-word;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+}
+
+.card:hover .card-filename {
+    color: var(--accent-blue);
+}
+
+.card-buttons {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.card-buttons button {
+    padding: 6px 12px;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    transition: all var(--transition-base);
+    border: none;
+}
+
+.rename-file-btn {
+    background: rgba(59, 130, 246, 0.2);
+    border: 1px solid rgba(59, 130, 246, 0.4);
+    color: #93c5fd;
+}
+
+.rename-file-btn:hover {
+    background: rgba(59, 130, 246, 0.35);
+    transform: translateY(-2px);
+}
+
+.delete-btn {
+    background: rgba(244, 63, 94, 0.2);
+    border: 1px solid rgba(244, 63, 94, 0.4);
+    color: #fda4af;
+}
+
+.delete-btn:hover {
+    background: rgba(244, 63, 94, 0.35);
+    transform: translateY(-2px);
+}
+
+/* Action bar */
+.action-bar {
+    display: flex;
+    gap: 8px;
+    padding: 10px 14px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 12px;
+    background: var(--glass-bg);
+    border-radius: var(--radius-full);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(12px);
+}
+
+.action-btn {
+    background: rgba(20, 40, 60, 0.7);
+    border: 1px solid var(--glass-border);
+    padding: 6px 14px;
+    border-radius: var(--radius-full);
+    color: var(--text-primary);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: all var(--transition-base);
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(124, 58, 237, 0.8));
+    border-color: transparent;
+    color: white;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    background: var(--card-bg);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(12px);
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 16px;
+    opacity: 0.5;
+    color: var(--accent-blue);
+    display: block;
+    animation: floatIcon 3s ease-in-out infinite;
+}
+
+@keyframes floatIcon {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+}
+
+.empty-state p {
+    color: var(--text-secondary);
+}
+
+.search-result-info {
+    margin: 0 0 16px 0;
+    padding: 10px 18px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    background: var(--glass-bg);
+    border-radius: var(--radius-full);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(12px);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-secondary);
+}
+
+.toast {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    padding: 14px 24px;
+    border-radius: var(--radius-full);
+    z-index: 1100;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: transform 0.35s cubic-bezier(0.34, 1.2, 0.64, 1), opacity 0.25s ease;
+    opacity: 0;
+}
+
+.toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
+.toast.error {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.loading-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(7, 13, 26, 0.85);
+    backdrop-filter: blur(8px);
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+}
+
+.loading-spinner {
+    position: relative;
+    width: 60px;
+    height: 60px;
+}
+
+.spinner-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 3px solid transparent;
+    border-top-color: var(--accent-blue);
+    animation: spin 1s linear infinite;
+}
+
+.spinner-ring:nth-child(2) {
+    inset: 8px;
+    border-top-color: var(--accent-purple);
+    animation-duration: 0.8s;
+    animation-direction: reverse;
+}
+
+.spinner-ring:nth-child(3) {
+    inset: 16px;
+    border-top-color: var(--accent-cyan);
+    animation-duration: 0.6s;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.hidden { display: none !important; }
+
+/* ========== MOBILE ADJUSTMENTS ========== */
+@media (max-width: 640px) {
+    .app { padding: 16px 14px 32px; }
+    .header { padding: 14px 18px; }
+    .header-title h1 { font-size: 1.3rem; }
+    .logo { width: 44px; height: 44px; }
+    .search-container { min-width: 100%; order: 3; margin-top: 8px; }
+    .top-bar { flex-wrap: wrap; padding: 12px 16px !important; }
+    .top-bar-actions { margin-left: auto; order: 2; }
+    .btn-back { order: 1; padding: 10px 18px !important; }
+    .theme-toggle { width: 44px !important; height: 44px !important; }
+    .btn-upload { padding: 9px 20px !important; }
+    .card {
+        padding: 8px 12px !important;
+        gap: 10px !important;
+        transform: translateY(-1px);
+    }
+    .card:hover { transform: translateY(-4px); }
+    .card-icon { width: 28px !important; height: 28px !important; }
+    .card-icon i { font-size: 0.9rem !important; }
+    .card-filename { font-size: 0.85rem !important; }
+    .card-buttons button { padding: 5px 10px !important; font-size: 0.7rem !important; }
+    .action-bar { padding: 6px 10px !important; gap: 6px !important; }
+    .action-btn { padding: 5px 12px !important; font-size: 0.75rem !important; }
+    .dept-oval { padding: 10px 20px !important; }
+    .dept-oval span { font-size: 0.75rem !important; }
+    .dept-info { padding: 4px 10px !important; font-size: 0.7rem !important; }
+    .toast { white-space: normal; max-width: 90%; text-align: center; }
+}
+
+@media (max-width: 480px) {
+    .btn-upload span { display: none; }
+    .btn-upload { padding: 9px 16px !important; }
+    .btn-upload i { margin: 0; font-size: 1.2rem; }
+    .theme-toggle { width: 42px !important; height: 42px !important; }
+    .card { padding: 6px 10px !important; }
+    .card-buttons button { padding: 4px 8px !important; }
+    .dept-oval { padding: 8px 16px !important; }
+}
+</style>
 </head>
 <body>
 <div class="particles-container">
@@ -66,7 +1065,305 @@
 <div id="toast" class="toast hidden"><div class="toast-icon"><i class="fas fa-check-circle"></i></div><span></span></div>
 <div id="loadingOverlay" class="loading-overlay hidden"><div class="loading-spinner"><div class="spinner-ring"></div><div class="spinner-ring"></div><div class="spinner-ring"></div></div><p>Loading...</p></div>
 
-<script src="app.js"></script>
-</body>
-</html>
+<script>
+// ==================== INDEXEDDB CORE (FULLY FUNCTIONAL) ====================
+const DB_NAME = 'OarcelDB';
+const DB_VERSION = 4;
+let db = null;
+let allFiles = {};
+let fileSystem = {};
+let currentPath = [];
+let isSearchMode = false;
 
+function openPDF(dataUrl, fileName) {
+    showToast(`Opening ${fileName}...`);
+    fetch(dataUrl).then(r=>r.blob()).then(blob=>{const url=URL.createObjectURL(blob); window.open(url,'_blank'); showToast(`PDF opened.`); setTimeout(()=>URL.revokeObjectURL(url),60000)}).catch(()=>showToast("PDF error",true));
+}
+
+function initDB() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => { db = request.result; resolve(); };
+        request.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains('files')) db.createObjectStore('files', { keyPath: 'id' });
+            if (!db.objectStoreNames.contains('folderStructure')) db.createObjectStore('folderStructure', { keyPath: 'key' });
+        };
+    });
+}
+
+function saveFolderStructure() {
+    const tx = db.transaction('folderStructure', 'readwrite');
+    tx.objectStore('folderStructure').put({ key: 'structure', value: fileSystem });
+    tx.commit();
+}
+
+function saveAllFilesToDB() {
+    const tx = db.transaction('files', 'readwrite');
+    const store = tx.objectStore('files');
+    store.clear();
+    for (const folderPath in allFiles) {
+        if (allFiles[folderPath] && allFiles[folderPath].length > 0) {
+            store.put({ id: folderPath, folderPath, files: allFiles[folderPath] });
+        }
+    }
+    tx.commit();
+}
+
+function ensureFurnace1DataLogs() {
+    if (fileSystem["REMELT"] && fileSystem["REMELT"]["FURNACE 1"]) {
+        const furnace1 = fileSystem["REMELT"]["FURNACE 1"];
+        let changed = false;
+        for (let i = 1; i <= 20; i++) {
+            if (!furnace1[`Data Log ${i}`]) { furnace1[`Data Log ${i}`] = {}; changed = true; }
+        }
+        if (!furnace1["Data Logs"]) { furnace1["Data Logs"] = {}; changed = true; }
+        if (changed) saveFolderStructure();
+    }
+}
+
+async function loadFromIndexedDB() {
+    const folderReq = db.transaction('folderStructure', 'readonly').objectStore('folderStructure').get('structure');
+    folderReq.onsuccess = () => {
+        if (folderReq.result) {
+            fileSystem = folderReq.result.value;
+            ensureFurnace1DataLogs();
+        } else {
+            const furnace1Content = { "Data Logs": {} };
+            for (let i=1;i<=20;i++) furnace1Content[`Data Log ${i}`] = {};
+            fileSystem = {
+                "REMELT": { "FURNACE 1": furnace1Content, "FURNACE 2": {}, "FURNACE 3": {}, "FURNACE 4": {}, "FURNACE 5": {}, "ACD": {}, "DBF": {}, "ROD FEEDER": {}, "LAUNDER HEATERS": {}, "LAUNDER PANEL ": {}, "HPU 1": {}, "HPU 2": {}, "M": {}, "N": {}, "O": {}, "P": {}, "Q": {}, "R": {}, "S": {}, "T": {}, "U": {}, "V": {}, "W": {}, "X": {}, "Y": {}, "Z": {} },
+                "CASTER": { "Quality Reports": {}, "Mechanical": {}, "Maintenance": {}, "Production Data": {}, "Testing": {}, "Checklists": {}, "Safety": {}, "Training": {} },
+                "HRM": { "Employee Records": {}, "Attendance": {}, "Performance": {}, "Training Logs": {}, "Safety Compliance": {}, "Policies": {}, "Reports": {}, "Certifications": {} },
+                "CRM": { "PLC Programs": {}, "CAD Drawings": {}, "Electrical": {}, "SCADA": {}, "Automation": {}, "Reports": {}, "Configurations": {}, "Manuals": {} },
+                "ANNEALING": { "Temperature Control": {}, "Process Parameters": {}, "Quality Assurance": {}, "Maintenance": {}, "Safety": {}, "Production Logs": {}, "Testing": {}, "SOP Documents": {} },
+                "TLL": { "PLC Programs": {}, "CAD Drawings": {}, "Maintenance": {}, "Production Logs": {}, "Process Optimization": {}, "Quality Reports": {}, "Manuals": {}, "Safety": {} },
+                "SLITTER": { "Blade Maintenance": {}, "Quality Control": {}, "Production Reports": {}, "Mechanical": {}, "Safety": {}, "Checklists": {}, "Training": {}, "Testing": {} },
+                "UTILITY": { "Power Supply": {}, "Water System": {}, "Compressed Air": {}, "HVAC": {}, "Reports": {}, "Safety": {}, "Manuals": {}, "Testing": {} }
+            };
+            saveFolderStructure();
+        }
+        const fileReq = db.transaction('files', 'readonly').objectStore('files').getAll();
+        fileReq.onsuccess = () => {
+            allFiles = {};
+            for (let item of fileReq.result) allFiles[item.folderPath] = item.files;
+            render();
+        };
+    };
+}
+
+function getCurrentFolderObject() { return currentPath.reduce((o, p) => o?.[p], fileSystem); }
+function getFilesForCurrentFolder() { return allFiles[currentPath.join('/')] || []; }
+
+async function addFileToCurrentFolder(file) {
+    const folderPath = currentPath.join('/');
+    if (!allFiles[folderPath]) allFiles[folderPath] = [];
+    const base64 = await new Promise(r => { const rd = new FileReader(); rd.onload = e => r(e.target.result); rd.readAsDataURL(file); });
+    allFiles[folderPath].push({ name: file.name, dataUrl: base64 });
+    await saveAllFilesToDB();
+}
+
+function deleteFileFromFolder(folderPath, fileName) {
+    if (allFiles[folderPath]) {
+        allFiles[folderPath] = allFiles[folderPath].filter(f => f.name !== fileName);
+        if (allFiles[folderPath].length === 0) delete allFiles[folderPath];
+        saveAllFilesToDB();
+        render();
+        showToast(`✅ Deleted "${fileName}"`);
+    }
+}
+
+function renameFileInFolder(folderPath, oldName, newName) {
+    if (allFiles[folderPath]) {
+        const idx = allFiles[folderPath].findIndex(f => f.name === oldName);
+        if (idx !== -1) {
+            if (!newName.toLowerCase().endsWith('.pdf')) newName += '.pdf';
+            allFiles[folderPath][idx].name = newName;
+            saveAllFilesToDB();
+            render();
+            showToast(`✅ Renamed to "${newName}"`);
+        }
+    }
+}
+
+function selectDepartment(d) { currentPath = [d]; render(); }
+function goBack() { if (currentPath.length && !isSearchMode) { currentPath.pop(); render(); } else if (isSearchMode) clearSearch(); }
+function triggerUpload() { document.getElementById('fileInput').click(); }
+function clearSearch() { document.getElementById('searchInput').value = ''; isSearchMode = false; document.getElementById('searchInfo').classList.add('hidden'); document.getElementById('clearSearchBtn').classList.add('hidden'); render(); }
+
+function searchFiles(q) {
+    if (!q.trim()) return [];
+    const all = [];
+    for (const path in allFiles) if (allFiles[path]) allFiles[path].forEach(f => all.push({ ...f, folder: path }));
+    return all.filter(f => f.name.toLowerCase().includes(q.toLowerCase()));
+}
+
+function createCard(title, onClick, isFolder = false, showDel = false, delPath = null, delName = null, showRename = false) {
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.innerHTML = `
+        <div class="card-icon"><i class="fas ${isFolder ? 'fa-folder' : 'fa-file-pdf'}"></i></div>
+        <div class="card-filename">${escapeHtml(title)}</div>
+        <div class="card-buttons">
+            ${showRename ? `<button class="rename-file-btn" onclick="event.stopPropagation(); window.renameFile('${delPath}','${escapeHtml(delName)}')"><i class="fas fa-edit"></i> Rename</button>` : ''}
+            ${showDel ? `<button class="delete-btn" onclick="event.stopPropagation(); window.deleteFile('${delPath}','${escapeHtml(delName)}')"><i class="fas fa-trash"></i> Delete</button>` : ''}
+        </div>
+    `;
+    div.onclick = onClick;
+    return div;
+}
+
+function render() {
+    const query = document.getElementById('searchInput').value.trim().toLowerCase();
+    if (query) {
+        isSearchMode = true;
+        document.getElementById('clearSearchBtn').classList.remove('hidden');
+        const results = searchFiles(query);
+        document.getElementById('searchInfo').classList.remove('hidden');
+        document.getElementById('searchInfo').innerHTML = `<i class="fas fa-search"></i> Found ${results.length} result(s) for "${escapeHtml(query)}" <button onclick="clearSearch()">Clear</button>`;
+        const contentDiv = document.getElementById('content');
+        contentDiv.innerHTML = '';
+        document.getElementById('backBtn').classList.remove('hidden');
+        document.getElementById('uploadBtn').classList.add('hidden');
+        document.getElementById('departmentsSection').innerHTML = '';
+        document.getElementById('breadcrumb').innerHTML = '';
+        if (!results.length) contentDiv.innerHTML = '<div class="empty-state"><i class="fas fa-search"></i><p>No PDFs found.</p></div>';
+        else results.forEach(f => contentDiv.appendChild(createCard(f.name, () => openPDF(f.dataUrl, f.name), false)));
+        updateStats();
+        return;
+    }
+    isSearchMode = false;
+    document.getElementById('clearSearchBtn').classList.add('hidden');
+    document.getElementById('searchInfo').classList.add('hidden');
+    document.getElementById('content').innerHTML = '';
+    const folder = getCurrentFolderObject();
+    if (!folder) { currentPath = []; render(); return; }
+    document.getElementById('backBtn').classList.toggle('hidden', currentPath.length === 0);
+    const bcDiv = document.getElementById('breadcrumb');
+    bcDiv.innerHTML = `<div class="breadcrumb-item" onclick="navigateToBreadcrumb(-1)"><i class="fas fa-home"></i> Home</div>`;
+    currentPath.forEach((f,i)=> bcDiv.innerHTML += `<span class="breadcrumb-separator">/</span><div class="breadcrumb-item" onclick="navigateToBreadcrumb(${i})">${escapeHtml(f)}</div>`);
+    const isRoot = currentPath.length === 0;
+    if (isRoot) {
+        let html = '<div class="section-title"><i class="fas fa-building"></i> Departments</div><div class="departments-grid">';
+        for (let dept in fileSystem) {
+            const sub = Object.keys(fileSystem[dept]).length;
+            const fcount = allFiles[dept] ? allFiles[dept].length : 0;
+            html += `<div class="dept-card" data-dept="${dept}" onclick="selectDepartment('${dept}')"><div class="dept-oval"><span>${dept}</span></div><div class="dept-arrow"><i class="fas fa-chevron-right"></i></div><div class="dept-info">${sub + fcount} items</div></div>`;
+        }
+        html += '</div>';
+        document.getElementById('departmentsSection').innerHTML = html;
+        document.getElementById('uploadBtn').classList.add('hidden');
+    } else document.getElementById('departmentsSection').innerHTML = '';
+    const hasSubfolders = Object.keys(folder).length > 0;
+    const isLeafFolder = !isRoot && !hasSubfolders;
+    if (isLeafFolder) document.getElementById('uploadBtn').classList.remove('hidden');
+    else document.getElementById('uploadBtn').classList.add('hidden');
+    const actionDiv = document.createElement('div'); actionDiv.className = 'action-bar';
+    if (!isRoot) actionDiv.innerHTML = `<button class="action-btn" onclick="renameCurrentFolder()"><i class="fas fa-edit"></i> Rename Folder</button><button class="action-btn" onclick="deleteCurrentFolder()"><i class="fas fa-trash-alt"></i> Delete Folder</button><button class="action-btn" onclick="addNewFolder()"><i class="fas fa-plus"></i> Add Subfolder</button>`;
+    else actionDiv.innerHTML = `<button class="action-btn" onclick="addNewDepartment()"><i class="fas fa-building"></i> Add Department</button>`;
+    document.getElementById('content').appendChild(actionDiv);
+    if (!isRoot && hasSubfolders) for (let key in folder) document.getElementById('content').appendChild(createCard(key, () => { currentPath.push(key); render(); }, true));
+    if (isLeafFolder) {
+        const files = getFilesForCurrentFolder();
+        const path = currentPath.join('/');
+        if (files.length) files.forEach(f => document.getElementById('content').appendChild(createCard(f.name, () => openPDF(f.dataUrl, f.name), false, true, path, f.name, true)));
+        else document.getElementById('content').innerHTML += '<div class="empty-state"><i class="fas fa-cloud-upload-alt"></i><p>No PDFs yet. Click Upload to add files.</p></div>';
+    }
+    updateStats();
+}
+
+function navigateToBreadcrumb(idx) { if (idx === -1) currentPath = []; else currentPath = currentPath.slice(0, idx+1); render(); }
+function renameCurrentFolder() {
+    if (!currentPath.length) return;
+    const old = currentPath[currentPath.length-1];
+    const newName = prompt("New folder name:", old);
+    if (newName && newName !== old && newName.trim()) {
+        const parent = currentPath.slice(0,-1).reduce((o,p)=>o[p], fileSystem);
+        parent[newName] = parent[old];
+        delete parent[old];
+        const oldPath = currentPath.join('/');
+        const newPath = [...currentPath.slice(0,-1), newName].join('/');
+        if (allFiles[oldPath]) { allFiles[newPath] = allFiles[oldPath]; delete allFiles[oldPath]; }
+        currentPath[currentPath.length-1] = newName;
+        saveFolderStructure(); saveAllFilesToDB(); render();
+        showToast(`✅ Renamed to "${newName}"`);
+    }
+}
+function deleteCurrentFolder() {
+    if (!currentPath.length) return;
+    const name = currentPath[currentPath.length-1];
+    if (confirm(`Delete "${name}" and all contents?`)) {
+        const path = currentPath.join('/');
+        delete allFiles[path];
+        const parent = currentPath.slice(0,-1).reduce((o,p)=>o[p], fileSystem);
+        delete parent[name];
+        currentPath.pop();
+        saveFolderStructure(); saveAllFilesToDB(); render();
+        showToast(`🗑️ Folder "${name}" deleted`);
+    }
+}
+function addNewFolder() {
+    const name = prompt("Folder name:");
+    if (name && name.trim()) {
+        const cur = getCurrentFolderObject();
+        if (cur && !cur[name]) { cur[name] = {}; saveFolderStructure(); render(); showToast(`✅ Folder "${name}" created`); }
+        else showToast("Exists", true);
+    }
+}
+function addNewDepartment() {
+    const name = prompt("Department name:");
+    if (name && name.trim() && !fileSystem[name]) { fileSystem[name] = {}; saveFolderStructure(); render(); showToast(`✅ Department "${name}" created`); }
+    else if (fileSystem[name]) showToast("Exists", true);
+}
+function updateStats() {
+    let folderCount = 0, fileCount = 0;
+    function countFolders(obj) { for (let k in obj) if (typeof obj[k] === 'object') { folderCount++; countFolders(obj[k]); } }
+    countFolders(fileSystem);
+    for (let k in allFiles) if (allFiles[k]) fileCount += allFiles[k].length;
+    document.getElementById('folderCount').textContent = folderCount;
+    document.getElementById('fileCount').textContent = fileCount;
+}
+function showToast(msg, isErr = false) {
+    const toast = document.getElementById('toast');
+    toast.querySelector('span').textContent = msg;
+    toast.style.background = isErr ? "linear-gradient(135deg,#ef4444,#dc2626)" : "linear-gradient(135deg,#10b981,#059669)";
+    toast.classList.remove('hidden'); toast.classList.add('show');
+    setTimeout(() => { toast.classList.remove('show'); toast.classList.add('hidden'); }, 3000);
+}
+function escapeHtml(str) { const div = document.createElement('div'); div.textContent = str; return div.innerHTML; }
+function toggleTheme() { document.body.classList.toggle('light-mode'); localStorage.setItem('oarcel_theme', document.body.classList.contains('light-mode') ? 'light-mode' : ''); updateThemeIcon(); }
+function updateThemeIcon() { const isDark = !document.body.classList.contains('light-mode'); const themeBtn = document.getElementById('themeToggle'); if (themeBtn) themeBtn.innerHTML = `<div class="theme-icon-wrapper"><i class="fas ${isDark ? 'fa-sun' : 'fa-moon'}"></i></div>`; }
+window.selectDepartment = selectDepartment;
+window.goBack = goBack;
+window.triggerUpload = triggerUpload;
+window.clearSearch = clearSearch;
+window.navigateToBreadcrumb = navigateToBreadcrumb;
+window.renameCurrentFolder = renameCurrentFolder;
+window.deleteCurrentFolder = deleteCurrentFolder;
+window.addNewFolder = addNewFolder;
+window.addNewDepartment = addNewDepartment;
+window.openPDF = openPDF;
+window.renameFile = (p, old) => { const nu = prompt("New name:", old.replace('.pdf','')); if (nu && nu.trim()) renameFileInFolder(p, old, nu.trim()); };
+window.deleteFile = (p, n) => { if (confirm(`Delete "${n}"?`)) deleteFileFromFolder(p, n); };
+
+document.addEventListener('DOMContentLoaded', async () => {
+    const themeBtn = document.getElementById('themeToggle');
+    if (themeBtn) themeBtn.onclick = toggleTheme;
+    if (localStorage.getItem('oarcel_theme') === 'light-mode') document.body.classList.add('light-mode');
+    updateThemeIcon();
+    const fileInput = document.getElementById('fileInput');
+    if (fileInput) fileInput.addEventListener('change', async (e) => { const files = Array.from(e.target.files); for (let f of files) if (f.type === 'application/pdf') await addFileToCurrentFolder(f); showToast(`${files.length} PDF(s) saved!`); render(); e.target.value = ''; });
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) searchInput.addEventListener('input', () => render());
+    const clearSearchBtn = document.getElementById('clearSearchBtn');
+    if (clearSearchBtn) clearSearchBtn.addEventListener('click', clearSearch);
+    const backBtn = document.getElementById('backBtn');
+    if (backBtn) backBtn.addEventListener('click', goBack);
+    const uploadBtn = document.getElementById('uploadBtn');
+    if (uploadBtn) uploadBtn.addEventListener('click', triggerUpload);
+    try { await initDB(); await loadFromIndexedDB(); } catch (e) { console.error(e); showToast('Database error', true); }
+});
+</script>
+</body>
+</html>     can you seperate the html and css
