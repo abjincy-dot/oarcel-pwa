@@ -1,5 +1,6 @@
 /* ============================================
-   OARCEL Document Manager — Smooth 3D Effects
+   OARCEL Document Manager — Full 3D Depth
+   EXTERNAL CSS FILE (styles.css)
    ============================================ */
 
 * {
@@ -156,6 +157,7 @@ body::before {
     to { opacity: 1; transform: translateY(0); }
 }
 
+/* Header */
 .header {
     display: flex;
     align-items: center;
@@ -278,17 +280,17 @@ body.light-mode .header-title h1 {
     50% { opacity: 0.6; transform: scale(0.85); }
 }
 
+/* Top bar */
 .top-bar {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
     margin-bottom: 20px;
-    padding: 10px;
+    padding: 14px 20px;
     background: var(--glass-bg);
     backdrop-filter: blur(16px);
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-full);
-    flex-wrap: wrap;
     transition: all var(--transition-base);
 }
 
@@ -298,26 +300,25 @@ body.light-mode .header-title h1 {
 }
 
 .btn-back {
-    background:  background: rgba(30, 90, 200, 0.75);/* darker base → contrast */
-
-    border: 1px solid rgba(255, 255, 255, 0.35);
-
-    color: #ffffff; /* stop using faded colors */
-
-    padding: 12px 18px;
-    border-radius: 22px;
-
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    border: none;
+    color: white;
+    padding: 12px 22px;
+    border-radius: 40px;
     backdrop-filter: blur(12px);
-
-    box-shadow: 
-        0 6px 20px rgba(0,0,0,0.6),
-        inset 0 1px 0 rgba(255,255,255,0.25);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    transition: all var(--transition-base);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
 }
 
 .btn-back:hover {
     transform: translateX(-3px);
-    border-color: rgba(59, 130, 246, 0.6);
-    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.6);
 }
 
 .search-container {
@@ -336,7 +337,7 @@ body.light-mode .header-title h1 {
 
 #searchInput {
     width: 100%;
-    padding: 12px 40px 12px 44px;
+    padding: 13px 45px 13px 48px;
     border-radius: var(--radius-full);
     border: 1px solid var(--glass-border);
     background: var(--input-bg);
@@ -348,7 +349,7 @@ body.light-mode .header-title h1 {
 
 #searchInput:focus {
     border-color: rgba(59, 130, 246, 0.5);
-    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
 .clear-search {
@@ -360,8 +361,8 @@ body.light-mode .header-title h1 {
     border: none;
     color: var(--text-muted);
     cursor: pointer;
-    width: 24px;
-    height: 24px;
+    width: 26px;
+    height: 26px;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -372,33 +373,48 @@ body.light-mode .header-title h1 {
 .clear-search:hover {
     background: rgba(244, 63, 94, 0.2);
     color: var(--accent-rose);
-    transform: translateY(-50%) scale(1.1);
+}
+
+.top-bar-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
 .theme-toggle {
-    width: 42px;
-    height: 42px;
-    background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(236, 72, 153, 0.15));
-    border: 1px solid rgba(168, 85, 247, 0.3);
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(236, 72, 153, 0.15));
+    border: 1px solid rgba(168, 85, 247, 0.4);
     border-radius: 50%;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all var(--transition-base);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .theme-toggle:hover {
     transform: scale(1.08);
-    border-color: rgba(168, 85, 247, 0.6);
-    box-shadow: 0 8px 20px rgba(168, 85, 247, 0.3);
+    border-color: rgba(168, 85, 247, 0.7);
+    box-shadow: 0 8px 20px rgba(168, 85, 247, 0.4);
+}
+
+.theme-toggle i {
+    font-size: 1.3rem;
+    color: #fbbf24;
+}
+
+body.light-mode .theme-toggle i {
+    color: #8b5cf6;
 }
 
 .btn-upload {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 12px 22px;
+    gap: 10px;
+    padding: 11px 26px;
     background: linear-gradient(135deg, #3b82f6, #7c3aed);
     border: none;
     border-radius: var(--radius-full);
@@ -406,16 +422,21 @@ body.light-mode .header-title h1 {
     font-weight: 700;
     cursor: pointer;
     transition: all var(--transition-base);
-    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.35);
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
 }
 
 .btn-upload:hover {
     transform: translateY(-2px);
-    box-shadow: 0 12px 30px rgba(59, 130, 246, 0.5);
+    box-shadow: 0 10px 24px rgba(59, 130, 246, 0.6);
+}
+
+.btn-upload i {
+    font-size: 1rem;
 }
 
 #fileInput { display: none; }
 
+/* Stats bar */
 .stats-bar {
     display: flex;
     align-items: center;
@@ -479,6 +500,7 @@ body.light-mode .header-title h1 {
     background: var(--glass-border);
 }
 
+/* Breadcrumb */
 .breadcrumb {
     display: flex;
     align-items: center;
@@ -515,6 +537,7 @@ body.light-mode .header-title h1 {
     color: var(--accent-blue);
 }
 
+/* Section title */
 .section-title {
     font-size: 0.85rem;
     font-weight: 700;
@@ -533,10 +556,11 @@ body.light-mode .header-title h1 {
     background: linear-gradient(90deg, var(--glass-border), transparent);
 }
 
+/* 3D DEPARTMENT CARDS */
 .departments-grid {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
     margin-bottom: 24px;
 }
 
@@ -545,57 +569,49 @@ body.light-mode .header-title h1 {
     align-items: center;
     gap: 16px;
     cursor: pointer;
-    padding: 6px;
     border-radius: var(--radius-lg);
     transition: all var(--transition-base);
-    border: 1px solid transparent;
-}
-
-.dept-card:hover {
-    background: var(--glass-bg);
-    border-color: var(--glass-border);
-    transform: translateX(6px);
-    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
 }
 
 .dept-oval {
     padding: 12px 28px;
-    border-radius: var(--radius-full);
-    background: linear-gradient(145deg, #2563eb, #1d4ed8);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+    border-radius: 60px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
     display: flex;
     align-items: center;
     gap: 10px;
-    transition: all var(--transition-base);
+    transition: all 0.2s ease;
     position: relative;
     overflow: hidden;
+    box-shadow: 0 12px 20px -10px rgba(0, 0, 0, 0.4), 0 4px 8px -4px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
-.dept-oval::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
-    transition: left 0.5s ease;
-}
-
-.dept-card:hover .dept-oval::before {
-    left: 100%;
-}
+.dept-card[data-dept="REMELT"] .dept-oval { background: linear-gradient(145deg, #ea580c, #b91c0c); }
+.dept-card[data-dept="CASTER"] .dept-oval { background: linear-gradient(145deg, #0d9488, #0b6b62); }
+.dept-card[data-dept="HRM"] .dept-oval { background: linear-gradient(145deg, #7c3aed, #5b21b6); }
+.dept-card[data-dept="CRM"] .dept-oval { background: linear-gradient(145deg, #d97706, #b45309); }
+.dept-card[data-dept="ANNEALING"] .dept-oval { background: linear-gradient(145deg, #db2777, #be185d); }
+.dept-card[data-dept="TLL"] .dept-oval { background: linear-gradient(145deg, #0891b2, #0e7490); }
+.dept-card[data-dept="SLITTER"] .dept-oval { background: linear-gradient(145deg, #4f46e5, #4338ca); }
+.dept-card[data-dept="UTILITY"] .dept-oval { background: linear-gradient(145deg, #dc2626, #b91c1c); }
 
 .dept-card:hover .dept-oval {
-    transform: scale(1.03);
-    box-shadow: 0 12px 30px rgba(37, 99, 235, 0.5);
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 20px 28px -12px rgba(0, 0, 0, 0.5), 0 8px 12px -6px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.dept-card:active .dept-oval {
+    transform: translateY(2px) scale(0.98);
+    transition: 0.05s linear;
+    box-shadow: 0 6px 12px -6px rgba(0, 0, 0, 0.3), inset 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .dept-oval span {
     font-size: 0.85rem;
     font-weight: 700;
     color: white;
+    text-shadow: 0 1px 1px rgba(0,0,0,0.3);
 }
 
 .dept-arrow {
@@ -603,6 +619,7 @@ body.light-mode .header-title h1 {
     font-size: 0.8rem;
     transition: all var(--transition-base);
     margin-left: auto;
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3));
 }
 
 .dept-card:hover .dept-arrow {
@@ -614,87 +631,84 @@ body.light-mode .header-title h1 {
     font-size: 0.75rem;
     font-weight: 600;
     color: var(--text-muted);
-    background: rgba(0, 0, 0, 0.25);
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
     padding: 5px 14px;
     border-radius: var(--radius-full);
-    border: 1px solid var(--glass-border);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 2px 5px rgba(0,0,0,0.2);
 }
 
-.dept-card[data-dept="REMELT"] .dept-oval { background: linear-gradient(145deg, #ea580c, #c2410c); }
-.dept-card[data-dept="CASTER"] .dept-oval { background: linear-gradient(145deg, #0d9488, #0f766e); }
-.dept-card[data-dept="HRM"] .dept-oval { background: linear-gradient(145deg, #7c3aed, #6d28d9); }
-.dept-card[data-dept="CRM"] .dept-oval { background: linear-gradient(145deg, #d97706, #b45309); }
-.dept-card[data-dept="ANNEALING"] .dept-oval { background: linear-gradient(145deg, #db2777, #be185d); }
-.dept-card[data-dept="TLL"] .dept-oval { background: linear-gradient(145deg, #0891b2, #0e7490); }
-.dept-card[data-dept="SLITTER"] .dept-oval { background: linear-gradient(145deg, #4f46e5, #4338ca); }
-.dept-card[data-dept="UTILITY"] .dept-oval { background: linear-gradient(145deg, #dc2626, #b91c1c); }
+body.light-mode .dept-oval {
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 12px 20px -10px rgba(0, 0, 0, 0.2), 0 4px 8px -4px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
 
+body.light-mode .dept-card:hover .dept-oval {
+    box-shadow: 0 20px 28px -12px rgba(0, 0, 0, 0.25), 0 8px 12px -6px rgba(0, 0, 0, 0.15);
+}
+
+body.light-mode .dept-info {
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    color: #475569;
+}
+
+/* 3D FOLDER CARDS */
 .content {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
 }
 
 .card {
-    background: var(--card-bg);
-    backdrop-filter: blur(14px);
-    padding: 14px 18px;
-    border-radius: var(--radius-md);
+    background: linear-gradient(145deg, #1e2a47, #141f38);
+    backdrop-filter: none;
+    padding: 10px 16px;
+    border-radius: 24px;
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 14px;
-    border: 1px solid var(--glass-border);
-    transition: all var(--transition-base);
+    gap: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    transition: all 0.2s ease;
     position: relative;
     overflow: hidden;
     animation: cardEnter 0.3s ease-out backwards;
-}
-
-@keyframes cardEnter {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.card::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 3px;
-    background: linear-gradient(180deg, var(--accent-blue), var(--accent-purple));
-    opacity: 0;
-    transition: opacity var(--transition-fast);
-}
-
-.card::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.04), transparent);
-    transition: left 0.5s ease;
+    box-shadow: 0 20px 30px -15px rgba(0, 0, 0, 0.5), 0 8px 12px -6px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
 }
 
 .card:hover {
-    background: var(--card-bg-hover);
-    border-color: var(--glass-border-hover);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+    transform: translateY(-6px);
+    background: linear-gradient(145deg, #25365e, #18243f);
+    box-shadow: 0 28px 40px -18px rgba(0, 0, 0, 0.6), 0 12px 18px -8px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
-.card:hover::before { opacity: 1; }
-.card:hover::after { left: 100%; }
+.card:active {
+    transform: translateY(2px);
+    transition: 0.05s linear;
+    box-shadow: 0 8px 16px -8px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+body.light-mode .card {
+    background: linear-gradient(145deg, #ffffff, #e9eef3);
+    box-shadow: 0 20px 30px -15px rgba(0, 0, 0, 0.2), 0 8px 12px -6px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+body.light-mode .card:hover {
+    background: linear-gradient(145deg, #ffffff, #e2e8f0);
+    transform: translateY(-6px);
+    box-shadow: 0 28px 40px -18px rgba(0, 0, 0, 0.3), 0 12px 18px -8px rgba(0, 0, 0, 0.2);
+}
 
 .card-icon {
     width: 32px;
     height: 32px;
     border-radius: var(--radius-sm);
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(139, 92, 246, 0.1));
-    border: 1px solid rgba(59, 130, 246, 0.2);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.15));
+    border: 1px solid rgba(59, 130, 246, 0.3);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -703,13 +717,13 @@ body.light-mode .header-title h1 {
 
 .card:hover .card-icon {
     transform: scale(1.1);
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(139, 92, 246, 0.2));
-    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(139, 92, 246, 0.25));
 }
 
 .card-icon i {
     font-size: 1.1rem;
     color: var(--accent-blue);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .card-filename {
@@ -717,6 +731,7 @@ body.light-mode .header-title h1 {
     font-size: 0.9rem;
     font-weight: 500;
     word-break: break-word;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
 }
 
 .card:hover .card-filename {
@@ -730,7 +745,7 @@ body.light-mode .header-title h1 {
 }
 
 .card-buttons button {
-    padding: 8px 14px;
+    padding: 6px 12px;
     border-radius: var(--radius-full);
     font-size: 0.75rem;
     cursor: pointer;
@@ -743,34 +758,35 @@ body.light-mode .header-title h1 {
 }
 
 .rename-file-btn {
-    background: rgba(59, 130, 246, 0.12);
-    border: 1px solid rgba(59, 130, 246, 0.25);
+    background: rgba(59, 130, 246, 0.2);
+    border: 1px solid rgba(59, 130, 246, 0.4);
     color: #93c5fd;
 }
 
 .rename-file-btn:hover {
-    background: rgba(59, 130, 246, 0.25);
+    background: rgba(59, 130, 246, 0.35);
     transform: translateY(-2px);
 }
 
 .delete-btn {
-    background: rgba(244, 63, 94, 0.12);
-    border: 1px solid rgba(244, 63, 94, 0.25);
+    background: rgba(244, 63, 94, 0.2);
+    border: 1px solid rgba(244, 63, 94, 0.4);
     color: #fda4af;
 }
 
 .delete-btn:hover {
-    background: rgba(244, 63, 94, 0.25);
+    background: rgba(244, 63, 94, 0.35);
     transform: translateY(-2px);
 }
 
+/* Action bar */
 .action-bar {
     display: flex;
-    gap: 6px;
-    padding: 12px;
+    gap: 8px;
+    padding: 10px 14px;
     flex-wrap: wrap;
     justify-content: center;
-    margin-bottom: 8px;
+    margin-bottom: 12px;
     background: var(--glass-bg);
     border-radius: var(--radius-full);
     border: 1px solid var(--glass-border);
@@ -780,7 +796,7 @@ body.light-mode .header-title h1 {
 .action-btn {
     background: rgba(20, 40, 60, 0.7);
     border: 1px solid var(--glass-border);
-    padding: 6px 16px;
+    padding: 6px 14px;
     border-radius: var(--radius-full);
     color: var(--text-primary);
     cursor: pointer;
@@ -914,309 +930,42 @@ body.light-mode .header-title h1 {
 
 .hidden { display: none !important; }
 
+/* ========== MOBILE ADJUSTMENTS ========== */
 @media (max-width: 640px) {
     .app { padding: 16px 14px 32px; }
     .header { padding: 14px 18px; }
     .header-title h1 { font-size: 1.3rem; }
     .logo { width: 44px; height: 44px; }
-    .search-container { min-width: 100%; order: -1; margin-bottom: 4px; }
-    .top-bar { flex-wrap: wrap; }
-    .top-bar-actions { margin-left: auto; }
-    .card { flex-wrap: wrap; }
-    .card-buttons { margin-top: 8px; width: 100%; justify-content: flex-end; }
+    .search-container { min-width: 100%; order: 3; margin-top: 8px; }
+    .top-bar { flex-wrap: wrap; padding: 12px 16px !important; }
+    .top-bar-actions { margin-left: auto; order: 2; }
+    .btn-back { order: 1; padding: 10px 18px !important; }
+    .theme-toggle { width: 44px !important; height: 44px !important; }
+    .btn-upload { padding: 9px 20px !important; }
+    .card {
+        padding: 8px 12px !important;
+        gap: 10px !important;
+        transform: translateY(-1px);
+    }
+    .card:hover { transform: translateY(-4px); }
+    .card-icon { width: 28px !important; height: 28px !important; }
+    .card-icon i { font-size: 0.9rem !important; }
+    .card-filename { font-size: 0.85rem !important; }
+    .card-buttons button { padding: 5px 10px !important; font-size: 0.7rem !important; }
+    .action-bar { padding: 6px 10px !important; gap: 6px !important; }
+    .action-btn { padding: 5px 12px !important; font-size: 0.75rem !important; }
+    .dept-oval { padding: 10px 20px !important; }
+    .dept-oval span { font-size: 0.75rem !important; }
+    .dept-info { padding: 4px 10px !important; font-size: 0.7rem !important; }
     .toast { white-space: normal; max-width: 90%; text-align: center; }
 }
-.section-title {
-    margin-bottom: 8px !important;
-    line-height: 1.3 !important;
-}
-@media (max-width: 380px) {
-    .card-buttons { flex-direction: column; gap: 6px; }
-    .card-buttons button { width: 100%; justify-content: center; }
-    .dept-info { display: none; }
-}
-/* Reduce card height */
-.card {
-    padding: 3px 10px !important;   /* was 14px 18px – much shorter */
-    gap: 6px !important;
-}
 
-.card-icon {
-    width: 20px !important;
-    height: 20px !important;
-}
-
-.card-icon i {
-    font-size: 0.9rem !important;
-}
-.content {
-    gap: 3px !important;   /* reduces space between cards */
-}
-/* Make card backgrounds more visible */
-.card {
-    background: rgba(12, 28, 48, 0.92) !important;
-}
-
-body.light-mode .card {
-    background: rgba(255, 255, 255, 0.96) !important;
-}
-/* Change background color of folder cards */
-.card {
-    background: #of172a !important;   /* solid dark blue-gray */
-    border-radius: 12px !important;
-}
-body.light-mode .card {
-    background: #e2e8f0 !important;   /* light gray */
-}
-/* Mobile: fix top bar order and boundaries */
-.top-bar {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-
-    width: 100%;
-    padding: 18px 20px;
-
-    border-radius: 40px; /* bigger oval */
-    
-    background: rgba(255,255,255,0.05);
-    backdrop-filter: blur(20px);
-    
-    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-}
-}
-
-/* Search takes full width on next line */
-.search-container {
-    order: 3;
-    flex: 1 1 100%;
-    min-width: 100%;
-    margin-top: 4px;
-    margin-bottom: 4px;
-}
-
-/* Right side actions (theme toggle + upload) */
-.top-bar-actions button {
-    background: rgba(20, 25, 40, 0.8); /* darker = visible */
-
-    border: 1px solid rgba(255, 255, 255, 0.35);
-
-    width: 50px;
-    height: 50px;
-
-    border-radius: 50%;
-
-    backdrop-filter: blur(12px);
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    box-shadow: 
-        0 6px 20px rgba(0,0,0,0.6),
-        inset 0 1px 0 rgba(255,255,255,0.25);
-}
-
-/* Ensure no overflow */
-.app {
-    overflow-x: hidden;
-}
-
-.top-bar, .btn-back, .search-container, .top-bar-actions {
-    max-width: 100%;
-    box-sizing: border-box;
-}
-/* Fix Upload button on mobile – make it a clean circle/pill */
-@media (max-width: 560px) {
-    .btn-upload {
-        padding: 10px !important;
-        width: 44px !important;
-        height: 44px !important;
-        border-radius: 50% !important;
-        justify-content: center !important;
-        align-items: center !important;
-    }
-    
-    .btn-upload span {
-        display: none !important;  /* hide the word "Upload" */
-    }
-    
-    .btn-upload i {
-        margin: 0 !important;
-        font-size: 1.2rem !important;
-    }
-    
-    /* Also make the theme toggle a perfect circle */
-    .theme-toggle {
-        width: 44px !important;
-        height: 44px !important;
-        border-radius: 50% !important;
-        padding: 0 !important;
-        justify-content: center !important;
-        align-items: center !important;
-    }
-}
-function toggleFolder(element) {
-  const parentLi = element.closest('.tree-item');
-  const childrenContainer = parentLi.querySelector('.tree-children');
-  if (childrenContainer) {
-    const isVisible = childrenContainer.style.display !== 'none';
-    childrenContainer.style.display = isVisible ? 'none' : 'block';
-    // also rotate chevron icon
-    const chevron = element.querySelector('.toggle-icon');
-    if (chevron) chevron.style.transform = isVisible ? 'rotate(0deg)' : 'rotate(90deg)';
-  }
-}
-/* Center upload button (without changing HTML) */
-/* Make actions container full width and center items */
-.top-bar-actions {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 16px;
-    width: 100%;
-}
-
-/* Keep buttons normal (remove fixed 
-/* Make actions container full width and center items */
-.top-bar-actions {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 16px;
-    width: 100%;
-}
-
-/* Keep buttons normal (remove fixed hacks) */
-.btn-upload {
-    position: static !important;
-    transform: none !important;
-}
-
-/* Ensure back button stays left */
-.btn-back {
-    margin-right: auto;
-}
-
-/* Ensure theme stays right */
-#themeToggle {
-    margin-left: auto;
-}
-/* ========== 3D PROJECTED FOLDER BUTTONS ========== */
-.card {
-    /* Remove the flat glass effect, add a solid but soft background */
-    background: linear-gradient(145deg, #1e2a47, #141f38);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 24px;
-    box-shadow: 
-        0 20px 30px -15px rgba(0, 0, 0, 0.5),
-        0 8px 12px -6px rgba(0, 0, 0, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    transition: all 0.2s ease;
-    transform: translateY(-2px);
-}
-
-/* Hover effect: pushes the button even more */
-.card:hover {
-    transform: translateY(-6px);
-    box-shadow: 
-        0 28px 40px -18px rgba(0, 0, 0, 0.6),
-        0 12px 18px -8px rgba(0, 0, 0, 0.4),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
-    background: linear-gradient(145deg, #25365e, #18243f);
-}
-
-/* For light mode */
-body.light-mode .card {
-    background: linear-gradient(145deg, #ffffff, #e9eef3);
-    box-shadow: 
-        0 20px 30px -15px rgba(0, 0, 0, 0.2),
-        0 8px 12px -6px rgba(0, 0, 0, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.8);
-    border: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-body.light-mode .card:hover {
-    background: linear-gradient(145deg, #ffffff, #e2e8f0);
-    transform: translateY(-6px);
-    box-shadow: 
-        0 28px 40px -18px rgba(0, 0, 0, 0.3),
-        0 12px 18px -8px rgba(0, 0, 0, 0.2);
-}
-
-/* Optional: add a subtle pressed effect when clicked */
-.card:active {
-    transform: translateY(2px);
-    transition: 0.05s linear;
-    box-shadow: 
-        0 8px 16px -8px rgba(0, 0, 0, 0.4),
-        inset 0 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-/* Keep the icon and text readable */
-.card-icon i {
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-.card-filename {
-    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
-}/* ========== 3D DEPTH FOR DEPARTMENT CARDS ========== */
-.dept-card {
-    transform: translateY(-1px);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.dept-oval {
-    /* Solid gradient background (keeps department colors) */
-    background: linear-gradient(145deg, currentColor, color-mix(in srgb, currentColor 70%, black));
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    border-radius: 60px;
-    box-shadow: 
-        0 12px 20px -10px rgba(0, 0, 0, 0.4),
-        0 4px 8px -4px rgba(0, 0, 0, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
-    transition: all 0.2s ease;
-}
-
-.dept-card:hover .dept-oval {
-    transform: translateY(-4px) scale(1.02);
-    box-shadow: 
-        0 20px 28px -12px rgba(0, 0, 0, 0.5),
-        0 8px 12px -6px rgba(0, 0, 0, 0.4),
-        inset 0 1px 0 rgba(255, 255, 255, 0.3);
-}
-
-.dept-card:active .dept-oval {
-    transform: translateY(2px) scale(0.98);
-    transition: 0.05s linear;
-    box-shadow: 
-        0 6px 12px -6px rgba(0, 0, 0, 0.3),
-        inset 0 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-/* Keep existing department colors but enhance them */
-.dept-card[data-dept="REMELT"] .dept-oval { background: linear-gradient(145deg, #ea580c, #b91c0c); color: #ea580c; }
-.dept-card[data-dept="CASTER"] .dept-oval { background: linear-gradient(145deg, #0d9488, #0b6b62); color: #0d9488; }
-.dept-card[data-dept="HRM"] .dept-oval { background: linear-gradient(145deg, #7c3aed, #5b21b6); color: #7c3aed; }
-.dept-card[data-dept="CRM"] .dept-oval { background: linear-gradient(145deg, #d97706, #b45309); color: #d97706; }
-.dept-card[data-dept="ANNEALING"] .dept-oval { background: linear-gradient(145deg, #db2777, #be185d); color: #db2777; }
-.dept-card[data-dept="TLL"] .dept-oval { background: linear-gradient(145deg, #0891b2, #0e7490); color: #0891b2; }
-.dept-card[data-dept="SLITTER"] .dept-oval { background: linear-gradient(145deg, #4f46e5, #4338ca); color: #4f46e5; }
-.dept-card[data-dept="UTILITY"] .dept-oval { background: linear-gradient(145deg, #dc2626, #b91c1c); color: #dc2626; }
-
-/* Also style the arrow and info to match depth */
-.dept-arrow i {
-    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3));
-    transition: transform 0.2s ease;
-}
-
-.dept-card:hover .dept-arrow i {
-    transform: translateX(4px);
-}
-
-.dept-info {
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(4px);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 2px 5px rgba(0,0,0,0.2);
-    border: 1px solid rgba(255,255,255,0.15);
+@media (max-width: 480px) {
+    .btn-upload span { display: none; }
+    .btn-upload { padding: 9px 16px !important; }
+    .btn-upload i { margin: 0; font-size: 1.2rem; }
+    .theme-toggle { width: 42px !important; height: 42px !important; }
+    .card { padding: 6px 10px !important; }
+    .card-buttons button { padding: 4px 8px !important; }
+    .dept-oval { padding: 8px 16px !important; }
 }
