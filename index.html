@@ -295,13 +295,13 @@ body.light-mode .header-title h1 {
     50% { opacity: 0.6; transform: scale(0.85); }
 }
 
-/* ========== TOP BAR REARRANGED - BEAUTIFUL & VISIBLE ========== */
+/* ========== TOP BAR - INCREASED HEIGHT FOR BETTER BALANCE ========== */
 .top-bar {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
     margin-bottom: 20px;
-    padding: 10px 18px;
+    padding: 14px 20px;  /* increased from 10px 18px */
     background: var(--glass-bg);
     backdrop-filter: blur(16px);
     border: 1px solid var(--glass-border);
@@ -315,10 +315,10 @@ body.light-mode .header-title h1 {
 }
 
 .btn-back {
-    background: rgba(30, 40, 220, 0.85);
+    background: rgba(20, 25, 40, 0.85);
     border: 1px solid rgba(255, 255, 255, 0.35);
     color: #ffffff;
-    padding: 12px 20px;
+    padding: 12px 22px;  /* slightly larger */
     border-radius: 40px;
     backdrop-filter: blur(12px);
     cursor: pointer;
@@ -352,7 +352,7 @@ body.light-mode .header-title h1 {
 
 #searchInput {
     width: 100%;
-    padding: 12px 40px 12px 44px;
+    padding: 13px 45px 13px 48px;  /* increased vertical padding */
     border-radius: var(--radius-full);
     border: 1px solid var(--glass-border);
     background: var(--input-bg);
@@ -393,12 +393,12 @@ body.light-mode .header-title h1 {
 .top-bar-actions {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
 }
 
 .theme-toggle {
-    width: 46px;
-    height: 46px;
+    width: 48px;   /* increased from 46px */
+    height: 48px;
     background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(236, 72, 153, 0.15));
     border: 1px solid rgba(168, 85, 247, 0.4);
     border-radius: 50%;
@@ -417,7 +417,7 @@ body.light-mode .header-title h1 {
 }
 
 .theme-toggle i {
-    font-size: 1.2rem;
+    font-size: 1.3rem;
     color: #fbbf24;
 }
 
@@ -429,7 +429,7 @@ body.light-mode .theme-toggle i {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 10px 24px;
+    padding: 11px 26px;  /* slightly larger */
     background: linear-gradient(135deg, #3b82f6, #7c3aed);
     border: none;
     border-radius: var(--radius-full);
@@ -950,16 +950,21 @@ body.light-mode .theme-toggle i {
 
 .hidden { display: none !important; }
 
-/* ========== BASE MOBILE STYLES (ORIGINAL) ========== */
+/* ========== BASE MOBILE STYLES (ORIGINAL + HEIGHT ADJUSTMENTS) ========== */
 @media (max-width: 640px) {
     .app { padding: 16px 14px 32px; }
     .header { padding: 14px 18px; }
     .header-title h1 { font-size: 1.3rem; }
     .logo { width: 44px; height: 44px; }
     .search-container { min-width: 100%; order: 3; margin-top: 8px; }
-    .top-bar { flex-wrap: wrap; }
+    .top-bar { 
+        flex-wrap: wrap; 
+        padding: 12px 16px !important;  /* slightly taller on mobile too */
+    }
     .top-bar-actions { margin-left: auto; order: 2; }
-    .btn-back { order: 1; }
+    .btn-back { order: 1; padding: 10px 18px !important; }
+    .theme-toggle { width: 44px !important; height: 44px !important; }
+    .btn-upload { padding: 9px 20px !important; }
     .card { flex-wrap: wrap; }
     .card-buttons { margin-top: 8px; width: 100%; justify-content: flex-end; }
     .toast { white-space: normal; max-width: 90%; text-align: center; }
@@ -967,58 +972,43 @@ body.light-mode .theme-toggle i {
 
 @media (max-width: 480px) {
     .btn-upload span { display: none; }
-    .btn-upload { padding: 10px 16px; }
+    .btn-upload { padding: 9px 16px !important; }
     .btn-upload i { margin: 0; font-size: 1.2rem; }
-    .theme-toggle { width: 42px; height: 42px; }
+    .theme-toggle { width: 42px !important; height: 42px !important; }
 }
 
-/* ===== NEW: REDUCE CARD HEIGHT ON MOBILE (FIXES SPACING ISSUE) ===== */
+/* ===== MOBILE CARD HEIGHT REDUCTION (FIXES EXCESS SPACING) ===== */
 @media (max-width: 640px) {
-    /* Compact folder/file cards - reduces vertical height significantly */
     .card {
         padding: 8px 12px !important;
         gap: 10px !important;
     }
-    
     .card-icon {
         width: 28px !important;
         height: 28px !important;
     }
-    
     .card-icon i {
         font-size: 0.9rem !important;
     }
-    
     .card-filename {
         font-size: 0.85rem !important;
-        font-weight: 500;
     }
-    
     .card-buttons button {
         padding: 5px 10px !important;
         font-size: 0.7rem !important;
     }
-    
-    /* Reduce action bar height */
     .action-bar {
         padding: 6px 10px !important;
         gap: 6px !important;
         margin-bottom: 12px !important;
     }
-    
     .action-btn {
         padding: 5px 12px !important;
         font-size: 0.75rem !important;
-        gap: 5px !important;
     }
-    
-    /* Even tighter for very small screens */
     @media (max-width: 480px) {
         .card {
             padding: 6px 10px !important;
-        }
-        .card-buttons {
-            gap: 4px !important;
         }
         .card-buttons button {
             padding: 4px 8px !important;
