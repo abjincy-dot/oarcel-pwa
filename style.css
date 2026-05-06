@@ -937,7 +937,7 @@ body.light-mode .header-title h1 {
 }
 /* Reduce card height */
 .card {
-    padding: 3px 10px !important;   /* was 14px 18px – much shorter */
+    padding: 1px 10px !important;   /* was 14px 18px – much shorter */
     gap: 6px !important;
 }
 
