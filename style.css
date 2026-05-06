@@ -298,7 +298,7 @@ body.light-mode .header-title h1 {
 }
 
 .btn-back {
-    background: rgba(20, 25, 40, 0.75); /* darker base → contrast */
+    background:  background: rgba(30, 90, 200, 0.75);/* darker base → contrast */
 
     border: 1px solid rgba(255, 255, 255, 0.35);
 
@@ -937,8 +937,8 @@ body.light-mode .header-title h1 {
 }
 /* Reduce card height */
 .card {
-    padding: 3px 1px !important;   /* was 14px 18px – much shorter */
-    gap: 1px !important;
+    padding: 3px 10px !important;   /* was 14px 18px – much shorter */
+    gap: 6px !important;
 }
 
 .card-icon {
@@ -1101,97 +1101,4 @@ function toggleFolder(element) {
 /* Ensure theme stays right */
 #themeToggle {
     margin-left: auto;
-}
-/* ===== REDUCE CARD HEIGHT ON MOBILE ===== */
-@media (max-width: 640px) {
-    /* Compact folder/file cards */
-    .card {
-        padding: 8px 12px !important;   /* was 14px 18px → much shorter */
-        gap: 10px !important;
-    }
-    
-    .card-icon {
-        width: 28px !important;
-        height: 28px !important;
-    }
-    
-    .card-icon i {
-        font-size: 0.9rem !important;
-    }
-    
-    .card-filename {
-        font-size: 0.85rem !important;
-        font-weight: 500;
-    }
-    
-    .card-buttons button {
-        padding: 5px 10px !important;
-        font-size: 0.7rem !important;
-    }
-    
-    /* Reduce action bar height */
-    .action-bar {
-        padding: 6px 10px !important;
-        gap: 6px !important;
-        margin-bottom: 12px !important;
-    }
-    
-    .action-btn {
-        padding: 5px 12px !important;
-        font-size: 0.75rem !important;
-        gap: 5px !important;
-    }
-    
-    /* Even tighter for very small screens */
-    @media (max-width: 480px) {
-        .card {
-            padding: 6px 10px !important;
-        }
-        .card-buttons {
-            gap: 4px !important;
-        }
-        .card-buttons button {
-            padding: 4px 8px !important;
-        }
-    }
-}
-/* Increase top bar height for better visual balance */
-.top-bar {
-    padding: 14px 20px !important;  /* was 10px 18px — gives more breathing room */
-    gap: 14px !important;
-}
-
-/* Slightly adjust buttons to match new height (optional, keeps proportions) */
-.btn-back {
-    padding: 12px 22px !important;
-}
-
-.search-container #searchInput {
-    padding: 13px 45px 13px 48px !important;
-}
-
-.theme-toggle {
-    width: 48px !important;
-    height: 48px !important;
-}
-
-.btn-upload {
-    padding: 11px 26px !important;
-}
-
-/* On mobile, keep it slightly taller but still compact */
-@media (max-width: 640px) {
-    .top-bar {
-        padding: 12px 16px !important;
-    }
-    .btn-back {
-        padding: 10px 18px !important;
-    }
-    .theme-toggle {
-        width: 44px !important;
-        height: 44px !important;
-    }
-    .btn-upload {
-        padding: 9px 20px !important;
-    }
 }
