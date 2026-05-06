@@ -17,7 +17,6 @@
 <style>
 /* ============================================
    OARCEL Document Manager — Smooth 3D Effects
-   (ORIGINAL STYLES - ONLY TOP BAR REARRANGED)
    ============================================ */
 
 * {
@@ -315,7 +314,6 @@ body.light-mode .header-title h1 {
     box-shadow: var(--shadow-md);
 }
 
-/* Back button - enhanced visibility */
 .btn-back {
     background: rgba(20, 25, 40, 0.85);
     border: 1px solid rgba(255, 255, 255, 0.35);
@@ -338,7 +336,6 @@ body.light-mode .header-title h1 {
     box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
 }
 
-/* Search - takes available space */
 .search-container {
     flex: 1;
     position: relative;
@@ -393,14 +390,12 @@ body.light-mode .header-title h1 {
     color: var(--accent-rose);
 }
 
-/* Action buttons group */
 .top-bar-actions {
     display: flex;
     align-items: center;
     gap: 10px;
 }
 
-/* Theme toggle button - visible and glowing */
 .theme-toggle {
     width: 46px;
     height: 46px;
@@ -430,7 +425,6 @@ body.light-mode .theme-toggle i {
     color: #8b5cf6;
 }
 
-/* Upload button - prominent and beautiful */
 .btn-upload {
     display: flex;
     align-items: center;
@@ -956,6 +950,7 @@ body.light-mode .theme-toggle i {
 
 .hidden { display: none !important; }
 
+/* ========== BASE MOBILE STYLES (ORIGINAL) ========== */
 @media (max-width: 640px) {
     .app { padding: 16px 14px 32px; }
     .header { padding: 14px 18px; }
@@ -975,6 +970,60 @@ body.light-mode .theme-toggle i {
     .btn-upload { padding: 10px 16px; }
     .btn-upload i { margin: 0; font-size: 1.2rem; }
     .theme-toggle { width: 42px; height: 42px; }
+}
+
+/* ===== NEW: REDUCE CARD HEIGHT ON MOBILE (FIXES SPACING ISSUE) ===== */
+@media (max-width: 640px) {
+    /* Compact folder/file cards - reduces vertical height significantly */
+    .card {
+        padding: 8px 12px !important;
+        gap: 10px !important;
+    }
+    
+    .card-icon {
+        width: 28px !important;
+        height: 28px !important;
+    }
+    
+    .card-icon i {
+        font-size: 0.9rem !important;
+    }
+    
+    .card-filename {
+        font-size: 0.85rem !important;
+        font-weight: 500;
+    }
+    
+    .card-buttons button {
+        padding: 5px 10px !important;
+        font-size: 0.7rem !important;
+    }
+    
+    /* Reduce action bar height */
+    .action-bar {
+        padding: 6px 10px !important;
+        gap: 6px !important;
+        margin-bottom: 12px !important;
+    }
+    
+    .action-btn {
+        padding: 5px 12px !important;
+        font-size: 0.75rem !important;
+        gap: 5px !important;
+    }
+    
+    /* Even tighter for very small screens */
+    @media (max-width: 480px) {
+        .card {
+            padding: 6px 10px !important;
+        }
+        .card-buttons {
+            gap: 4px !important;
+        }
+        .card-buttons button {
+            padding: 4px 8px !important;
+        }
+    }
 }
 </style>
 </head>
