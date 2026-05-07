@@ -197,7 +197,7 @@ body::before {
     font-size: 1.5rem;
     color: white;
     animation: gradientShift 6s ease infinite;
-    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+    box-shadow: 0 0 5px 2px rgba(255, 255, 255, 0.2);
     transition: transform var(--transition-bounce);
 }
 
@@ -301,7 +301,7 @@ body.light-mode .header-title h1 {
 
 /* BACK BUTTON (ID: backBtn) */
 #backBtn {
-    background: linear-gradient(135deg, #3b82f6, #2563eb);  /* blue gradient */
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
     border: 1px solid rgba(59, 130, 246, 0.6);
     color: white;
     padding: 12px 18px;
@@ -415,7 +415,6 @@ body.light-mode .header-title h1 {
 body.light-mode .theme-toggle i {
     color: #8b5cf6;
 }
-
 
 /* UPLOAD BUTTON (ID: uploadBtn) */
 #uploadBtn {
@@ -993,4 +992,26 @@ body.light-mode .card {
     .card-buttons { flex-direction: column; gap: 6px; }
     .card-buttons button { width: 100%; justify-content: center; }
     .dept-info { display: none; }
+}
+
+/* ========== WHITE OUTER GLOW FOR SUBFOLDERS ONLY (REDUCED) ========== */
+.card.glow-folder {
+    position: relative;
+    transition: box-shadow 0.25s ease, transform 0.2s ease;
+    /* Reduced glow: smaller blur, less spread, lower opacity */
+    box-shadow: 0 0 8px 3px rgba(255, 255, 255, 0.3), var(--shadow-sm);
+}
+
+.card.glow-folder:hover {
+    box-shadow: 0 0 14px 6px rgba(255, 255, 255, 0.5), var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+/* Light mode – even softer */
+body.light-mode .card.glow-folder {
+    box-shadow: 0 0 6px 2px rgba(0, 0, 0, 0.1);
+}
+
+body.light-mode .card.glow-folder:hover {
+    box-shadow: 0 0 10px 4px rgba(0, 0, 0, 0.2);
 }
