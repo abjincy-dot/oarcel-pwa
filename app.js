@@ -120,7 +120,7 @@ async function loadFromIndexedDB() {
                     "HPU 2": {},
                     "M": {}, "N": {}, "O": {}, "P": {}, "Q": {}, "R": {}, "S": {}, "T": {}, "U": {}, "V": {}, "W": {}, "X": {}, "Y": {}, "Z": {}
                 },
-                "CASTER": { "Quality Reports": {}, "Mechanical": {}, "Maintenance": {}, "Production Data": {}, "Testing": {}, "Checklists": {}, "Safety": {}, "Training": {} },
+                "CASTER": { "UPATED ELECTRICAL DRAWING": {}, "HYDRAULIC ": {}, "AJAX": {}, "WATER CIRCULATION PUMP": {}, "A": {}, "B": {}, "B": {}, "C": {} },
                 "HRM": { "Employee Records": {}, "Attendance": {}, "Performance": {}, "Training Logs": {}, "Safety Compliance": {}, "Policies": {}, "Reports": {}, "Certifications": {} },
                 "CRM": { "PLC Programs": {}, "CAD Drawings": {}, "Electrical": {}, "SCADA": {}, "Automation": {}, "Reports": {}, "Configurations": {}, "Manuals": {} },
                 "ANNEALING": { "Temperature Control": {}, "Process Parameters": {}, "Quality Assurance": {}, "Maintenance": {}, "Safety": {}, "Production Logs": {}, "Testing": {}, "SOP Documents": {} },
