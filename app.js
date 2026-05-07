@@ -126,6 +126,8 @@ async function loadFromIndexedDB() {
                 "ANNEALING": { "Temperature Control": {}, "Process Parameters": {}, "Quality Assurance": {}, "Maintenance": {}, "Safety": {}, "Production Logs": {}, "Testing": {}, "SOP Documents": {} },
                 "TLL": { "PLC Programs": {}, "CAD Drawings": {}, "Maintenance": {}, "Production Logs": {}, "Process Optimization": {}, "Quality Reports": {}, "Manuals": {}, "Safety": {} },
                 "SLITTER": { "Blade Maintenance": {}, "Quality Control": {}, "Production Reports": {}, "Mechanical": {}, "Safety": {}, "Checklists": {}, "Training": {}, "Testing": {} },
+                  "CRANES": { "CASTER CRANE": {}, "HRM CRANE": {}, "SOUTH CRANE": {}, "NORTH CRANE": {}, "SLITER CRANE": {}, "TLL CRANE": {}, "ROLL SHOP CRANE": {}, "A": {} },
+                
                 "UTILITY": { "Power Supply": {}, "Water System": {}, "Compressed Air": {}, "HVAC": {}, "Reports": {}, "Safety": {}, "Manuals": {}, "Testing": {} }
             };
             saveFolderStructure();
