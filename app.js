@@ -120,14 +120,12 @@ async function loadFromIndexedDB() {
                     "HPU 2": {},
                     "M": {}, "N": {}, "O": {}, "P": {}, "Q": {}, "R": {}, "S": {}, "T": {}, "U": {}, "V": {}, "W": {}, "X": {}, "Y": {}, "Z": {}
                 },
-                "CASTER": { "UPATED ELECTRICAL DRAWING": {}, "HYDRAULIC ": {}, "AJAX": {}, "WATER CIRCULATION PUMP": {}, "A": {}, "B": {}, "B": {}, "C": {} },
+                "CASTER": { "Quality Reports": {}, "Mechanical": {}, "Maintenance": {}, "Production Data": {}, "Testing": {}, "Checklists": {}, "Safety": {}, "Training": {} },
                 "HRM": { "Employee Records": {}, "Attendance": {}, "Performance": {}, "Training Logs": {}, "Safety Compliance": {}, "Policies": {}, "Reports": {}, "Certifications": {} },
                 "CRM": { "PLC Programs": {}, "CAD Drawings": {}, "Electrical": {}, "SCADA": {}, "Automation": {}, "Reports": {}, "Configurations": {}, "Manuals": {} },
                 "ANNEALING": { "Temperature Control": {}, "Process Parameters": {}, "Quality Assurance": {}, "Maintenance": {}, "Safety": {}, "Production Logs": {}, "Testing": {}, "SOP Documents": {} },
                 "TLL": { "PLC Programs": {}, "CAD Drawings": {}, "Maintenance": {}, "Production Logs": {}, "Process Optimization": {}, "Quality Reports": {}, "Manuals": {}, "Safety": {} },
                 "SLITTER": { "Blade Maintenance": {}, "Quality Control": {}, "Production Reports": {}, "Mechanical": {}, "Safety": {}, "Checklists": {}, "Training": {}, "Testing": {} },
-                  "CRANES": { "CASTER CRANE": {}, "HRM CRANE": {}, "SOUTH CRANE": {}, "NORTH CRANE": {}, "SLITER CRANE": {}, "TLL CRANE": {}, "ROLL SHOP CRANE": {}, "A": {} },
-                
                 "UTILITY": { "Power Supply": {}, "Water System": {}, "Compressed Air": {}, "HVAC": {}, "Reports": {}, "Safety": {}, "Manuals": {}, "Testing": {} }
             };
             saveFolderStructure();
@@ -193,9 +191,11 @@ function searchFiles(q) {
     return all.filter(f => f.name.toLowerCase().includes(q.toLowerCase()));
 }
 
+// ========== CHANGED: Added 'glow-folder' class for folders ==========
 function createCard(title, onClick, isFolder = false, showDel = false, delPath = null, delName = null, showRename = false) {
     const div = document.createElement('div');
-    div.className = 'card';
+    // ✅ Only folders (subfolders) get the 'glow-folder' class
+    div.className = isFolder ? 'card glow-folder' : 'card';
     div.innerHTML = `
         <div class="card-icon"><i class="fas ${isFolder ? 'fa-folder' : 'fa-file-pdf'}"></i></div>
         <div class="card-filename">${escapeHtml(title)}</div>
@@ -207,6 +207,7 @@ function createCard(title, onClick, isFolder = false, showDel = false, delPath =
     div.onclick = onClick;
     return div;
 }
+// ========== END CHANGE ==========
 
 function render() {
     const query = document.getElementById('searchInput').value.trim().toLowerCase();
