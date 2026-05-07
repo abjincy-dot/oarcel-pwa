@@ -1,7 +1,6 @@
 /* ============================================
    OARCEL Document Manager — Smooth 3D Effects
-   Fixed: top bar background now ROUNDED RECTANGLE (not pill)
-   Search input & folder cards remain OVAL
+   Added glows to top bar, stats bar, breadcrumb, action bar, folder cards
    ============================================ */
 
 * {
@@ -350,7 +349,7 @@ body.light-mode .header-title h1 {
     50% { opacity: 0.6; transform: scale(0.85); }
 }
 
-/* ========== TOP BAR (RECTANGLE BACKGROUND) ========== */
+/* ========== TOP BAR (with glow) ========== */
 .top-bar {
     display: flex;
     align-items: center;
@@ -360,14 +359,15 @@ body.light-mode .header-title h1 {
     background: var(--glass-bg);
     backdrop-filter: blur(16px);
     border: 1px solid var(--glass-border);
-    border-radius: 24px;   /* 🔁 CHANGED: from pill to rounded rectangle */
+    border-radius: 24px;
     flex-wrap: wrap;
     transition: all var(--transition-base);
+    box-shadow: 0 0 0 1px rgba(59,130,246,0.2), 0 4px 12px rgba(0,0,0,0.2), 0 0 12px rgba(59,130,246,0.3);
 }
 
 .top-bar:hover {
     transform: translateY(-1px);
-    box-shadow: var(--shadow-md);
+    box-shadow: 0 0 0 1px rgba(59,130,246,0.4), 0 8px 20px rgba(0,0,0,0.25), 0 0 20px rgba(59,130,246,0.5);
 }
 
 /* BACK BUTTON (ID: backBtn) */
@@ -412,18 +412,19 @@ body.light-mode .header-title h1 {
 #searchInput {
     width: 100%;
     padding: 12px 40px 12px 44px;
-    border-radius: 60px;           /* ← OVAL SHAPE (kept as you wanted) */
+    border-radius: 60px;
     border: 1px solid var(--glass-border);
     background: var(--input-bg);
     color: var(--text-primary);
     outline: none;
     font-size: 0.9rem;
     transition: all var(--transition-base);
+    box-shadow: 0 0 0 0 rgba(59,130,246,0);
 }
 
 #searchInput:focus {
     border-color: rgba(59, 130, 246, 0.5);
-    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
+    box-shadow: 0 0 0 2px rgba(59,130,246,0.3), 0 8px 25px rgba(59, 130, 246, 0.15);
 }
 
 #clearSearchBtn {
@@ -510,7 +511,7 @@ body.light-mode .theme-toggle i {
 
 #fileInput { display: none; }
 
-/* ========== STATS BAR ========== */
+/* ========== STATS BAR (top bar area) with glow ========== */
 .stats-bar {
     display: flex;
     align-items: center;
@@ -521,6 +522,12 @@ body.light-mode .theme-toggle i {
     backdrop-filter: blur(16px);
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-lg);
+    box-shadow: 0 0 0 1px rgba(59,130,246,0.15), 0 4px 12px rgba(0,0,0,0.2), 0 0 8px rgba(59,130,246,0.2);
+    transition: all var(--transition-base);
+}
+
+.stats-bar:hover {
+    box-shadow: 0 0 0 1px rgba(59,130,246,0.3), 0 6px 16px rgba(0,0,0,0.25), 0 0 14px rgba(59,130,246,0.3);
 }
 
 .stat-item {
@@ -574,7 +581,7 @@ body.light-mode .theme-toggle i {
     background: var(--glass-border);
 }
 
-/* ========== BREADCRUMB ========== */
+/* ========== BREADCRUMB with glow ========== */
 .breadcrumb {
     display: flex;
     align-items: center;
@@ -587,6 +594,7 @@ body.light-mode .theme-toggle i {
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-full);
     width: fit-content;
+    box-shadow: 0 0 0 1px rgba(59,130,246,0.1), 0 2px 8px rgba(0,0,0,0.15), 0 0 6px rgba(59,130,246,0.15);
 }
 
 .breadcrumb-item {
@@ -867,18 +875,24 @@ body.light-mode .card {
     transform: translateY(-2px);
 }
 
-/* ========== ACTION BAR (below cards) ========== */
+/* ========== ACTION BAR (bottom bar) with glow ========== */
 .action-bar {
     display: flex;
     gap: 6px;
     padding: 12px;
     flex-wrap: wrap;
     justify-content: center;
-    margin-bottom: 8px;
+    margin: 12px 0 8px;
     background: var(--glass-bg);
     border-radius: var(--radius-full);
     border: 1px solid var(--glass-border);
     backdrop-filter: blur(12px);
+    box-shadow: 0 0 0 1px rgba(59,130,246,0.15), 0 4px 12px rgba(0,0,0,0.2), 0 0 8px rgba(59,130,246,0.2);
+    transition: all var(--transition-base);
+}
+
+.action-bar:hover {
+    box-shadow: 0 0 0 1px rgba(59,130,246,0.3), 0 6px 16px rgba(0,0,0,0.25), 0 0 14px rgba(59,130,246,0.3);
 }
 
 .action-btn {
@@ -1065,27 +1079,24 @@ body.light-mode .card {
     .dept-info { display: none; }
 }
 
-/* ========== WHITE OUTER GLOW FOR SUBFOLDERS — OVAL SHAPE (kept) ========== */
+/* ========== FOLDER CARDS – ENHANCED GLOW ========== */
 .card.glow-folder {
     position: relative;
     border-radius: 60px !important;
     transition: box-shadow 0.25s ease, transform 0.2s ease;
-    box-shadow: 0 0 8px 3px rgba(255, 255, 255, 0.3), var(--shadow-sm);
+    box-shadow: 0 0 0 1px rgba(59,130,246,0.3), 0 0 12px rgba(59,130,246,0.4), 0 0 8px 3px rgba(255,255,255,0.25);
 }
 
 .card.glow-folder:hover {
-    border-radius: 60px !important;
-    box-shadow: 0 0 14px 6px rgba(255, 255, 255, 0.5), var(--shadow-md);
+    box-shadow: 0 0 0 1px rgba(59,130,246,0.6), 0 0 20px rgba(59,130,246,0.6), 0 0 14px 6px rgba(255,255,255,0.4);
     transform: translateY(-2px);
 }
 
-/* Light mode – even softer */
+/* Light mode folder glow – softer, darker */
 body.light-mode .card.glow-folder {
-    border-radius: 60px !important;
-    box-shadow: 0 0 6px 2px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 0 0 1px rgba(59,130,246,0.2), 0 0 8px rgba(59,130,246,0.2), 0 0 6px 2px rgba(0,0,0,0.08);
 }
 
 body.light-mode .card.glow-folder:hover {
-    border-radius: 60px !important;
-    box-shadow: 0 0 10px 4px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 0 0 1px rgba(59,130,246,0.4), 0 0 16px rgba(59,130,246,0.3), 0 0 10px 4px rgba(0,0,0,0.12);
 }
