@@ -1,6 +1,6 @@
 // ==================== INDEXEDDB CORE ====================
 const DB_NAME = 'OarcelDB';
-const DB_VERSION = 6;  // version bumped to trigger migration
+const DB_VERSION = 5;  // version bumped to trigger migration safely
 let db = null;
 let allFiles = {};
 let fileSystem = {};
@@ -56,21 +56,35 @@ function saveAllFilesToDB() {
     tx.commit();
 }
 
-// Migration function - now just ensures furnaces are empty objects
-function migrateFurnacesToEmpty() {
+// Helper: returns an object with Data Log 1..20 and a "Data Logs" folder
+function createFurnaceDataLogs() {
+    const logs = { "Data Logs": {} };
+    for (let i = 1; i <= 20; i++) {
+        logs[`Data Log ${i}`] = {};
+    }
+    return logs;
+}
+
+// One‑time migration: add Data Log folders to FURNACE 2,3,4 if missing
+function migrateFurnacesDataLogs() {
     let changed = false;
     const remelt = fileSystem["REMELT"];
     if (!remelt) return false;
 
-    const furnaces = ["FURNACE 1", "FURNACE 2", "FURNACE 3", "FURNACE 4", "FURNACE 5"];
+    const furnaces = ["FURNACE 2", "FURNACE 3", "FURNACE 4"];
     for (const furnace of furnaces) {
         const furnaceObj = remelt[furnace];
         if (furnaceObj && typeof furnaceObj === 'object') {
-            // If it has any Data Log folders or subfolders, replace with empty object
-            if (Object.keys(furnaceObj).length > 0) {
-                remelt[furnace] = {};
+            // Check if it already has at least one "Data Log X" or "Data Logs"
+            const hasDataLog = Object.keys(furnaceObj).some(key => 
+                key === "Data Logs" || /^Data Log \d+$/.test(key)
+            );
+            if (!hasDataLog) {
+                // Add the full set
+                const newLogs = createFurnaceDataLogs();
+                Object.assign(furnaceObj, newLogs);
                 changed = true;
-                console.log(`Cleared ${furnace} - now empty for direct PDF uploads`);
+                console.log(`Added Data Log folders to ${furnace}`);
             }
         }
     }
@@ -82,20 +96,20 @@ async function loadFromIndexedDB() {
     folderReq.onsuccess = () => {
         if (folderReq.result) {
             fileSystem = folderReq.result.value;
-            // Run migration to clear any existing Data Log folders
-            const migrated = migrateFurnacesToEmpty();
+            // Run migration once (adds missing Data Logs to Furnace 2,3,4)
+            const migrated = migrateFurnacesDataLogs();
             if (migrated) {
                 saveFolderStructure();
-                showToast("✅ Furnaces now accept direct PDF uploads (Data Log folders removed)");
+                showToast("✅ Added Data Log folders to FURNACE 2, 3, 4");
             }
         } else {
-            // First time setup: create full structure with empty furnaces
+            // First time setup: create full structure with Data Logs in all furnaces 1-4
             fileSystem = {
                 "REMELT": {
-                    "FURNACE 1": {},  // Empty - upload PDFs directly
-                    "FURNACE 2": {},  // Empty - upload PDFs directly
-                    "FURNACE 3": {},  // Empty - upload PDFs directly
-                    "FURNACE 4": {},  // Empty - upload PDFs directly
+                    "FURNACE 1": createFurnaceDataLogs(),
+                    "FURNACE 2": createFurnaceDataLogs(),
+                    "FURNACE 3": createFurnaceDataLogs(),
+                    "FURNACE 4": createFurnaceDataLogs(),
                     "FURNACE 5": {},
                     "ACD": {},
                     "DBF": {},
@@ -106,7 +120,7 @@ async function loadFromIndexedDB() {
                     "HPU 2": {},
                     "M": {}, "N": {}, "O": {}, "P": {}, "Q": {}, "R": {}, "S": {}, "T": {}, "U": {}, "V": {}, "W": {}, "X": {}, "Y": {}, "Z": {}
                 },
-                "CASTER": { "UPDATED DRAWING": {}, "HYDRAULIC": {}, "AJAX": {}, "WATER CIRCULATION PUMP": {} },
+                "CASTER": { "Quality Reports": {}, "Mechanical": {}, "Maintenance": {}, "Production Data": {}, "Testing": {}, "Checklists": {}, "Safety": {}, "Training": {} },
                 "HRM": { "Employee Records": {}, "Attendance": {}, "Performance": {}, "Training Logs": {}, "Safety Compliance": {}, "Policies": {}, "Reports": {}, "Certifications": {} },
                 "CRM": { "PLC Programs": {}, "CAD Drawings": {}, "Electrical": {}, "SCADA": {}, "Automation": {}, "Reports": {}, "Configurations": {}, "Manuals": {} },
                 "ANNEALING": { "Temperature Control": {}, "Process Parameters": {}, "Quality Assurance": {}, "Maintenance": {}, "Safety": {}, "Production Logs": {}, "Testing": {}, "SOP Documents": {} },
@@ -127,7 +141,6 @@ async function loadFromIndexedDB() {
     };
 }
 
-// The rest of your code remains the same...
 function getCurrentFolderObject() { return currentPath.reduce((o, p) => o?.[p], fileSystem); }
 function getFilesForCurrentFolder() { return allFiles[currentPath.join('/')] || []; }
 
@@ -181,6 +194,7 @@ function searchFiles(q) {
 // ========== CHANGED: Added 'glow-folder' class for folders ==========
 function createCard(title, onClick, isFolder = false, showDel = false, delPath = null, delName = null, showRename = false) {
     const div = document.createElement('div');
+    // ✅ Only folders (subfolders) get the 'glow-folder' class
     div.className = isFolder ? 'card glow-folder' : 'card';
     div.innerHTML = `
         <div class="card-icon"><i class="fas ${isFolder ? 'fa-folder' : 'fa-file-pdf'}"></i></div>
@@ -193,6 +207,7 @@ function createCard(title, onClick, isFolder = false, showDel = false, delPath =
     div.onclick = onClick;
     return div;
 }
+// ========== END CHANGE ==========
 
 function render() {
     const query = document.getElementById('searchInput').value.trim().toLowerCase();
