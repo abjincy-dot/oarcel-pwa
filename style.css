@@ -10,37 +10,107 @@
 }
 
 :root {
-    --bg-deep: #070d1a;
-    --bg-gradient: url("https://raw.githubusercontent.com/abjincy-dot/oarcel-pwa/main/images/wallpaper.jpg");
-    --glass-bg: rgba(15, 30, 50, 0.55);
-    --glass-bg-hover: rgba(20, 45, 75, 0.7);
-    --glass-border: rgba(255, 255, 255, 0.12);
-    --glass-border-hover: rgba(255, 255, 255, 0.22);
-    --glass-highlight: rgba(255, 255, 255, 0.05);
-    --text-primary: #f0f4f8;
-    --text-secondary: #94a3b8;
+
+    /* ========= BACKGROUND SYSTEM ========= */
+
+    --bg-deep: #020817;
+    --bg-secondary: #071224;
+    --bg-tertiary: #0b1730;
+
+    --bg-gradient:
+        radial-gradient(circle at top left,
+            rgba(59,130,246,0.18) 0%,
+            transparent 35%),
+
+        radial-gradient(circle at bottom right,
+            rgba(139,92,246,0.14) 0%,
+            transparent 35%),
+
+        linear-gradient(
+            145deg,
+            #020617 0%,
+            #071224 45%,
+            #0b1730 100%
+        );
+
+    /* ========= GLASS ========= */
+
+    --glass-bg: rgba(15, 23, 42, 0.52);
+    --glass-bg-hover: rgba(20, 32, 58, 0.72);
+
+    --glass-border: rgba(255,255,255,0.08);
+    --glass-border-hover: rgba(255,255,255,0.16);
+
+    --glass-highlight:
+        linear-gradient(
+            135deg,
+            rgba(255,255,255,0.10),
+            rgba(255,255,255,0.02)
+        );
+
+    /* ========= TEXT ========= */
+
+    --text-primary: #f8fafc;
+    --text-secondary: #cbd5e1;
     --text-muted: #64748b;
-    --accent-blue: #3b82f6;
-    --accent-purple: #8b5cf6;
-    --accent-cyan: #06b6d4;
-    --accent-rose: #f43f5e;
-    --accent-emerald: #10b981;
-    --card-bg: rgba(12, 28, 48, 0.6);
-    --card-bg-hover: rgba(18, 40, 68, 0.75);
-    --input-bg: rgba(0, 0, 0, 0.35);
-    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
-    --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.3);
-    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
-    --shadow-glow: 0 0 40px rgba(59, 130, 246, 0.15);
-    --shadow-3d: 0 10px 40px rgba(0, 0, 0, 0.5);
-    --radius-sm: 12px;
-    --radius-md: 16px;
-    --radius-lg: 24px;
-    --radius-xl: 32px;
+
+    /* ========= PRIMARY ACCENTS ========= */
+
+    --accent-primary: #3b82f6;
+    --accent-secondary: #8b5cf6;
+    --accent-highlight: #06b6d4;
+
+    /* ========= STATUS COLORS ========= */
+
+    --accent-success: #10b981;
+    --accent-danger: #f43f5e;
+    --accent-warning: #f59e0b;
+
+    /* ========= CARD SYSTEM ========= */
+
+    --card-bg: rgba(10, 18, 35, 0.72);
+    --card-bg-hover: rgba(15, 25, 48, 0.88);
+
+    --input-bg: rgba(255,255,255,0.04);
+
+    /* ========= SHADOW SYSTEM ========= */
+
+    --shadow-sm:
+        0 2px 10px rgba(0,0,0,0.25);
+
+    --shadow-md:
+        0 8px 24px rgba(0,0,0,0.32);
+
+    --shadow-lg:
+        0 18px 48px rgba(0,0,0,0.45);
+
+    --shadow-glow:
+        0 0 30px rgba(59,130,246,0.18);
+
+    --shadow-purple:
+        0 0 40px rgba(139,92,246,0.16);
+
+    --shadow-3d:
+        0 20px 60px rgba(0,0,0,0.55);
+
+    /* ========= RADIUS ========= */
+
+    --radius-sm: 14px;
+    --radius-md: 20px;
+    --radius-lg: 28px;
+    --radius-xl: 36px;
     --radius-full: 9999px;
-    --transition-fast: 0.15s cubic-bezier(0.2, 0.9, 0.4, 1.1);
-    --transition-base: 0.2s cubic-bezier(0.2, 0.9, 0.4, 1.1);
-    --transition-bounce: 0.35s cubic-bezier(0.34, 1.2, 0.64, 1);
+
+    /* ========= TRANSITIONS ========= */
+
+    --transition-fast:
+        0.18s cubic-bezier(0.22, 1, 0.36, 1);
+
+    --transition-base:
+        0.28s cubic-bezier(0.22, 1, 0.36, 1);
+
+    --transition-bounce:
+        0.42s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 body.light-mode {
