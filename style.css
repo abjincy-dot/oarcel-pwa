@@ -1,6 +1,7 @@
 /* ============================================
    OARCEL Document Manager — Smooth 3D Effects
-   Fixed: back/upload/theme buttons now use IDs
+   Fixed: top bar background now ROUNDED RECTANGLE (not pill)
+   Search input & folder cards remain OVAL
    ============================================ */
 
 * {
@@ -349,7 +350,7 @@ body.light-mode .header-title h1 {
     50% { opacity: 0.6; transform: scale(0.85); }
 }
 
-/* ========== TOP BAR (Back, Search, Theme, Upload) ========== */
+/* ========== TOP BAR (RECTANGLE BACKGROUND) ========== */
 .top-bar {
     display: flex;
     align-items: center;
@@ -359,7 +360,7 @@ body.light-mode .header-title h1 {
     background: var(--glass-bg);
     backdrop-filter: blur(16px);
     border: 1px solid var(--glass-border);
-    border-radius: var(--radius-full);
+    border-radius: 24px;   /* 🔁 CHANGED: from pill to rounded rectangle */
     flex-wrap: wrap;
     transition: all var(--transition-base);
 }
@@ -411,7 +412,7 @@ body.light-mode .header-title h1 {
 #searchInput {
     width: 100%;
     padding: 12px 40px 12px 44px;
-    border-radius: var(--radius-full);
+    border-radius: 60px;           /* ← OVAL SHAPE (kept as you wanted) */
     border: 1px solid var(--glass-border);
     background: var(--input-bg);
     color: var(--text-primary);
@@ -1064,24 +1065,27 @@ body.light-mode .card {
     .dept-info { display: none; }
 }
 
-/* ========== WHITE OUTER GLOW FOR SUBFOLDERS ONLY (REDUCED) ========== */
+/* ========== WHITE OUTER GLOW FOR SUBFOLDERS — OVAL SHAPE (kept) ========== */
 .card.glow-folder {
     position: relative;
+    border-radius: 60px !important;
     transition: box-shadow 0.25s ease, transform 0.2s ease;
-    /* Reduced glow: smaller blur, less spread, lower opacity */
     box-shadow: 0 0 8px 3px rgba(255, 255, 255, 0.3), var(--shadow-sm);
 }
 
 .card.glow-folder:hover {
+    border-radius: 60px !important;
     box-shadow: 0 0 14px 6px rgba(255, 255, 255, 0.5), var(--shadow-md);
     transform: translateY(-2px);
 }
 
 /* Light mode – even softer */
 body.light-mode .card.glow-folder {
+    border-radius: 60px !important;
     box-shadow: 0 0 6px 2px rgba(0, 0, 0, 0.1);
 }
 
 body.light-mode .card.glow-folder:hover {
+    border-radius: 60px !important;
     box-shadow: 0 0 10px 4px rgba(0, 0, 0, 0.2);
 }
