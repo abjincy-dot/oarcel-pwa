@@ -1,5 +1,6 @@
 /* ============================================
    OARCEL Document Manager — Smooth 3D Effects
+   Fixed: back/upload/theme buttons now use IDs
    ============================================ */
 
 * {
@@ -278,12 +279,13 @@ body.light-mode .header-title h1 {
     50% { opacity: 0.6; transform: scale(0.85); }
 }
 
+/* ========== TOP BAR (Back, Search, Theme, Upload) ========== */
 .top-bar {
     display: flex;
     align-items: center;
     gap: 12px;
     margin-bottom: 20px;
-    padding: 10px;
+    padding: 10px 20px;
     background: var(--glass-bg);
     backdrop-filter: blur(16px);
     border: 1px solid var(--glass-border);
@@ -297,29 +299,31 @@ body.light-mode .header-title h1 {
     box-shadow: var(--shadow-md);
 }
 
-.btn-back {
-    background: rgba(20, 25, 40, 0.75); /* darker base → contrast */
-
-    border: 1px solid rgba(255, 255, 255, 0.35);
-
-    color: #ffffff; /* stop using faded colors */
-
+/* BACK BUTTON (ID: backBtn) */
+#backBtn {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);  /* blue gradient */
+    border: 1px solid rgba(59, 130, 246, 0.6);
+    color: white;
     padding: 12px 18px;
-    border-radius: 22px;
-
+    border-radius: 40px;
     backdrop-filter: blur(12px);
-
-    box-shadow: 
-        0 6px 20px rgba(0,0,0,0.6),
-        inset 0 1px 0 rgba(255,255,255,0.25);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    transition: all var(--transition-base);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
-.btn-back:hover {
+#backBtn:hover {
     transform: translateX(-3px);
-    border-color: rgba(59, 130, 246, 0.6);
-    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    border-color: #60a5fa;
+    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.5);
 }
 
+/* SEARCH CONTAINER */
 .search-container {
     flex: 1;
     position: relative;
@@ -351,7 +355,7 @@ body.light-mode .header-title h1 {
     box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
 }
 
-.clear-search {
+#clearSearchBtn {
     position: absolute;
     right: 12px;
     top: 50%;
@@ -369,32 +373,52 @@ body.light-mode .header-title h1 {
     transition: all var(--transition-fast);
 }
 
-.clear-search:hover {
+#clearSearchBtn:hover {
     background: rgba(244, 63, 94, 0.2);
     color: var(--accent-rose);
     transform: translateY(-50%) scale(1.1);
 }
 
+/* RIGHT SIDE ACTIONS (Theme + Upload) */
+.top-bar-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* THEME TOGGLE (ID: themeToggle) */
 .theme-toggle {
-    width: 42px;
-    height: 42px;
-    background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(236, 72, 153, 0.15));
-    border: 1px solid rgba(168, 85, 247, 0.3);
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(236, 72, 153, 0.15));
+    border: 1px solid rgba(168, 85, 247, 0.4);
     border-radius: 50%;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all var(--transition-base);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .theme-toggle:hover {
     transform: scale(1.08);
-    border-color: rgba(168, 85, 247, 0.6);
-    box-shadow: 0 8px 20px rgba(168, 85, 247, 0.3);
+    border-color: rgba(168, 85, 247, 0.7);
+    box-shadow: 0 8px 20px rgba(168, 85, 247, 0.4);
 }
 
-.btn-upload {
+.theme-toggle i {
+    font-size: 1.3rem;
+    color: #fbbf24;
+}
+
+body.light-mode .theme-toggle i {
+    color: #8b5cf6;
+}
+
+
+/* UPLOAD BUTTON (ID: uploadBtn) */
+#uploadBtn {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -409,13 +433,14 @@ body.light-mode .header-title h1 {
     box-shadow: 0 8px 20px rgba(59, 130, 246, 0.35);
 }
 
-.btn-upload:hover {
+#uploadBtn:hover {
     transform: translateY(-2px);
     box-shadow: 0 12px 30px rgba(59, 130, 246, 0.5);
 }
 
 #fileInput { display: none; }
 
+/* ========== STATS BAR ========== */
 .stats-bar {
     display: flex;
     align-items: center;
@@ -479,6 +504,7 @@ body.light-mode .header-title h1 {
     background: var(--glass-border);
 }
 
+/* ========== BREADCRUMB ========== */
 .breadcrumb {
     display: flex;
     align-items: center;
@@ -515,6 +541,7 @@ body.light-mode .header-title h1 {
     color: var(--accent-blue);
 }
 
+/* ========== DEPARTMENTS (Oval cards) ========== */
 .section-title {
     font-size: 0.85rem;
     font-weight: 700;
@@ -620,6 +647,7 @@ body.light-mode .header-title h1 {
     border: 1px solid var(--glass-border);
 }
 
+/* Department color overrides */
 .dept-card[data-dept="REMELT"] .dept-oval { background: linear-gradient(145deg, #ea580c, #c2410c); }
 .dept-card[data-dept="CASTER"] .dept-oval { background: linear-gradient(145deg, #0d9488, #0f766e); }
 .dept-card[data-dept="HRM"] .dept-oval { background: linear-gradient(145deg, #7c3aed, #6d28d9); }
@@ -629,6 +657,7 @@ body.light-mode .header-title h1 {
 .dept-card[data-dept="SLITTER"] .dept-oval { background: linear-gradient(145deg, #4f46e5, #4338ca); }
 .dept-card[data-dept="UTILITY"] .dept-oval { background: linear-gradient(145deg, #dc2626, #b91c1c); }
 
+/* ========== CONTENT & CARDS ========== */
 .content {
     display: flex;
     flex-direction: column;
@@ -636,9 +665,9 @@ body.light-mode .header-title h1 {
 }
 
 .card {
-    background: var(--card-bg);
+    background: rgba(12, 28, 48, 0.92);
     backdrop-filter: blur(14px);
-    padding: 14px 18px;
+    padding: 3px 10px;
     border-radius: var(--radius-md);
     cursor: pointer;
     display: flex;
@@ -649,6 +678,10 @@ body.light-mode .header-title h1 {
     position: relative;
     overflow: hidden;
     animation: cardEnter 0.3s ease-out backwards;
+}
+
+body.light-mode .card {
+    background: rgba(255, 255, 255, 0.96);
 }
 
 @keyframes cardEnter {
@@ -690,8 +723,8 @@ body.light-mode .header-title h1 {
 .card:hover::after { left: 100%; }
 
 .card-icon {
-    width: 32px;
-    height: 32px;
+    width: 20px;
+    height: 20px;
     border-radius: var(--radius-sm);
     background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(139, 92, 246, 0.1));
     border: 1px solid rgba(59, 130, 246, 0.2);
@@ -708,7 +741,7 @@ body.light-mode .header-title h1 {
 }
 
 .card-icon i {
-    font-size: 1.1rem;
+    font-size: 0.9rem;
     color: var(--accent-blue);
 }
 
@@ -764,6 +797,7 @@ body.light-mode .header-title h1 {
     transform: translateY(-2px);
 }
 
+/* ========== ACTION BAR (below cards) ========== */
 .action-bar {
     display: flex;
     gap: 6px;
@@ -799,6 +833,7 @@ body.light-mode .header-title h1 {
     color: white;
 }
 
+/* ========== EMPTY STATE ========== */
 .empty-state {
     text-align: center;
     padding: 48px 24px;
@@ -826,7 +861,8 @@ body.light-mode .header-title h1 {
     color: var(--text-secondary);
 }
 
-.search-result-info {
+/* ========== SEARCH INFO ========== */
+#searchInfo {
     margin: 0 0 16px 0;
     padding: 10px 18px;
     font-size: 0.85rem;
@@ -841,6 +877,7 @@ body.light-mode .header-title h1 {
     color: var(--text-secondary);
 }
 
+/* ========== TOAST ========== */
 .toast {
     position: fixed;
     bottom: 32px;
@@ -867,6 +904,7 @@ body.light-mode .header-title h1 {
     background: linear-gradient(135deg, #ef4444, #dc2626);
 }
 
+/* ========== LOADING ========== */
 .loading-overlay {
     position: fixed;
     inset: 0;
@@ -914,145 +952,45 @@ body.light-mode .header-title h1 {
 
 .hidden { display: none !important; }
 
+/* ========== RESPONSIVE FIXES ========== */
 @media (max-width: 640px) {
     .app { padding: 16px 14px 32px; }
     .header { padding: 14px 18px; }
     .header-title h1 { font-size: 1.3rem; }
     .logo { width: 44px; height: 44px; }
-    .search-container { min-width: 100%; order: -1; margin-bottom: 4px; }
+    .search-container { min-width: 100%; order: 3; margin-top: 8px; }
     .top-bar { flex-wrap: wrap; }
     .top-bar-actions { margin-left: auto; }
     .card { flex-wrap: wrap; }
     .card-buttons { margin-top: 8px; width: 100%; justify-content: flex-end; }
     .toast { white-space: normal; max-width: 90%; text-align: center; }
-}
-.section-title {
-    margin-bottom: 8px !important;
-    line-height: 1.3 !important;
-}
-@media (max-width: 380px) {
-    .card-buttons { flex-direction: column; gap: 6px; }
-    .card-buttons button { width: 100%; justify-content: center; }
-    .dept-info { display: none; }
-}
-/* Reduce card height */
-.card {
-    padding: 3px 10px !important;   /* was 14px 18px – much shorter */
-    gap: 6px !important;
-}
-
-.card-icon {
-    width: 20px !important;
-    height: 20px !important;
-}
-
-.card-icon i {
-    font-size: 0.9rem !important;
-}
-.content {
-    gap: 3px !important;   /* reduces space between cards */
-}
-/* Make card backgrounds more visible */
-.card {
-    background: rgba(12, 28, 48, 0.92) !important;
-}
-
-body.light-mode .card {
-    background: rgba(255, 255, 255, 0.96) !important;
-}
-/* Change background color of folder cards */
-.card {
-    background: #of172a !important;   /* solid dark blue-gray */
-    border-radius: 12px !important;
-}
-body.light-mode .card {
-    background: #e2e8f0 !important;   /* light gray */
-}
-/* Mobile: fix top bar order and boundaries */
-.top-bar {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-
-    width: 100%;
-    padding: 18px 20px;
-
-    border-radius: 40px; /* bigger oval */
     
-    background: rgba(255,255,255,0.05);
-    backdrop-filter: blur(20px);
-    
-    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-}
-}
-
-/* Search takes full width on next line */
-.search-container {
-    order: 3;
-    flex: 1 1 100%;
-    min-width: 100%;
-    margin-top: 4px;
-    margin-bottom: 4px;
-}
-
-/* Right side actions (theme toggle + upload) */
-.top-bar-actions button {
-    background: rgba(20, 25, 40, 0.8); /* darker = visible */
-
-    border: 1px solid rgba(255, 255, 255, 0.35);
-
-    width: 50px;
-    height: 50px;
-
-    border-radius: 50%;
-
-    backdrop-filter: blur(12px);
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    box-shadow: 
-        0 6px 20px rgba(0,0,0,0.6),
-        inset 0 1px 0 rgba(255,255,255,0.25);
-}
-
-/* Ensure no overflow */
-.app {
-    overflow-x: hidden;
-}
-
-.top-bar, .btn-back, .search-container, .top-bar-actions {
-    max-width: 100%;
-    box-sizing: border-box;
-}
-/* Fix Upload button on mobile – make it a clean circle/pill */
-@media (max-width: 560px) {
-    .btn-upload {
+    /* Upload button on mobile: become circle without text */
+    #uploadBtn {
         padding: 10px !important;
-        width: 44px !important;
-        height: 44px !important;
+        width: 48px !important;
+        height: 48px !important;
         border-radius: 50% !important;
         justify-content: center !important;
         align-items: center !important;
     }
-    
-    .btn-upload span {
-        display: none !important;  /* hide the word "Upload" */
+    #uploadBtn span {
+        display: none !important;
     }
-    
-    .btn-upload i {
+    #uploadBtn i {
         margin: 0 !important;
         font-size: 1.2rem !important;
     }
     
-    /* Also make the theme toggle a perfect circle */
-    .theme-toggle {
-        width: 44px !important;
-        height: 44px !important;
-        border-radius: 50% !important;
-        padding: 0 !important;
-        justify-content: center !important;
-        align-items: center !important;
+    /* Theme toggle already circle, but ensure size */
+    #themeToggle {
+        width: 48px !important;
+        height: 48px !important;
     }
+}
+
+@media (max-width: 380px) {
+    .card-buttons { flex-direction: column; gap: 6px; }
+    .card-buttons button { width: 100%; justify-content: center; }
+    .dept-info { display: none; }
 }
