@@ -20,6 +20,7 @@
     --text-secondary: #94a3b8;
     --text-muted: #64748b;
     --accent-blue: #3b82f6;
+    --accent-blue-glow: rgba(59, 130, 246, 0.45);
     --accent-purple: #8b5cf6;
     --accent-cyan: #06b6d4;
     --accent-rose: #f43f5e;
@@ -60,6 +61,7 @@ body.light-mode {
     --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.08);
     --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.1);
     --shadow-3d: 0 10px 40px rgba(0, 0, 0, 0.15);
+    --accent-blue-glow: rgba(59, 130, 246, 0.25);
 }
 
 body {
@@ -71,6 +73,7 @@ body {
     line-height: 1.5;
     transform: translateZ(0);
     backface-visibility: hidden;
+    position: relative;
 }
 
 body::before {
@@ -83,12 +86,31 @@ body::before {
     z-index: -3;
 }
 
+/* Background Blue Glow - Like sample.png */
+body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: -2;
+    background: radial-gradient(ellipse at 50% 25%, rgba(59, 130, 246, 0.25), transparent 70%);
+    animation: breatheGlow 5s ease-in-out infinite alternate;
+}
+
+@keyframes breatheGlow {
+    0% { opacity: 0.3; }
+    100% { opacity: 0.7; }
+}
+
 .ambient-glow {
     position: fixed;
     border-radius: 50%;
     filter: blur(80px);
     pointer-events: none;
-    z-index: -2;
+    z-index: -1;
     opacity: 0.4;
     animation: ambientFloat 20s ease-in-out infinite alternate;
 }
@@ -98,7 +120,7 @@ body::before {
     height: 500px;
     top: -10%;
     left: -5%;
-    background: radial-gradient(circle, rgba(59, 130, 246, 0.25), transparent 70%);
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.35), transparent 70%);
     animation-duration: 18s;
 }
 
@@ -156,6 +178,9 @@ body::before {
     to { opacity: 1; transform: translateY(0); }
 }
 
+/* ============================================
+   HEADER - PERMANENT BLUE GLOW
+   ============================================ */
 .header {
     display: flex;
     align-items: center;
@@ -164,15 +189,15 @@ body::before {
     padding: 18px 24px;
     background: var(--glass-bg);
     backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-border);
+    border: 1px solid rgba(59, 130, 246, 0.5);
     border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-md), inset 0 1px 0 var(--glass-highlight);
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.4), inset 0 1px 0 var(--glass-highlight);
     transition: all var(--transition-base);
 }
 
 .header:hover {
-    border-color: var(--glass-border-hover);
-    box-shadow: var(--shadow-lg), var(--shadow-glow);
+    border-color: rgba(59, 130, 246, 0.7);
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.6);
     transform: translateY(-2px);
 }
 
@@ -202,7 +227,7 @@ body::before {
 
 .logo:hover .logo-inner {
     transform: scale(1.05);
-    box-shadow: 0 12px 35px rgba(59, 130, 246, 0.6);
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.8);
 }
 
 @keyframes gradientShift {
@@ -278,6 +303,9 @@ body.light-mode .header-title h1 {
     50% { opacity: 0.6; transform: scale(0.85); }
 }
 
+/* ============================================
+   TOP BAR - PERMANENT BLUE GLOW
+   ============================================ */
 .top-bar {
     display: flex;
     align-items: center;
@@ -286,32 +314,26 @@ body.light-mode .header-title h1 {
     padding: 10px;
     background: var(--glass-bg);
     backdrop-filter: blur(16px);
-    border: 1px solid var(--glass-border);
+    border: 1px solid rgba(59, 130, 246, 0.45);
     border-radius: var(--radius-full);
     flex-wrap: wrap;
     transition: all var(--transition-base);
+    box-shadow: 0 0 18px rgba(59, 130, 246, 0.35);
 }
 
 .top-bar:hover {
     transform: translateY(-1px);
-    box-shadow: var(--shadow-md);
+    box-shadow: 0 0 28px rgba(59, 130, 246, 0.55);
 }
 
 .btn-back {
-    background: rgba(20, 25, 40, 0.75); /* darker base → contrast */
-
+    background: rgba(20, 25, 40, 0.75);
     border: 1px solid rgba(255, 255, 255, 0.35);
-
-    color: #ffffff; /* stop using faded colors */
-
+    color: #ffffff;
     padding: 12px 18px;
     border-radius: 22px;
-
     backdrop-filter: blur(12px);
-
-    box-shadow: 
-        0 6px 20px rgba(0,0,0,0.6),
-        inset 0 1px 0 rgba(255,255,255,0.25);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.25);
 }
 
 .btn-back:hover {
@@ -334,21 +356,23 @@ body.light-mode .header-title h1 {
     color: var(--text-muted);
 }
 
+/* SEARCH INPUT - BLUE GLOW */
 #searchInput {
     width: 100%;
     padding: 12px 40px 12px 44px;
     border-radius: var(--radius-full);
-    border: 1px solid var(--glass-border);
+    border: 1px solid rgba(59, 130, 246, 0.5);
     background: var(--input-bg);
     color: var(--text-primary);
     outline: none;
     font-size: 0.9rem;
     transition: all var(--transition-base);
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.3), inset 0 0 8px rgba(59, 130, 246, 0.1);
 }
 
 #searchInput:focus {
-    border-color: rgba(59, 130, 246, 0.5);
-    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
+    border-color: rgba(59, 130, 246, 0.8);
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.5), inset 0 0 10px rgba(59, 130, 246, 0.15);
 }
 
 .clear-search {
@@ -394,28 +418,32 @@ body.light-mode .header-title h1 {
     box-shadow: 0 8px 20px rgba(168, 85, 247, 0.3);
 }
 
+/* UPLOAD BUTTON - BLUE GLOW */
 .btn-upload {
     display: flex;
     align-items: center;
     gap: 8px;
     padding: 12px 22px;
     background: linear-gradient(135deg, #3b82f6, #7c3aed);
-    border: none;
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: var(--radius-full);
     color: white;
     font-weight: 700;
     cursor: pointer;
     transition: all var(--transition-base);
-    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.35);
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
 }
 
 .btn-upload:hover {
     transform: translateY(-2px);
-    box-shadow: 0 12px 30px rgba(59, 130, 246, 0.5);
+    box-shadow: 0 0 25px rgba(59, 130, 246, 0.7);
 }
 
 #fileInput { display: none; }
 
+/* ============================================
+   STATS BAR - PERMANENT BLUE GLOW
+   ============================================ */
 .stats-bar {
     display: flex;
     align-items: center;
@@ -424,8 +452,9 @@ body.light-mode .header-title h1 {
     padding: 14px 24px;
     background: var(--glass-bg);
     backdrop-filter: blur(16px);
-    border: 1px solid var(--glass-border);
+    border: 1px solid rgba(59, 130, 246, 0.4);
     border-radius: var(--radius-lg);
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
 }
 
 .stat-item {
@@ -451,7 +480,7 @@ body.light-mode .header-title h1 {
 
 .stat-item:hover .stat-icon-bg {
     transform: scale(1.08);
-    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
 }
 
 .stat-icon-files {
@@ -479,6 +508,9 @@ body.light-mode .header-title h1 {
     background: var(--glass-border);
 }
 
+/* ============================================
+   BREADCRUMB - SUBTLE BLUE GLOW
+   ============================================ */
 .breadcrumb {
     display: flex;
     align-items: center;
@@ -488,9 +520,10 @@ body.light-mode .header-title h1 {
     padding: 8px 16px;
     background: rgba(0, 0, 0, 0.25);
     backdrop-filter: blur(12px);
-    border: 1px solid var(--glass-border);
+    border: 1px solid rgba(59, 130, 246, 0.3);
     border-radius: var(--radius-full);
     width: fit-content;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.2);
 }
 
 .breadcrumb-item {
@@ -562,8 +595,8 @@ body.light-mode .header-title h1 {
     padding: 12px 28px;
     border-radius: var(--radius-full);
     background: linear-gradient(145deg, #2563eb, #1d4ed8);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
     display: flex;
     align-items: center;
     gap: 10px;
@@ -589,7 +622,7 @@ body.light-mode .header-title h1 {
 
 .dept-card:hover .dept-oval {
     transform: scale(1.03);
-    box-shadow: 0 12px 30px rgba(37, 99, 235, 0.5);
+    box-shadow: 0 0 25px rgba(59, 130, 246, 0.6);
 }
 
 .dept-oval span {
@@ -635,6 +668,9 @@ body.light-mode .header-title h1 {
     gap: 10px;
 }
 
+/* ============================================
+   CARDS - PERMANENT BLUE GLOW
+   ============================================ */
 .card {
     background: var(--card-bg);
     backdrop-filter: blur(14px);
@@ -644,11 +680,12 @@ body.light-mode .header-title h1 {
     display: flex;
     align-items: center;
     gap: 14px;
-    border: 1px solid var(--glass-border);
+    border: 1px solid rgba(59, 130, 246, 0.35);
     transition: all var(--transition-base);
     position: relative;
     overflow: hidden;
     animation: cardEnter 0.3s ease-out backwards;
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.25);
 }
 
 @keyframes cardEnter {
@@ -681,9 +718,9 @@ body.light-mode .header-title h1 {
 
 .card:hover {
     background: var(--card-bg-hover);
-    border-color: var(--glass-border-hover);
+    border-color: rgba(59, 130, 246, 0.7);
     transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+    box-shadow: 0 0 25px rgba(59, 130, 246, 0.5);
 }
 
 .card:hover::before { opacity: 1; }
@@ -704,7 +741,7 @@ body.light-mode .header-title h1 {
 .card:hover .card-icon {
     transform: scale(1.1);
     background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(139, 92, 246, 0.2));
-    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
 }
 
 .card-icon i {
@@ -764,6 +801,9 @@ body.light-mode .header-title h1 {
     transform: translateY(-2px);
 }
 
+/* ============================================
+   ACTION BAR (DOWN SIDE BAR) - BLUE GLOW
+   ============================================ */
 .action-bar {
     display: flex;
     gap: 6px;
@@ -773,8 +813,14 @@ body.light-mode .header-title h1 {
     margin-bottom: 8px;
     background: var(--glass-bg);
     border-radius: var(--radius-full);
-    border: 1px solid var(--glass-border);
+    border: 1px solid rgba(59, 130, 246, 0.45);
     backdrop-filter: blur(12px);
+    box-shadow: 0 0 18px rgba(59, 130, 246, 0.35);
+    transition: all var(--transition-base);
+}
+
+.action-bar:hover {
+    box-shadow: 0 0 28px rgba(59, 130, 246, 0.55);
 }
 
 .action-btn {
@@ -797,6 +843,7 @@ body.light-mode .header-title h1 {
     background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(124, 58, 237, 0.8));
     border-color: transparent;
     color: white;
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.6);
 }
 
 .empty-state {
@@ -914,6 +961,38 @@ body.light-mode .header-title h1 {
 
 .hidden { display: none !important; }
 
+/* ============================================
+   LIGHT MODE - BLUE GLOW SUPPORT
+   ============================================ */
+body.light-mode .header,
+body.light-mode .top-bar,
+body.light-mode .stats-bar,
+body.light-mode .action-bar,
+body.light-mode .card,
+body.light-mode .breadcrumb {
+    border: 1px solid rgba(59, 130, 246, 0.6) !important;
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.3) !important;
+}
+
+body.light-mode .card:hover,
+body.light-mode .header:hover,
+body.light-mode .top-bar:hover,
+body.light-mode .action-bar:hover {
+    box-shadow: 0 0 25px rgba(59, 130, 246, 0.5) !important;
+}
+
+body.light-mode #searchInput {
+    border: 1px solid rgba(59, 130, 246, 0.6) !important;
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.25) !important;
+}
+
+body.light-mode .dept-oval {
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.35) !important;
+}
+
+/* ============================================
+   RESPONSIVE STYLES
+   ============================================ */
 @media (max-width: 640px) {
     .app { padding: 16px 14px 32px; }
     .header { padding: 14px 18px; }
@@ -926,18 +1005,21 @@ body.light-mode .header-title h1 {
     .card-buttons { margin-top: 8px; width: 100%; justify-content: flex-end; }
     .toast { white-space: normal; max-width: 90%; text-align: center; }
 }
+
 .section-title {
     margin-bottom: 8px !important;
     line-height: 1.3 !important;
 }
+
 @media (max-width: 380px) {
     .card-buttons { flex-direction: column; gap: 6px; }
     .card-buttons button { width: 100%; justify-content: center; }
     .dept-info { display: none; }
 }
+
 /* Reduce card height */
 .card {
-    padding: 3px 10px !important;   /* was 14px 18px – much shorter */
+    padding: 3px 10px !important;
     gap: 6px !important;
 }
 
@@ -949,9 +1031,11 @@ body.light-mode .header-title h1 {
 .card-icon i {
     font-size: 0.9rem !important;
 }
+
 .content {
-    gap: 3px !important;   /* reduces space between cards */
+    gap: 3px !important;
 }
+
 /* Make card backgrounds more visible */
 .card {
     background: rgba(12, 28, 48, 0.92) !important;
@@ -960,30 +1044,28 @@ body.light-mode .header-title h1 {
 body.light-mode .card {
     background: rgba(255, 255, 255, 0.96) !important;
 }
+
 /* Change background color of folder cards */
 .card {
-    background: #of172a !important;   /* solid dark blue-gray */
+    background: #0f172a !important;
     border-radius: 12px !important;
 }
+
 body.light-mode .card {
-    background: #e2e8f0 !important;   /* light gray */
+    background: #e2e8f0 !important;
 }
+
 /* Mobile: fix top bar order and boundaries */
 .top-bar {
     display: flex;
     align-items: center;
     gap: 12px;
-
     width: 100%;
     padding: 18px 20px;
-
-    border-radius: 40px; /* bigger oval */
-    
+    border-radius: 40px;
     background: rgba(255,255,255,0.05);
     backdrop-filter: blur(20px);
-    
     box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-}
 }
 
 /* Search takes full width on next line */
@@ -997,24 +1079,16 @@ body.light-mode .card {
 
 /* Right side actions (theme toggle + upload) */
 .top-bar-actions button {
-    background: rgba(20, 25, 40, 0.8); /* darker = visible */
-
+    background: rgba(20, 25, 40, 0.8);
     border: 1px solid rgba(255, 255, 255, 0.35);
-
     width: 50px;
     height: 50px;
-
     border-radius: 50%;
-
     backdrop-filter: blur(12px);
-
     display: flex;
     align-items: center;
     justify-content: center;
-
-    box-shadow: 
-        0 6px 20px rgba(0,0,0,0.6),
-        inset 0 1px 0 rgba(255,255,255,0.25);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.25);
 }
 
 /* Ensure no overflow */
@@ -1026,6 +1100,7 @@ body.light-mode .card {
     max-width: 100%;
     box-sizing: border-box;
 }
+
 /* Fix Upload button on mobile – make it a clean circle/pill */
 @media (max-width: 560px) {
     .btn-upload {
@@ -1038,7 +1113,7 @@ body.light-mode .card {
     }
     
     .btn-upload span {
-        display: none !important;  /* hide the word "Upload" */
+        display: none !important;
     }
     
     .btn-upload i {
@@ -1046,7 +1121,6 @@ body.light-mode .card {
         font-size: 1.2rem !important;
     }
     
-    /* Also make the theme toggle a perfect circle */
     .theme-toggle {
         width: 44px !important;
         height: 44px !important;
