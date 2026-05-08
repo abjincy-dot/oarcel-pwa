@@ -1,6 +1,6 @@
-// ==================== INDEXEDDB CORE ====================
+/ ==================== INDEXEDDB CORE ====================
 const DB_NAME = 'OarcelDB';
-const DB_VERSION = 5;  // version bumped to trigger migration safely
+const DB_VERSION = 4;
 let db = null;
 let allFiles = {};
 let fileSystem = {};
@@ -56,39 +56,26 @@ function saveAllFilesToDB() {
     tx.commit();
 }
 
-// Helper: returns an object with Data Log 1..20 and a "Data Logs" folder
-function createFurnaceDataLogs() {
-    const logs = { "Data Logs": {} };
-    for (let i = 1; i <= 20; i++) {
-        logs[`Data Log ${i}`] = {};
-    }
-    return logs;
-}
-
-// One‑time migration: add Data Log folders to FURNACE 2,3,4 if missing
-function migrateFurnacesDataLogs() {
-    let changed = false;
-    const remelt = fileSystem["REMELT"];
-    if (!remelt) return false;
-
-    const furnaces = ["FURNACE 2", "FURNACE 3", "FURNACE 4"];
-    for (const furnace of furnaces) {
-        const furnaceObj = remelt[furnace];
-        if (furnaceObj && typeof furnaceObj === 'object') {
-            // Check if it already has at least one "Data Log X" or "Data Logs"
-            const hasDataLog = Object.keys(furnaceObj).some(key => 
-                key === "Data Logs" || /^Data Log \d+$/.test(key)
-            );
-            if (!hasDataLog) {
-                // Add the full set
-                const newLogs = createFurnaceDataLogs();
-                Object.assign(furnaceObj, newLogs);
+function ensureFurnace1DataLogs() {
+    if (fileSystem["REMELT"] && fileSystem["REMELT"]["FURNACE 1"]) {
+        const furnace1 = fileSystem["REMELT"]["FURNACE 1"];
+        let changed = false;
+        for (let i = 1; i <= 20; i++) {
+            const folderName = `Data Log ${i}`;
+            if (!furnace1[folderName]) {
+                furnace1[folderName] = {};
                 changed = true;
-                console.log(`Added Data Log folders to ${furnace}`);
             }
         }
+        if (!furnace1["Data Logs"]) {
+            furnace1["Data Logs"] = {};
+            changed = true;
+        }
+        if (changed) {
+            saveFolderStructure();
+            showToast("✅ Added Data Log 1‑20 folders inside FURNACE 1");
+        }
     }
-    return changed;
 }
 
 async function loadFromIndexedDB() {
@@ -96,30 +83,14 @@ async function loadFromIndexedDB() {
     folderReq.onsuccess = () => {
         if (folderReq.result) {
             fileSystem = folderReq.result.value;
-            // Run migration once (adds missing Data Logs to Furnace 2,3,4)
-            const migrated = migrateFurnacesDataLogs();
-            if (migrated) {
-                saveFolderStructure();
-                showToast("✅ Added Data Log folders to FURNACE 2, 3, 4");
-            }
+            ensureFurnace1DataLogs();
         } else {
-            // First time setup: create full structure with Data Logs in all furnaces 1-4
+            const furnace1Content = { "Data Logs": {} };
+            for (let i = 1; i <= 20; i++) {
+                furnace1Content[`Data Log ${i}`] = {};
+            }
             fileSystem = {
-                "REMELT": {
-                    "FURNACE 1": createFurnaceDataLogs(),
-                    "FURNACE 2": createFurnaceDataLogs(),
-                    "FURNACE 3": createFurnaceDataLogs(),
-                    "FURNACE 4": createFurnaceDataLogs(),
-                    "FURNACE 5": {},
-                    "ACD": {},
-                    "DBF": {},
-                    "ROD FEEDER": {},
-                    "LAUNDER HEATERS": {},
-                    "LAUNDER PANEL ": {},
-                    "HPU 1": {},
-                    "HPU 2": {},
-                    "M": {}, "N": {}, "O": {}, "P": {}, "Q": {}, "R": {}, "S": {}, "T": {}, "U": {}, "V": {}, "W": {}, "X": {}, "Y": {}, "Z": {}
-                },
+                "REMELT": { "FURNACE 1": furnace1Content, "FURNACE 2": {}, "FURNACE 3": {}, "FURNACE 4": {}, "FURNACE 5": {}, "ACD": {}, "DBF": {}, "ROD FEEDER": {}, "LAUNDER HEATERS": {}, "LAUNDER PANEL ": {}, "HPU 1": {}, "HPU 2": {}, "M": {}, "N": {}, "O": {}, "P": {}, "Q": {}, "R": {}, "S": {}, "T": {}, "U": {}, "V": {}, "W": {}, "X": {}, "Y": {}, "Z": {} },
                 "CASTER": { "Quality Reports": {}, "Mechanical": {}, "Maintenance": {}, "Production Data": {}, "Testing": {}, "Checklists": {}, "Safety": {}, "Training": {} },
                 "HRM": { "Employee Records": {}, "Attendance": {}, "Performance": {}, "Training Logs": {}, "Safety Compliance": {}, "Policies": {}, "Reports": {}, "Certifications": {} },
                 "CRM": { "PLC Programs": {}, "CAD Drawings": {}, "Electrical": {}, "SCADA": {}, "Automation": {}, "Reports": {}, "Configurations": {}, "Manuals": {} },
@@ -191,11 +162,9 @@ function searchFiles(q) {
     return all.filter(f => f.name.toLowerCase().includes(q.toLowerCase()));
 }
 
-// ========== CHANGED: Added 'glow-folder' class for folders ==========
 function createCard(title, onClick, isFolder = false, showDel = false, delPath = null, delName = null, showRename = false) {
     const div = document.createElement('div');
-    // ✅ Only folders (subfolders) get the 'glow-folder' class
-    div.className = isFolder ? 'card glow-folder' : 'card';
+    div.className = 'card';
     div.innerHTML = `
         <div class="card-icon"><i class="fas ${isFolder ? 'fa-folder' : 'fa-file-pdf'}"></i></div>
         <div class="card-filename">${escapeHtml(title)}</div>
@@ -207,7 +176,6 @@ function createCard(title, onClick, isFolder = false, showDel = false, delPath =
     div.onclick = onClick;
     return div;
 }
-// ========== END CHANGE ==========
 
 function render() {
     const query = document.getElementById('searchInput').value.trim().toLowerCase();
