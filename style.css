@@ -977,6 +977,45 @@ body.light-mode .note-card:hover {
         font-size: 1rem !important;
     }
     .stat-data label {
-        font-size: 0.5rem !important;
-    }
+        font-size: 0.5rem !/* ========== 3D FEEL FOR DEPARTMENTS & SUBFOLDERS (ONLY) ========== */
+
+/* Department oval buttons - 3D depth */
+.dept-oval {
+    transform: translateY(0);
+    transition: all 0.08s cubic-bezier(0.2, 0.9, 0.4, 1.2) !important;
+    box-shadow: 0 6px 0 rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Department press effect */
+.dept-card:active .dept-oval {
+    transform: translateY(4px) !important;
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3), 0 2px 6px rgba(0, 0, 0, 0.15) !important;
+    transition: all 0.04s cubic-bezier(0.2, 0.9, 0.4, 1.2) !important;
+}
+
+/* Subfolder cards - 3D depth */
+.card.glow-folder {
+    transform: translateY(0);
+    transition: all 0.08s cubic-bezier(0.2, 0.9, 0.4, 1.2) !important;
+    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.25), 0 3px 10px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Subfolder press effect */
+.card.glow-folder:active {
+    transform: translateY(3px) !important;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.25), 0 1px 4px rgba(0, 0, 0, 0.1) !important;
+    transition: all 0.04s cubic-bezier(0.2, 0.9, 0.4, 1.2) !important;
+}
+
+/* Note cards & PDF cards (if you want same for them) - optional */
+.note-card, .card:not(.glow-folder):not(.note-card) {
+    transform: translateY(0);
+    transition: all 0.08s cubic-bezier(0.2, 0.9, 0.4, 1.2) !important;
+    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.25), 0 3px 10px rgba(0, 0, 0, 0.15) !important;
+}
+
+.note-card:active, .card:not(.glow-folder):not(.note-card):active {
+    transform: translateY(3px) !important;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.25), 0 1px 4px rgba(0, 0, 0, 0.1) !important;
+    transition: all 0.04s cubic-bezier(0.2, 0.9, 0.4, 1.2) !important;
 }
