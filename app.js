@@ -647,36 +647,106 @@ function updateThemeIcon() {
     if (themeBtn) { themeBtn.innerHTML = `<div class="theme-icon-wrapper"><i class="fas ${isDark ? 'fa-sun' : 'fa-moon'}"></i></div>`; }
 }
 
-// ========== PRESS EFFECT (WORKING) ==========
-function addPressEffect(element) {
+// ========== 3D DEPTH TOUCH EFFECT WITH RIPPLE ==========
+function addDepthEffect(element, event) {
     if (!element || element.hasAttribute('data-press-animating')) return;
     element.setAttribute('data-press-animating', 'true');
-    const originalTransition = element.style.transition;
-    element.style.transition = 'transform 0.08s cubic-bezier(0.2, 0.9, 0.4, 1.1), box-shadow 0.1s ease';
-    element.style.transform = 'scale(0.97) translateY(2px)';
-    element.style.boxShadow = '0 1px 2px rgba(0,0,0,0.2)';
+    
+    // Add 3D depth class
+    element.classList.add('press-depth-3d');
+    
+    // Add haptic feedback if supported (mobile)
+    if (window.navigator && window.navigator.vibrate) {
+        window.navigator.vibrate(12);
+    }
+    
+    // Create ripple effect on touch/click
+    const ripple = document.createElement('span');
+    ripple.classList.add('touch-ripple');
+    ripple.style.position = 'absolute';
+    ripple.style.borderRadius = '50%';
+    ripple.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
+    ripple.style.pointerEvents = 'none';
+    ripple.style.transform = 'scale(0)';
+    ripple.style.transition = 'transform 0.4s ease-out, opacity 0.3s ease-out';
+    ripple.style.willChange = 'transform, opacity';
+    
+    // Get click/touch position
+    let clientX, clientY;
+    if (event.touches) {
+        clientX = event.touches[0].clientX;
+        clientY = event.touches[0].clientY;
+    } else {
+        clientX = event.clientX;
+        clientY = event.clientY;
+    }
+    
+    const rect = element.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
+    
+    ripple.style.left = x + 'px';
+    ripple.style.top = y + 'px';
+    ripple.style.width = '0';
+    ripple.style.height = '0';
+    
+    // Add ripple to element
+    element.style.position = 'relative';
+    element.style.overflow = 'hidden';
+    element.appendChild(ripple);
+    
+    // Animate ripple
+    const size = Math.max(rect.width, rect.height);
+    ripple.style.width = size * 2 + 'px';
+    ripple.style.height = size * 2 + 'px';
+    ripple.style.transform = 'scale(1)';
+    ripple.style.opacity = '0';
+    
+    // Remove depth effect and ripple after animation
     setTimeout(() => {
-        element.style.transform = '';
-        element.style.boxShadow = '';
-        element.style.transition = originalTransition;
+        element.classList.remove('press-depth-3d');
+        if (ripple && ripple.parentNode) {
+            ripple.parentNode.removeChild(ripple);
+        }
         element.removeAttribute('data-press-animating');
-    }, 120);
+    }, 150);
 }
 
 function pressHandler(e) {
-    if (this.hasAttribute('data-press-animating')) return;
-    addPressEffect(this);
+    // Don't add effect if already animating or if it's a right-click
+    if (this.hasAttribute('data-press-animating') || (e.button === 2)) return;
+    
+    // Prevent duplicate effects on touch devices
+    if (e.type === 'touchstart' && this.hasAttribute('data-touch-processing')) return;
+    if (e.type === 'touchstart') {
+        this.setAttribute('data-touch-processing', 'true');
+        setTimeout(() => this.removeAttribute('data-touch-processing'), 200);
+    }
+    
+    addDepthEffect(this, e);
 }
 
 function attachPressEffects() {
     const selectors = [
         '#backBtn', '.type-btn', '.theme-toggle', '#uploadBtn', '#newNoteBtn',
         '.action-btn', '.rename-file-btn', '.edit-note-btn', '.delete-btn', '.delete-note-btn',
-        '.clear-search', '.modal-close', '.modal-footer button', '.breadcrumb-item', '.dept-card'
+        '.clear-search', '.modal-close', '.modal-footer button', '.breadcrumb-item', '.dept-card', '.card'
     ];
+    
     document.querySelectorAll(selectors.join(',')).forEach(el => {
+        // Remove old listeners
         el.removeEventListener('click', pressHandler);
-        el.addEventListener('click', pressHandler);
+        el.removeEventListener('touchstart', pressHandler);
+        el.removeEventListener('mousedown', pressHandler);
+        
+        // Add new listeners for better compatibility
+        el.addEventListener('mousedown', pressHandler);
+        el.addEventListener('touchstart', pressHandler, { passive: false });
+        
+        // Add cursor: pointer if not already
+        if (window.getComputedStyle(el).cursor === 'auto') {
+            el.style.cursor = 'pointer';
+        }
     });
 }
 
