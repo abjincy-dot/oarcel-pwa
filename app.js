@@ -1,12 +1,14 @@
-app.js
 // ==================== INDEXEDDB CORE ====================
 const DB_NAME = 'OarcelDB';
-const DB_VERSION = 5;  // version bumped to trigger migration safely
+const DB_VERSION = 6;
 let db = null;
 let allFiles = {};
+let allNotes = {};
 let fileSystem = {};
 let currentPath = [];
 let isSearchMode = false;
+let currentActiveTab = 'pdfs';
+let editingNoteId = null;
 
 // ==================== PDF VIEWER ====================
 function openPDF(dataUrl, fileName) {
@@ -25,6 +27,71 @@ function openPDF(dataUrl, fileName) {
         });
 }
 
+// ==================== NOTE FUNCTIONS ====================
+
+function getNotesForCurrentFolder() {
+    const folderPath = currentPath.join('/');
+    return allNotes[folderPath] || [];
+}
+
+async function addNoteToCurrentFolder(title, content) {
+    const folderPath = currentPath.join('/');
+    if (!allNotes[folderPath]) allNotes[folderPath] = [];
+    
+    const note = {
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 6),
+        title: title.trim(),
+        content: content.trim(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+    };
+    
+    allNotes[folderPath].push(note);
+    await saveAllNotesToDB();
+    render();
+    showToast(`✅ Note "${title}" created`);
+    return note;
+}
+
+async function updateNote(folderPath, noteId, title, content) {
+    if (allNotes[folderPath]) {
+        const index = allNotes[folderPath].findIndex(n => n.id === noteId);
+        if (index !== -1) {
+            allNotes[folderPath][index].title = title.trim();
+            allNotes[folderPath][index].content = content.trim();
+            allNotes[folderPath][index].updatedAt = new Date().toISOString();
+            await saveAllNotesToDB();
+            render();
+            showToast(`✅ Note updated`);
+            return true;
+        }
+    }
+    return false;
+}
+
+async function deleteNoteFromFolder(folderPath, noteId) {
+    if (allNotes[folderPath]) {
+        const note = allNotes[folderPath].find(n => n.id === noteId);
+        allNotes[folderPath] = allNotes[folderPath].filter(n => n.id !== noteId);
+        if (allNotes[folderPath].length === 0) delete allNotes[folderPath];
+        await saveAllNotesToDB();
+        render();
+        showToast(`🗑️ Note "${note?.title || 'unknown'}" deleted`);
+    }
+}
+
+async function saveAllNotesToDB() {
+    const tx = db.transaction('notes', 'readwrite');
+    const store = tx.objectStore('notes');
+    store.clear();
+    for (const folderPath in allNotes) {
+        if (allNotes[folderPath] && allNotes[folderPath].length > 0) {
+            store.put({ id: folderPath, folderPath, notes: allNotes[folderPath] });
+        }
+    }
+    tx.commit();
+}
+
 // ==================== INDEXEDDB FUNCTIONS ====================
 function initDB() {
     return new Promise((resolve, reject) => {
@@ -35,6 +102,7 @@ function initDB() {
             const db = e.target.result;
             if (!db.objectStoreNames.contains('files')) db.createObjectStore('files', { keyPath: 'id' });
             if (!db.objectStoreNames.contains('folderStructure')) db.createObjectStore('folderStructure', { keyPath: 'key' });
+            if (!db.objectStoreNames.contains('notes')) db.createObjectStore('notes', { keyPath: 'id' });
         };
     });
 }
@@ -57,7 +125,6 @@ function saveAllFilesToDB() {
     tx.commit();
 }
 
-// Helper: returns an object with Data Log 1..20 and a "Data Logs" folder
 function createFurnaceDataLogs() {
     const logs = { "Data Logs": {} };
     for (let i = 1; i <= 20; i++) {
@@ -66,26 +133,20 @@ function createFurnaceDataLogs() {
     return logs;
 }
 
-// One‑time migration: add Data Log folders to FURNACE 2,3,4 if missing
 function migrateFurnacesDataLogs() {
     let changed = false;
     const remelt = fileSystem["REMELT"];
     if (!remelt) return false;
-
     const furnaces = ["FURNACE 2", "FURNACE 3", "FURNACE 4"];
     for (const furnace of furnaces) {
         const furnaceObj = remelt[furnace];
         if (furnaceObj && typeof furnaceObj === 'object') {
-            // Check if it already has at least one "Data Log X" or "Data Logs"
             const hasDataLog = Object.keys(furnaceObj).some(key => 
                 key === "Data Logs" || /^Data Log \d+$/.test(key)
             );
             if (!hasDataLog) {
-                // Add the full set
-                const newLogs = createFurnaceDataLogs();
-                Object.assign(furnaceObj, newLogs);
+                Object.assign(furnaceObj, createFurnaceDataLogs());
                 changed = true;
-                console.log(`Added Data Log folders to ${furnace}`);
             }
         }
     }
@@ -97,14 +158,12 @@ async function loadFromIndexedDB() {
     folderReq.onsuccess = () => {
         if (folderReq.result) {
             fileSystem = folderReq.result.value;
-            // Run migration once (adds missing Data Logs to Furnace 2,3,4)
             const migrated = migrateFurnacesDataLogs();
             if (migrated) {
                 saveFolderStructure();
                 showToast("✅ Added Data Log folders to FURNACE 2, 3, 4");
             }
         } else {
-            // First time setup: create full structure with Data Logs in all furnaces 1-4
             fileSystem = {
                 "REMELT": {
                     "FURNACE 1": createFurnaceDataLogs(),
@@ -131,13 +190,22 @@ async function loadFromIndexedDB() {
             };
             saveFolderStructure();
         }
+        
         const fileReq = db.transaction('files', 'readonly').objectStore('files').getAll();
         fileReq.onsuccess = () => {
             allFiles = {};
             for (let item of fileReq.result) {
                 allFiles[item.folderPath] = item.files;
             }
-            render();
+            
+            const notesReq = db.transaction('notes', 'readonly').objectStore('notes').getAll();
+            notesReq.onsuccess = () => {
+                allNotes = {};
+                for (let item of notesReq.result) {
+                    allNotes[item.folderPath] = item.notes;
+                }
+                render();
+            };
         };
     };
 }
@@ -179,23 +247,156 @@ function renameFileInFolder(folderPath, oldName, newName) {
 function selectDepartment(d) { currentPath = [d]; render(); }
 function goBack() { if (currentPath.length && !isSearchMode) { currentPath.pop(); render(); } else if (isSearchMode) { clearSearch(); } }
 function triggerUpload() { document.getElementById('fileInput').click(); }
-function clearSearch() { document.getElementById('searchInput').value = ''; isSearchMode = false; document.getElementById('searchInfo').classList.add('hidden'); document.getElementById('clearSearchBtn').classList.add('hidden'); render(); }
+function triggerNewNote() { openNewNoteModal(); }
+
+function clearSearch() { 
+    document.getElementById('searchInput').value = ''; 
+    isSearchMode = false; 
+    document.getElementById('searchInfo').classList.add('hidden'); 
+    document.getElementById('clearSearchBtn').classList.add('hidden'); 
+    render(); 
+}
 
 function searchFiles(q) {
     if (!q.trim()) return [];
-    const all = [];
+    const results = [];
     for (const path in allFiles) {
         if (allFiles[path]) {
-            allFiles[path].forEach(f => all.push({ ...f, folder: path }));
+            allFiles[path].forEach(f => {
+                if (f.name.toLowerCase().includes(q.toLowerCase())) {
+                    results.push({ ...f, folder: path, type: 'pdf' });
+                }
+            });
         }
     }
-    return all.filter(f => f.name.toLowerCase().includes(q.toLowerCase()));
+    for (const path in allNotes) {
+        if (allNotes[path]) {
+            allNotes[path].forEach(n => {
+                if (n.title.toLowerCase().includes(q.toLowerCase()) || n.content.toLowerCase().includes(q.toLowerCase())) {
+                    results.push({ ...n, folder: path, type: 'note' });
+                }
+            });
+        }
+    }
+    return results;
 }
 
-// ========== CHANGED: Added 'glow-folder' class for folders ==========
+function openNote(note) {
+    const modal = document.getElementById('noteModal');
+    document.getElementById('noteModalTitle').textContent = `📝 ${note.title}`;
+    document.getElementById('noteTitle').value = note.title;
+    document.getElementById('noteContent').value = note.content;
+    editingNoteId = note.id;
+    const saveBtn = document.getElementById('saveNoteBtn');
+    saveBtn.onclick = () => {
+        const newTitle = document.getElementById('noteTitle').value;
+        const newContent = document.getElementById('noteContent').value;
+        if (newTitle.trim()) {
+            updateNote(note.folder, note.id, newTitle, newContent);
+            closeNoteModal();
+        } else {
+            showToast("Title cannot be empty", true);
+        }
+    };
+    modal.classList.add('show');
+}
+
+function createNoteCard(note, folderPath) {
+    const div = document.createElement('div');
+    div.className = 'card note-card';
+    const preview = note.content.length > 50 ? note.content.substring(0, 50) + '...' : note.content;
+    div.innerHTML = `
+        <div class="card-icon"><i class="fas fa-sticky-note"></i></div>
+        <div class="card-filename">${escapeHtml(note.title)}</div>
+        <div class="note-preview">${escapeHtml(preview)}</div>
+        <div class="card-buttons">
+            <button class="edit-note-btn" onclick="event.stopPropagation(); editNote('${folderPath}','${note.id}')"><i class="fas fa-edit"></i> Edit</button>
+            <button class="delete-note-btn" onclick="event.stopPropagation(); deleteNote('${folderPath}','${note.id}')"><i class="fas fa-trash"></i> Delete</button>
+        </div>
+    `;
+    div.onclick = () => openNote({ ...note, folder: folderPath });
+    return div;
+}
+
+function createPdfCard(file, folderPath) {
+    return createCard(file.name, () => openPDF(file.dataUrl, file.name), false, true, folderPath, file.name, true);
+}
+
+function openNewNoteModal() {
+    editingNoteId = null;
+    document.getElementById('noteModalTitle').textContent = 'New Note';
+    document.getElementById('noteTitle').value = '';
+    document.getElementById('noteContent').value = '';
+    const saveBtn = document.getElementById('saveNoteBtn');
+    saveBtn.onclick = () => {
+        const title = document.getElementById('noteTitle').value;
+        const content = document.getElementById('noteContent').value;
+        if (title.trim()) {
+            addNoteToCurrentFolder(title, content);
+            closeNoteModal();
+        } else {
+            showToast("Title cannot be empty", true);
+        }
+    };
+    document.getElementById('noteModal').classList.add('show');
+}
+
+function closeNoteModal() {
+    document.getElementById('noteModal').classList.remove('show');
+    editingNoteId = null;
+}
+
+function editNote(folderPath, noteId) {
+    const note = allNotes[folderPath]?.find(n => n.id === noteId);
+    if (note) {
+        document.getElementById('noteModalTitle').textContent = `✏️ Edit Note`;
+        document.getElementById('noteTitle').value = note.title;
+        document.getElementById('noteContent').value = note.content;
+        editingNoteId = noteId;
+        const saveBtn = document.getElementById('saveNoteBtn');
+        saveBtn.onclick = () => {
+            const newTitle = document.getElementById('noteTitle').value;
+            const newContent = document.getElementById('noteContent').value;
+            if (newTitle.trim()) {
+                updateNote(folderPath, noteId, newTitle, newContent);
+                closeNoteModal();
+            } else {
+                showToast("Title cannot be empty", true);
+            }
+        };
+        document.getElementById('noteModal').classList.add('show');
+    }
+}
+
+function deleteNote(folderPath, noteId) {
+    if (confirm('Delete this note?')) {
+        deleteNoteFromFolder(folderPath, noteId);
+    }
+}
+
+function setActiveTab(tab) {
+    currentActiveTab = tab;
+    const pdfTabBtn = document.getElementById('pdfTabBtn');
+    const notesTabBtn = document.getElementById('notesTabBtn');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const newNoteBtn = document.getElementById('newNoteBtn');
+    
+    if (tab === 'pdfs') {
+        pdfTabBtn.classList.add('active');
+        notesTabBtn.classList.remove('active');
+        uploadBtn.classList.remove('hidden');
+        newNoteBtn.classList.add('hidden');
+    } else {
+        pdfTabBtn.classList.remove('active');
+        notesTabBtn.classList.add('active');
+        uploadBtn.classList.add('hidden');
+        newNoteBtn.classList.remove('hidden');
+    }
+    render();
+}
+
 function createCard(title, onClick, isFolder = false, showDel = false, delPath = null, delName = null, showRename = false) {
     const div = document.createElement('div');
-    // ✅ Only folders (subfolders) get the 'glow-folder' class
     div.className = isFolder ? 'card glow-folder' : 'card';
     div.innerHTML = `
         <div class="card-icon"><i class="fas ${isFolder ? 'fa-folder' : 'fa-file-pdf'}"></i></div>
@@ -208,7 +409,6 @@ function createCard(title, onClick, isFolder = false, showDel = false, delPath =
     div.onclick = onClick;
     return div;
 }
-// ========== END CHANGE ==========
 
 function render() {
     const query = document.getElementById('searchInput').value.trim().toLowerCase();
@@ -223,12 +423,19 @@ function render() {
         contentDiv.innerHTML = '';
         document.getElementById('backBtn').classList.remove('hidden');
         document.getElementById('uploadBtn').classList.add('hidden');
+        document.getElementById('newNoteBtn').classList.add('hidden');
         document.getElementById('departmentsSection').innerHTML = '';
         document.getElementById('breadcrumb').innerHTML = '';
         if (!results.length) {
-            contentDiv.innerHTML = '<div class="empty-state"><i class="fas fa-search"></i><p>No PDFs found.</p></div>';
+            contentDiv.innerHTML = '<div class="empty-state"><i class="fas fa-search"></i><p>No results found.</p></div>';
         } else {
-            results.forEach(f => contentDiv.appendChild(createCard(f.name, () => openPDF(f.dataUrl, f.name), false)));
+            results.forEach(item => {
+                if (item.type === 'pdf') {
+                    contentDiv.appendChild(createPdfCard(item, item.folder));
+                } else {
+                    contentDiv.appendChild(createNoteCard(item, item.folder));
+                }
+            });
         }
         updateStats();
         return;
@@ -257,11 +464,13 @@ function render() {
         for (let dept in fileSystem) {
             const sub = Object.keys(fileSystem[dept]).length;
             const fcount = allFiles[dept] ? allFiles[dept].length : 0;
-            html += `<div class="dept-card" data-dept="${dept}" onclick="selectDepartment('${dept}')"><div class="dept-oval"><span>${dept}</span></div><div class="dept-arrow"><i class="fas fa-chevron-right"></i></div><div class="dept-info">${sub + fcount} items</div></div>`;
+            const ncount = allNotes[dept] ? allNotes[dept].length : 0;
+            html += `<div class="dept-card" data-dept="${dept}" onclick="selectDepartment('${dept}')"><div class="dept-oval"><span>${dept}</span></div><div class="dept-arrow"><i class="fas fa-chevron-right"></i></div><div class="dept-info">${sub + fcount + ncount} items</div></div>`;
         }
         html += '</div>';
         document.getElementById('departmentsSection').innerHTML = html;
         document.getElementById('uploadBtn').classList.add('hidden');
+        document.getElementById('newNoteBtn').classList.add('hidden');
     } else {
         document.getElementById('departmentsSection').innerHTML = '';
     }
@@ -270,9 +479,16 @@ function render() {
     const isLeafFolder = !isRoot && !hasSubfolders;
     
     if (isLeafFolder) {
-        document.getElementById('uploadBtn').classList.remove('hidden');
+        if (currentActiveTab === 'pdfs') {
+            document.getElementById('uploadBtn').classList.remove('hidden');
+            document.getElementById('newNoteBtn').classList.add('hidden');
+        } else {
+            document.getElementById('uploadBtn').classList.add('hidden');
+            document.getElementById('newNoteBtn').classList.remove('hidden');
+        }
     } else {
         document.getElementById('uploadBtn').classList.add('hidden');
+        document.getElementById('newNoteBtn').classList.add('hidden');
     }
     
     const actionDiv = document.createElement('div');
@@ -295,12 +511,22 @@ function render() {
     }
     
     if (isLeafFolder) {
-        const files = getFilesForCurrentFolder();
-        const path = currentPath.join('/');
-        if (files.length) {
-            files.forEach(f => document.getElementById('content').appendChild(createCard(f.name, () => openPDF(f.dataUrl, f.name), false, true, path, f.name, true)));
+        if (currentActiveTab === 'pdfs') {
+            const files = getFilesForCurrentFolder();
+            const path = currentPath.join('/');
+            if (files.length) {
+                files.forEach(f => document.getElementById('content').appendChild(createPdfCard(f, path)));
+            } else {
+                document.getElementById('content').innerHTML += '<div class="empty-state"><i class="fas fa-cloud-upload-alt"></i><p>No PDFs yet. Click Upload to add files.</p></div>';
+            }
         } else {
-            document.getElementById('content').innerHTML += '<div class="empty-state"><i class="fas fa-cloud-upload-alt"></i><p>No PDFs yet. Click Upload to add files.</p></div>';
+            const notes = getNotesForCurrentFolder();
+            const path = currentPath.join('/');
+            if (notes.length) {
+                notes.forEach(n => document.getElementById('content').appendChild(createNoteCard(n, path)));
+            } else {
+                document.getElementById('content').innerHTML += '<div class="empty-state empty-state-note"><i class="fas fa-sticky-note"></i><p>No notes yet. Click + New Note to add.</p></div>';
+            }
         }
     }
     
@@ -324,9 +550,11 @@ function renameCurrentFolder() {
         const oldPath = currentPath.join('/');
         const newPath = [...currentPath.slice(0, -1), newName].join('/');
         if (allFiles[oldPath]) { allFiles[newPath] = allFiles[oldPath]; delete allFiles[oldPath]; }
+        if (allNotes[oldPath]) { allNotes[newPath] = allNotes[oldPath]; delete allNotes[oldPath]; }
         currentPath[currentPath.length - 1] = newName;
         saveFolderStructure();
         saveAllFilesToDB();
+        saveAllNotesToDB();
         render();
         showToast(`✅ Renamed to "${newName}"`);
     }
@@ -338,11 +566,13 @@ function deleteCurrentFolder() {
     if (confirm(`Delete "${name}" and all contents?`)) {
         const path = currentPath.join('/');
         delete allFiles[path];
+        delete allNotes[path];
         const parent = currentPath.slice(0, -1).reduce((o, p) => o[p], fileSystem);
         delete parent[name];
         currentPath.pop();
         saveFolderStructure();
         saveAllFilesToDB();
+        saveAllNotesToDB();
         render();
         showToast(`🗑️ Folder "${name}" deleted`);
     }
@@ -372,12 +602,14 @@ function addNewDepartment() {
 }
 
 function updateStats() {
-    let folderCount = 0, fileCount = 0;
+    let folderCount = 0, fileCount = 0, notesCount = 0;
     function countFolders(obj) { for (let k in obj) { if (typeof obj[k] === 'object') { folderCount++; countFolders(obj[k]); } } }
     countFolders(fileSystem);
     for (let k in allFiles) { if (allFiles[k]) { fileCount += allFiles[k].length; } }
+    for (let k in allNotes) { if (allNotes[k]) { notesCount += allNotes[k].length; } }
     document.getElementById('folderCount').textContent = folderCount;
     document.getElementById('fileCount').textContent = fileCount;
+    document.getElementById('notesCount').textContent = notesCount;
 }
 
 function showToast(msg, isErr = false) {
@@ -402,9 +634,11 @@ function updateThemeIcon() {
     if (themeBtn) { themeBtn.innerHTML = `<div class="theme-icon-wrapper"><i class="fas ${isDark ? 'fa-sun' : 'fa-moon'}"></i></div>`; }
 }
 
+// Global functions for inline handlers
 window.selectDepartment = selectDepartment;
 window.goBack = goBack;
 window.triggerUpload = triggerUpload;
+window.triggerNewNote = triggerNewNote;
 window.clearSearch = clearSearch;
 window.navigateToBreadcrumb = navigateToBreadcrumb;
 window.renameCurrentFolder = renameCurrentFolder;
@@ -412,6 +646,10 @@ window.deleteCurrentFolder = deleteCurrentFolder;
 window.addNewFolder = addNewFolder;
 window.addNewDepartment = addNewDepartment;
 window.openPDF = openPDF;
+window.openNote = openNote;
+window.editNote = editNote;
+window.deleteNote = deleteNote;
+window.closeNoteModal = closeNoteModal;
 window.renameFile = (p, old) => { const nu = prompt("New name:", old.replace('.pdf', '')); if (nu && nu.trim()) renameFileInFolder(p, old, nu.trim()); };
 window.deleteFile = (p, n) => { if (confirm(`Delete "${n}"?`)) deleteFileFromFolder(p, n); };
 
@@ -420,6 +658,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (themeBtn) themeBtn.onclick = toggleTheme;
     if (localStorage.getItem('oarcel_theme') === 'light-mode') { document.body.classList.add('light-mode'); }
     updateThemeIcon();
+    
+    // Tab switching
+    document.getElementById('pdfTabBtn').onclick = () => setActiveTab('pdfs');
+    document.getElementById('notesTabBtn').onclick = () => setActiveTab('notes');
     
     const fileInput = document.getElementById('fileInput');
     if (fileInput) {
@@ -433,6 +675,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             e.target.value = '';
         });
     }
+    
+    const newNoteBtn = document.getElementById('newNoteBtn');
+    if (newNoteBtn) newNoteBtn.onclick = triggerNewNote;
     
     const searchInput = document.getElementById('searchInput');
     if (searchInput) { searchInput.addEventListener('input', () => render()); }
