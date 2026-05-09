@@ -1,4 +1,3 @@
-
 // ==================== INDEXEDDB CORE ====================
 const DB_NAME = 'OarcelDB';
 const DB_VERSION = 6;
@@ -309,7 +308,6 @@ function render() {
         }
         html += '</div>';
         document.getElementById('departmentsSection').innerHTML = html;
-        // HIDE buttons on departments page
         document.getElementById('uploadBtn').classList.add('hidden');
         document.getElementById('createNoteBtn').classList.add('hidden');
     } else {
@@ -319,7 +317,6 @@ function render() {
     const hasSubfolders = Object.keys(folder).length > 0;
     const isLeafFolder = !isRoot && !hasSubfolders;
     
-    // Show/hide action buttons based on folder type
     if (isLeafFolder) {
         document.getElementById('uploadBtn').classList.remove('hidden');
         document.getElementById('createNoteBtn').classList.remove('hidden');
