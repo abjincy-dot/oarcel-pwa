@@ -1,7 +1,5 @@
 /* ============================================
-   OARCEL Document Manager - ULTRA COMPACT CARDS
-   with Yellow New Note Button, Proper Theme Toggle
-   & GLOW on NOTE CARDS (same as folders)
+   OARCEL Document Manager - FINAL WITH PRESS EFFECT
    ============================================ */
 
 * {
@@ -234,9 +232,10 @@ body.light-mode .header-title h1 { background: linear-gradient(135deg, #0f172a, 
 .type-selector {
     display: flex;
     gap: 6px;
-    background: rgba(0,0,0,0.3);
+    background: rgba(0,0,0,0.4);
     padding: 4px;
     border-radius: var(--radius-full);
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.2), 0 0 6px rgba(255,255,255,0.3);
 }
 .type-btn {
     padding: 8px 18px;
@@ -295,7 +294,7 @@ body.light-mode .header-title h1 { background: linear-gradient(135deg, #0f172a, 
 }
 .top-bar-actions { display: flex; align-items: center; gap: 12px; }
 
-/* ========== THEME TOGGLE BUTTON (RESTORED) ========== */
+/* ========== THEME TOGGLE ========== */
 .theme-toggle {
     width: 48px !important;
     height: 48px !important;
@@ -309,21 +308,10 @@ body.light-mode .header-title h1 { background: linear-gradient(135deg, #0f172a, 
     transition: all 0.28s cubic-bezier(0.22, 1, 0.36, 1) !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
 }
-.theme-toggle:hover {
-    transform: scale(1.08) !important;
-    border-color: rgba(168,85,247, 0.8) !important;
-    box-shadow: 0 8px 20px rgba(168,85,247, 0.5) !important;
-}
-.theme-toggle i {
-    font-size: 1.3rem !important;
-    transition: color 0.2s ease;
-}
-.theme-toggle i {
-    color: #fbbf24 !important;
-}
-body.light-mode .theme-toggle i {
-    color: #f59e0b !important;
-}
+.theme-toggle:hover { transform: scale(1.08) !important; border-color: rgba(168,85,247, 0.8) !important; box-shadow: 0 8px 20px rgba(168,85,247, 0.5) !important; }
+.theme-toggle i { font-size: 1.3rem !important; transition: color 0.2s ease; }
+.theme-toggle i { color: #fbbf24 !important; }
+body.light-mode .theme-toggle i { color: #f59e0b !important; }
 
 /* ========== UPLOAD & NEW NOTE BUTTONS ========== */
 #uploadBtn, #newNoteBtn {
@@ -464,7 +452,6 @@ body.light-mode .theme-toggle i {
 /* ========== CONTENT & CARDS - ULTRA COMPACT ========== */
 .content { display: flex; flex-direction: column; gap: 8px; }
 
-/* Base card style */
 .card {
     background: rgba(12,28,48,0.92);
     backdrop-filter: blur(14px);
@@ -565,7 +552,7 @@ body.light-mode .card.glow-folder:hover {
     box-shadow: 0 0 0 2px rgba(0,0,0,0.15), 0 0 0 3px rgba(59,130,246,0.3);
 }
 
-/* Note cards - SAME THIN WHITE GLOW as folders */
+/* Note cards - same glow */
 .note-card {
     border-radius: 60px !important;
     box-shadow: 0 0 0 1px rgba(255,255,255,0.3), 0 0 0 2px rgba(59,130,246,0.2) !important;
@@ -697,6 +684,102 @@ body.light-mode .note-card:hover {
 
 .hidden { display: none !important; }
 
+/* ========== 3D PRESS EFFECT FOR ALL BUTTONS & DEPT CARDS - FORCED ========== */
+/* This will add a visible press effect on click/tap */
+#backBtn,
+.type-btn,
+.theme-toggle,
+#uploadBtn,
+#newNoteBtn,
+.action-btn,
+.rename-file-btn,
+.edit-note-btn,
+.delete-btn,
+.delete-note-btn,
+.clear-search,
+.modal-close,
+.modal-footer button,
+.breadcrumb-item,
+.dept-card {
+    transition: transform 0.06s linear, box-shadow 0.1s ease !important;
+    -webkit-tap-highlight-color: transparent !important;
+}
+
+/* Raised shadow for most buttons */
+#backBtn,
+.type-btn,
+.theme-toggle,
+#uploadBtn,
+#newNoteBtn,
+.action-btn,
+.rename-file-btn,
+.edit-note-btn,
+.delete-btn,
+.delete-note-btn,
+.clear-search,
+.modal-footer button {
+    box-shadow: 0 3px 6px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1) !important;
+}
+
+/* ACTIVE (PRESS) EFFECT - scale down + move down */
+#backBtn:active,
+.type-btn:active,
+.theme-toggle:active,
+#uploadBtn:active,
+#newNoteBtn:active,
+.action-btn:active,
+.rename-file-btn:active,
+.edit-note-btn:active,
+.delete-btn:active,
+.delete-note-btn:active,
+.clear-search:active,
+.modal-footer button:active {
+    transform: translateY(2px) scale(0.97) !important;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.2) !important;
+}
+
+/* DEPT CARDS press effect (the ones in your screenshot) */
+.dept-card:active {
+    transform: scale(0.98) translateX(2px) !important;
+    transition: transform 0.05s ease !important;
+}
+
+/* BREADCRUMB press */
+.breadcrumb-item:active {
+    transform: scale(0.96) !important;
+}
+
+/* For hover, keep a slight lift (optional) */
+.type-btn:hover,
+.action-btn:hover,
+.rename-file-btn:hover,
+.edit-note-btn:hover,
+.delete-btn:hover,
+.delete-note-btn:hover,
+.dept-card:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 5px 12px rgba(0,0,0,0.3) !important;
+}
+
+.theme-toggle:hover {
+    transform: scale(1.05) !important;
+}
+.theme-toggle:active {
+    transform: scale(0.96) translateY(1px) !important;
+}
+
+/* For touch devices, ensure active state fires instantly */
+@media (hover: none) and (pointer: coarse) {
+    .dept-card:active {
+        transform: scale(0.98) !important;
+        background: rgba(255,255,255,0.05) !important;
+    }
+    .type-btn:active,
+    .action-btn:active {
+        transform: scale(0.95) !important;
+    }
+}
+
 /* ========== RESPONSIVE ========== */
 @media (max-width: 640px) {
     .app { padding: 16px 14px 32px; }
@@ -709,12 +792,4 @@ body.light-mode .note-card:hover {
 @media (max-width: 380px) {
     .card-buttons { flex-direction: column; gap: 4px; }
     .dept-info { display: none; }
-}/* Subtle white glow for PDF/Notes tab selector */
-.type-selector {
-    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2), 0 0 6px rgba(255, 255, 255, 0.3) !important;
-    background: rgba(0, 0, 0, 0.4) !important; /* slight dark base to make glow pop */
-    transition: box-shadow 0.2s ease;
-}
-.type-selector:hover {
-    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.4), 0 0 12px rgba(255, 255, 255, 0.5) !important;
 }
