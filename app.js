@@ -426,8 +426,9 @@ function render() {
         document.getElementById('newNoteBtn').classList.add('hidden');
         document.getElementById('departmentsSection').innerHTML = '';
         document.getElementById('breadcrumb').innerHTML = '';
-        // Also hide type selector in search mode
-        document.querySelector('.type-selector').style.display = 'none';
+        // Hide type selector in search mode
+        const typeSelector = document.querySelector('.type-selector');
+        if (typeSelector) typeSelector.style.display = 'none';
         if (!results.length) {
             contentDiv.innerHTML = '<div class="empty-state"><i class="fas fa-search"></i><p>No results found.</p></div>';
         } else {
@@ -440,6 +441,7 @@ function render() {
             });
         }
         updateStats();
+        attachPressEffects(); // Re-attach press handlers
         return;
     }
     
@@ -480,7 +482,6 @@ function render() {
     const hasSubfolders = Object.keys(folder).length > 0;
     const isLeafFolder = !isRoot && !hasSubfolders;
     
-    // Show/hide the type selector (PDFs/Notes tabs) ONLY in leaf folders
     const typeSelector = document.querySelector('.type-selector');
     if (typeSelector) {
         if (isLeafFolder) {
@@ -543,6 +544,7 @@ function render() {
     }
     
     updateStats();
+    attachPressEffects(); // Re-attach press handlers to new elements
 }
 
 function navigateToBreadcrumb(idx) {
@@ -646,7 +648,49 @@ function updateThemeIcon() {
     if (themeBtn) { themeBtn.innerHTML = `<div class="theme-icon-wrapper"><i class="fas ${isDark ? 'fa-sun' : 'fa-moon'}"></i></div>`; }
 }
 
-// Global functions for inline handlers
+// ========== FORCE PRESS EFFECT (TACTILE FEEDBACK) ==========
+function addPressEffect(element) {
+    if (!element || element.hasAttribute('data-press-animating')) return;
+    element.setAttribute('data-press-animating', 'true');
+    const originalTransition = element.style.transition;
+    element.style.transition = 'transform 0.08s cubic-bezier(0.2, 0.9, 0.4, 1.1), box-shadow 0.1s ease';
+    element.style.transform = 'scale(0.97) translateY(2px)';
+    element.style.boxShadow = '0 1px 2px rgba(0,0,0,0.2)';
+    setTimeout(() => {
+        element.style.transform = '';
+        element.style.boxShadow = '';
+        element.style.transition = originalTransition;
+        element.removeAttribute('data-press-animating');
+    }, 120);
+}
+
+function pressHandler(e) {
+    // Prevent duplicate rapid presses
+    if (this.hasAttribute('data-press-animating')) return;
+    addPressEffect(this);
+}
+
+function attachPressEffects() {
+    const selectors = [
+        '#backBtn', '.type-btn', '.theme-toggle', '#uploadBtn', '#newNoteBtn',
+        '.action-btn', '.rename-file-btn', '.edit-note-btn', '.delete-btn', '.delete-note-btn',
+        '.clear-search', '.modal-close', '.modal-footer button', '.breadcrumb-item', '.dept-card'
+    ];
+    document.querySelectorAll(selectors.join(',')).forEach(el => {
+        // Remove any existing listener to avoid duplicates
+        el.removeEventListener('click', pressHandler);
+        el.addEventListener('click', pressHandler);
+    });
+}
+
+// Override render to reattach after dynamic content
+const originalRender = render;
+render = function() {
+    originalRender();
+    setTimeout(attachPressEffects, 20);
+};
+
+// Global functions for inline handlers (keep existing)
 window.selectDepartment = selectDepartment;
 window.goBack = goBack;
 window.triggerUpload = triggerUpload;
@@ -707,4 +751,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         await initDB();
         await loadFromIndexedDB();
     } catch (e) { console.error(e); showToast('Database error', true); }
+    
+    // Initial attach
+    setTimeout(attachPressEffects, 200);
 });
