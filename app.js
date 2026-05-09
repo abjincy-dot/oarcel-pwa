@@ -426,7 +426,6 @@ function render() {
         document.getElementById('newNoteBtn').classList.add('hidden');
         document.getElementById('departmentsSection').innerHTML = '';
         document.getElementById('breadcrumb').innerHTML = '';
-        // Hide type selector in search mode
         const typeSelector = document.querySelector('.type-selector');
         if (typeSelector) typeSelector.style.display = 'none';
         if (!results.length) {
@@ -441,7 +440,7 @@ function render() {
             });
         }
         updateStats();
-        attachPressEffects(); // Re-attach press handlers
+        attachPressEffects();
         return;
     }
     
@@ -544,7 +543,7 @@ function render() {
     }
     
     updateStats();
-    attachPressEffects(); // Re-attach press handlers to new elements
+    attachPressEffects();
 }
 
 function navigateToBreadcrumb(idx) {
@@ -648,7 +647,7 @@ function updateThemeIcon() {
     if (themeBtn) { themeBtn.innerHTML = `<div class="theme-icon-wrapper"><i class="fas ${isDark ? 'fa-sun' : 'fa-moon'}"></i></div>`; }
 }
 
-// ========== FORCE PRESS EFFECT (TACTILE FEEDBACK) ==========
+// ========== PRESS EFFECT (WORKING) ==========
 function addPressEffect(element) {
     if (!element || element.hasAttribute('data-press-animating')) return;
     element.setAttribute('data-press-animating', 'true');
@@ -665,7 +664,6 @@ function addPressEffect(element) {
 }
 
 function pressHandler(e) {
-    // Prevent duplicate rapid presses
     if (this.hasAttribute('data-press-animating')) return;
     addPressEffect(this);
 }
@@ -677,7 +675,6 @@ function attachPressEffects() {
         '.clear-search', '.modal-close', '.modal-footer button', '.breadcrumb-item', '.dept-card'
     ];
     document.querySelectorAll(selectors.join(',')).forEach(el => {
-        // Remove any existing listener to avoid duplicates
         el.removeEventListener('click', pressHandler);
         el.addEventListener('click', pressHandler);
     });
@@ -690,7 +687,7 @@ render = function() {
     setTimeout(attachPressEffects, 20);
 };
 
-// Global functions for inline handlers (keep existing)
+// Global functions for inline handlers
 window.selectDepartment = selectDepartment;
 window.goBack = goBack;
 window.triggerUpload = triggerUpload;
@@ -715,7 +712,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (localStorage.getItem('oarcel_theme') === 'light-mode') { document.body.classList.add('light-mode'); }
     updateThemeIcon();
     
-    // Tab switching
     document.getElementById('pdfTabBtn').onclick = () => setActiveTab('pdfs');
     document.getElementById('notesTabBtn').onclick = () => setActiveTab('notes');
     
@@ -752,6 +748,5 @@ document.addEventListener('DOMContentLoaded', async () => {
         await loadFromIndexedDB();
     } catch (e) { console.error(e); showToast('Database error', true); }
     
-    // Initial attach
     setTimeout(attachPressEffects, 200);
 });
