@@ -426,6 +426,8 @@ function render() {
         document.getElementById('newNoteBtn').classList.add('hidden');
         document.getElementById('departmentsSection').innerHTML = '';
         document.getElementById('breadcrumb').innerHTML = '';
+        // Also hide type selector in search mode
+        document.querySelector('.type-selector').style.display = 'none';
         if (!results.length) {
             contentDiv.innerHTML = '<div class="empty-state"><i class="fas fa-search"></i><p>No results found.</p></div>';
         } else {
@@ -477,6 +479,16 @@ function render() {
     
     const hasSubfolders = Object.keys(folder).length > 0;
     const isLeafFolder = !isRoot && !hasSubfolders;
+    
+    // Show/hide the type selector (PDFs/Notes tabs) ONLY in leaf folders
+    const typeSelector = document.querySelector('.type-selector');
+    if (typeSelector) {
+        if (isLeafFolder) {
+            typeSelector.style.display = 'flex';
+        } else {
+            typeSelector.style.display = 'none';
+        }
+    }
     
     if (isLeafFolder) {
         if (currentActiveTab === 'pdfs') {
