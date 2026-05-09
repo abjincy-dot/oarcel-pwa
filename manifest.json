@@ -1,36 +1,13 @@
 {
   "name": "OARCEL Document Manager",
   "short_name": "OARCEL",
-  "description": "Professional document management system for organizing and viewing PDF files with folder structure and offline access",
-  "start_url": "/oarcel-pwa/index.html",
-  "scope": "/oarcel-pwa/",
+  "description": "Industrial document & notes manager",
+  "start_url": ".",
   "display": "standalone",
-  "theme_color": "#6366f1",
-  "background_color": "#0f0c29",
+  "theme_color": "#0a1128",
+  "background_color": "#020817",
   "orientation": "portrait",
-  "lang": "en",
-  "dir": "ltr",
   "icons": [
-    {
-      "src": "https://img.icons8.com/fluency/96/folder-invoices.png",
-      "sizes": "96x96",
-      "type": "image/png"
-    },
-    {
-      "src": "https://img.icons8.com/fluency/128/folder-invoices.png",
-      "sizes": "128x128",
-      "type": "image/png"
-    },
-    {
-      "src": "https://img.icons8.com/fluency/144/folder-invoices.png",
-      "sizes": "144x144",
-      "type": "image/png"
-    },
-    {
-      "src": "https://img.icons8.com/fluency/152/folder-invoices.png",
-      "sizes": "152x152",
-      "type": "image/png"
-    },
     {
       "src": "https://img.icons8.com/fluency/192/folder-invoices.png",
       "sizes": "192x192",
@@ -38,37 +15,10 @@
       "purpose": "any maskable"
     },
     {
-      "src": "https://img.icons8.com/fluency/256/folder-invoices.png",
-      "sizes": "256x256",
-      "type": "image/png"
-    },
-    {
-      "src": "https://img.icons8.com/fluency/384/folder-invoices.png",
-      "sizes": "384x384",
-      "type": "image/png"
-    },
-    {
       "src": "https://img.icons8.com/fluency/512/folder-invoices.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
-    }
-  ],
-  "categories": ["productivity", "business"],
-  "screenshots": [],
-  "prefer_related_applications": false,
-  "shortcuts": [
-    {
-      "name": "Open OARCEL",
-      "short_name": "Open",
-      "description": "Open Document Manager",
-      "url": "/oarcel-pwa/index.html",
-      "icons": [
-        {
-          "src": "https://img.icons8.com/fluency/96/folder-invoices.png",
-          "sizes": "96x96"
-        }
-      ]
     }
   ]
 }
