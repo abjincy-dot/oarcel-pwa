@@ -1,6 +1,6 @@
 // ==================== INDEXEDDB CORE ====================
 const DB_NAME = 'OarcelDB';
-const DB_VERSION = 7; // version bump to force fresh structure if needed
+const DB_VERSION = 6;
 let db = null;
 let allFiles = {};
 let fileSystem = {};
@@ -97,85 +97,72 @@ function createFurnaceDataLogs() {
     return logs;
 }
 
-// DEFAULT FULL FOLDER STRUCTURE (used if DB is empty)
-function getDefaultFileSystem() {
-    return {
-        "REMELT": {
-            "FURNACE 1": createFurnaceDataLogs(),
-            "FURNACE 2": createFurnaceDataLogs(),
-            "FURNACE 3": createFurnaceDataLogs(),
-            "FURNACE 4": createFurnaceDataLogs(),
-            "FURNACE 5": {},
-            "ACD": {},
-            "DBF": {},
-            "ROD FEEDER": {},
-            "LAUNDER HEATERS": {},
-            "LAUNDER PANEL ": {},
-            "HPU 1": {},
-            "HPU 2": {},
-            "M": {}, "N": {}, "O": {}, "P": {}, "Q": {}, "R": {}, "S": {}, "T": {}, "U": {}, "V": {}, "W": {}, "X": {}, "Y": {}, "Z": {}
-        },
-        "CASTER": { "Quality Reports": {}, "Mechanical": {}, "Maintenance": {}, "Production Data": {}, "Testing": {}, "Checklists": {}, "Safety": {}, "Training": {} },
-        "HRM": { "Employee Records": {}, "Attendance": {}, "Performance": {}, "Training Logs": {}, "Safety Compliance": {}, "Policies": {}, "Reports": {}, "Certifications": {} },
-        "CRM": { "PLC Programs": {}, "CAD Drawings": {}, "Electrical": {}, "SCADA": {}, "Automation": {}, "Reports": {}, "Configurations": {}, "Manuals": {} },
-        "ANNEALING": { "Temperature Control": {}, "Process Parameters": {}, "Quality Assurance": {}, "Maintenance": {}, "Safety": {}, "Production Logs": {}, "Testing": {}, "SOP Documents": {} },
-        "TLL": { "PLC Programs": {}, "CAD Drawings": {}, "Maintenance": {}, "Production Logs": {}, "Process Optimization": {}, "Quality Reports": {}, "Manuals": {}, "Safety": {} },
-        "SLITTER": { "Blade Maintenance": {}, "Quality Control": {}, "Production Reports": {}, "Mechanical": {}, "Safety": {}, "Checklists": {}, "Training": {}, "Testing": {} },
-        "UTILITY": { "Power Supply": {}, "Water System": {}, "Compressed Air": {}, "HVAC": {}, "Reports": {}, "Safety": {}, "Manuals": {}, "Testing": {} }
-    };
+function migrateFurnacesDataLogs() {
+    let changed = false;
+    const remelt = fileSystem["REMELT"];
+    if (!remelt) return false;
+    const furnaces = ["FURNACE 2", "FURNACE 3", "FURNACE 4"];
+    for (const furnace of furnaces) {
+        const furnaceObj = remelt[furnace];
+        if (furnaceObj && typeof furnaceObj === 'object') {
+            const hasDataLog = Object.keys(furnaceObj).some(key => 
+                key === "Data Logs" || /^Data Log \d+$/.test(key)
+            );
+            if (!hasDataLog) {
+                Object.assign(furnaceObj, createFurnaceDataLogs());
+                changed = true;
+            }
+        }
+    }
+    return changed;
 }
 
 async function loadFromIndexedDB() {
-    return new Promise((resolve) => {
-        const folderReq = db.transaction('folderStructure', 'readonly').objectStore('folderStructure').get('structure');
-        folderReq.onsuccess = () => {
-            if (folderReq.result && folderReq.result.value && Object.keys(folderReq.result.value).length > 0) {
-                fileSystem = folderReq.result.value;
-                console.log("Loaded existing folder structure from DB");
-                // Optional migration for furnaces
-                const remelt = fileSystem["REMELT"];
-                if (remelt) {
-                    const furnaces = ["FURNACE 2", "FURNACE 3", "FURNACE 4"];
-                    for (const furnace of furnaces) {
-                        if (remelt[furnace] && typeof remelt[furnace] === 'object') {
-                            if (!remelt[furnace]["Data Logs"] && !Object.keys(remelt[furnace]).some(k => k.startsWith("Data Log"))) {
-                                Object.assign(remelt[furnace], createFurnaceDataLogs());
-                                saveFolderStructure();
-                            }
-                        }
-                    }
-                }
-            } else {
-                console.log("No existing structure, creating default departments...");
-                fileSystem = getDefaultFileSystem();
+    const folderReq = db.transaction('folderStructure', 'readonly').objectStore('folderStructure').get('structure');
+    folderReq.onsuccess = () => {
+        if (folderReq.result) {
+            fileSystem = folderReq.result.value;
+            const migrated = migrateFurnacesDataLogs();
+            if (migrated) {
                 saveFolderStructure();
+                showToast("✅ Added Data Log folders to FURNACE 2, 3, 4");
             }
-            
-            const fileReq = db.transaction('files', 'readonly').objectStore('files').getAll();
-            fileReq.onsuccess = () => {
-                allFiles = {};
-                for (let item of fileReq.result) {
-                    allFiles[item.folderPath] = item.files;
-                }
-                render();
-                resolve();
+        } else {
+            fileSystem = {
+                "REMELT": {
+                    "FURNACE 1": createFurnaceDataLogs(),
+                    "FURNACE 2": createFurnaceDataLogs(),
+                    "FURNACE 3": createFurnaceDataLogs(),
+                    "FURNACE 4": createFurnaceDataLogs(),
+                    "FURNACE 5": {},
+                    "ACD": {},
+                    "DBF": {},
+                    "ROD FEEDER": {},
+                    "LAUNDER HEATERS": {},
+                    "LAUNDER PANEL ": {},
+                    "HPU 1": {},
+                    "HPU 2": {},
+                    "M": {}, "N": {}, "O": {}, "P": {}, "Q": {}, "R": {}, "S": {}, "T": {}, "U": {}, "V": {}, "W": {}, "X": {}, "Y": {}, "Z": {}
+                },
+                "CASTER": { "Quality Reports": {}, "Mechanical": {}, "Maintenance": {}, "Production Data": {}, "Testing": {}, "Checklists": {}, "Safety": {}, "Training": {} },
+                "HRM": { "Employee Records": {}, "Attendance": {}, "Performance": {}, "Training Logs": {}, "Safety Compliance": {}, "Policies": {}, "Reports": {}, "Certifications": {} },
+                "CRM": { "PLC Programs": {}, "CAD Drawings": {}, "Electrical": {}, "SCADA": {}, "Automation": {}, "Reports": {}, "Configurations": {}, "Manuals": {} },
+                "ANNEALING": { "Temperature Control": {}, "Process Parameters": {}, "Quality Assurance": {}, "Maintenance": {}, "Safety": {}, "Production Logs": {}, "Testing": {}, "SOP Documents": {} },
+                "TLL": { "PLC Programs": {}, "CAD Drawings": {}, "Maintenance": {}, "Production Logs": {}, "Process Optimization": {}, "Quality Reports": {}, "Manuals": {}, "Safety": {} },
+                "SLITTER": { "Blade Maintenance": {}, "Quality Control": {}, "Production Reports": {}, "Mechanical": {}, "Safety": {}, "Checklists": {}, "Training": {}, "Testing": {} },
+                "UTILITY": { "Power Supply": {}, "Water System": {}, "Compressed Air": {}, "HVAC": {}, "Reports": {}, "Safety": {}, "Manuals": {}, "Testing": {} }
             };
-            fileReq.onerror = () => {
-                console.warn("Could not load files, using empty.");
-                allFiles = {};
-                render();
-                resolve();
-            };
-        };
-        folderReq.onerror = () => {
-            console.warn("Could not read folder structure, creating default.");
-            fileSystem = getDefaultFileSystem();
             saveFolderStructure();
+        }
+        const fileReq = db.transaction('files', 'readonly').objectStore('files').getAll();
+        fileReq.onsuccess = () => {
             allFiles = {};
+            for (let item of fileReq.result) {
+                allFiles[item.folderPath] = item.files;
+            }
             render();
-            resolve();
         };
-    });
+    };
 }
 
 function getCurrentFolderObject() { return currentPath.reduce((o, p) => o?.[p], fileSystem); }
@@ -299,19 +286,8 @@ function render() {
     document.getElementById('searchInfo').classList.add('hidden');
     document.getElementById('content').innerHTML = '';
     
-    // Ensure fileSystem is an object
-    if (!fileSystem || typeof fileSystem !== 'object') {
-        console.error("fileSystem is invalid, resetting");
-        fileSystem = getDefaultFileSystem();
-        saveFolderStructure();
-    }
-    
     const folder = getCurrentFolderObject();
-    if (!folder) { 
-        currentPath = []; 
-        render(); 
-        return; 
-    }
+    if (!folder) { currentPath = []; render(); return; }
     
     document.getElementById('backBtn').classList.toggle('hidden', currentPath.length === 0);
     
@@ -475,7 +451,6 @@ function updateStats() {
 
 function showToast(msg, isErr = false) {
     const toast = document.getElementById('toast');
-    if (!toast) return;
     toast.querySelector('span').textContent = msg;
     toast.style.background = isErr ? "linear-gradient(135deg,#ef4444,#dc2626)" : "linear-gradient(135deg,#10b981,#059669)";
     toast.classList.remove('hidden');
@@ -497,21 +472,17 @@ function updateThemeIcon() {
 }
 
 function openNoteModal() {
-    const modal = document.getElementById('noteModal');
-    if (!modal) return;
     document.getElementById('noteTitle').value = '';
     document.getElementById('noteContent').value = '';
-    modal.classList.add('show');
+    document.getElementById('noteModal').classList.add('show');
 }
 
 function closeNoteModal() {
-    const modal = document.getElementById('noteModal');
-    if (modal) modal.classList.remove('show');
+    document.getElementById('noteModal').classList.remove('show');
 }
 
 function closeViewNoteModal() {
-    const modal = document.getElementById('viewNoteModal');
-    if (modal) modal.classList.remove('show');
+    document.getElementById('viewNoteModal').classList.remove('show');
     currentViewingNote = null;
 }
 
@@ -621,10 +592,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         await initDB();
         await loadFromIndexedDB();
-    } catch (e) { 
-        console.error('DB init error:', e); 
-        showToast('Database error, using defaults', true);
-        fileSystem = getDefaultFileSystem();
-        render();
-    }
+    } catch (e) { console.error(e); showToast('Database error', true); }
 });
