@@ -186,8 +186,6 @@ async function loadFromIndexedDB() {
                 "ANNEALING": { "Temperature Control": {}, "Process Parameters": {}, "Quality Assurance": {}, "Maintenance": {}, "Safety": {}, "Production Logs": {}, "Testing": {}, "SOP Documents": {} },
                 "TLL": { "PLC Programs": {}, "CAD Drawings": {}, "Maintenance": {}, "Production Logs": {}, "Process Optimization": {}, "Quality Reports": {}, "Manuals": {}, "Safety": {} },
                 "SLITTER": { "Blade Maintenance": {}, "Quality Control": {}, "Production Reports": {}, "Mechanical": {}, "Safety": {}, "Checklists": {}, "Training": {}, "Testing": {} },
-                 "CRANE": { "CASTER CRANE": {}, "HEM CRANE": {}, "SOUTH CRANE": {}, "NOETH CRANE": {}, "SLITER CRANE": {}, "TLL CRANE": {}, "ROLL SHOP CRANE": {}, "A": {} },
-                
                 "UTILITY": { "Power Supply": {}, "Water System": {}, "Compressed Air": {}, "HVAC": {}, "Reports": {}, "Safety": {}, "Manuals": {}, "Testing": {} }
             };
             saveFolderStructure();
@@ -654,15 +652,12 @@ function addDepthEffect(element, event) {
     if (!element || element.hasAttribute('data-press-animating')) return;
     element.setAttribute('data-press-animating', 'true');
     
-    // Add 3D depth class
     element.classList.add('press-depth-3d');
     
-    // Add haptic feedback if supported (mobile)
     if (window.navigator && window.navigator.vibrate) {
         window.navigator.vibrate(12);
     }
     
-    // Create ripple effect on touch/click
     const ripple = document.createElement('span');
     ripple.classList.add('touch-ripple');
     ripple.style.position = 'absolute';
@@ -673,7 +668,6 @@ function addDepthEffect(element, event) {
     ripple.style.transition = 'transform 0.4s ease-out, opacity 0.3s ease-out';
     ripple.style.willChange = 'transform, opacity';
     
-    // Get click/touch position
     let clientX, clientY;
     if (event.touches) {
         clientX = event.touches[0].clientX;
@@ -692,19 +686,16 @@ function addDepthEffect(element, event) {
     ripple.style.width = '0';
     ripple.style.height = '0';
     
-    // Add ripple to element
     element.style.position = 'relative';
     element.style.overflow = 'hidden';
     element.appendChild(ripple);
     
-    // Animate ripple
     const size = Math.max(rect.width, rect.height);
     ripple.style.width = size * 2 + 'px';
     ripple.style.height = size * 2 + 'px';
     ripple.style.transform = 'scale(1)';
     ripple.style.opacity = '0';
     
-    // Remove depth effect and ripple after animation
     setTimeout(() => {
         element.classList.remove('press-depth-3d');
         if (ripple && ripple.parentNode) {
@@ -715,10 +706,8 @@ function addDepthEffect(element, event) {
 }
 
 function pressHandler(e) {
-    // Don't add effect if already animating or if it's a right-click
     if (this.hasAttribute('data-press-animating') || (e.button === 2)) return;
     
-    // Prevent duplicate effects on touch devices
     if (e.type === 'touchstart' && this.hasAttribute('data-touch-processing')) return;
     if (e.type === 'touchstart') {
         this.setAttribute('data-touch-processing', 'true');
@@ -736,27 +725,51 @@ function attachPressEffects() {
     ];
     
     document.querySelectorAll(selectors.join(',')).forEach(el => {
-        // Remove old listeners
         el.removeEventListener('click', pressHandler);
         el.removeEventListener('touchstart', pressHandler);
         el.removeEventListener('mousedown', pressHandler);
         
-        // Add new listeners for better compatibility
         el.addEventListener('mousedown', pressHandler);
         el.addEventListener('touchstart', pressHandler, { passive: false });
         
-        // Add cursor: pointer if not already
         if (window.getComputedStyle(el).cursor === 'auto') {
             el.style.cursor = 'pointer';
         }
     });
 }
 
-// Override render to reattach after dynamic content
+// ========== FORCE ACTION BAR STYLING (JavaScript) ==========
+function styleActionBar() {
+    const actionBar = document.querySelector('.action-bar');
+    if (actionBar) {
+        actionBar.style.setProperty('background', '#0f172a', 'important');
+        actionBar.style.setProperty('backdrop-filter', 'blur(20px)', 'important');
+        actionBar.style.setProperty('border', '1px solid rgba(255,255,255,0.2)', 'important');
+        actionBar.style.setProperty('border-radius', '60px', 'important');
+        actionBar.style.setProperty('padding', '10px 16px', 'important');
+        actionBar.style.setProperty('margin', '16px 0 20px 0', 'important');
+        actionBar.style.setProperty('box-shadow', '0 8px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)', 'important');
+        
+        const btns = actionBar.querySelectorAll('.action-btn');
+        btns.forEach(btn => {
+            btn.style.setProperty('background', '#1e293b', 'important');
+            btn.style.setProperty('border', '1px solid #3b82f6', 'important');
+            btn.style.setProperty('border-radius', '40px', 'important');
+            btn.style.setProperty('padding', '8px 18px', 'important');
+            btn.style.setProperty('color', '#f1f5f9', 'important');
+            btn.style.setProperty('box-shadow', '0 3px 8px rgba(0,0,0,0.2)', 'important');
+        });
+    }
+}
+
+// Override render to reattach after dynamic content AND apply action bar style
 const originalRender = render;
 render = function() {
     originalRender();
-    setTimeout(attachPressEffects, 20);
+    setTimeout(() => {
+        styleActionBar();
+        attachPressEffects();
+    }, 30);
 };
 
 // Global functions for inline handlers
@@ -820,5 +833,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         await loadFromIndexedDB();
     } catch (e) { console.error(e); showToast('Database error', true); }
     
-    setTimeout(attachPressEffects, 200);
+    setTimeout(() => {
+        attachPressEffects();
+        styleActionBar();
+    }, 200);
 });
