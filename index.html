@@ -15,6 +15,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
+<!-- PDF Compression Library -->
+<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<!-- Image Compression Library -->
+<script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.min.js"></script>
 </head>
 <body>
 <div class="particles-container">
@@ -49,6 +53,7 @@
       <button id="clearSearchBtn" class="clear-search hidden"><i class="fas fa-times"></i></button>
     </div>
     <div class="top-bar-actions">
+      <button id="settingsBtn" class="settings-toggle"><i class="fas fa-cog"></i></button>
       <button id="themeToggle" class="theme-toggle"><div class="theme-icon-wrapper"><i class="fas fa-moon"></i></div></button>
       <button id="uploadBtn" class="btn-upload"><i class="fas fa-cloud-upload-alt"></i><span>Upload</span></button>
       <button id="newNoteBtn" class="btn-upload hidden"><i class="fas fa-plus"></i><span>New Note</span></button>
@@ -70,6 +75,23 @@
   <div id="content" class="content"></div>
 </div>
 
+<!-- PDF Viewer Modal -->
+<div id="pdfModal" class="modal">
+  <div class="modal-content pdf-viewer-content">
+    <div class="modal-header">
+      <h3 id="pdfModalTitle"><i class="fas fa-file-pdf"></i> PDF Viewer</h3>
+      <button class="modal-close" onclick="closePDFModal()">&times;</button>
+    </div>
+    <div class="modal-body pdf-viewer-body">
+      <iframe id="pdfIframe" src="" frameborder="0" style="width:100%; height:70vh;"></iframe>
+    </div>
+    <div class="modal-footer">
+      <button onclick="closePDFModal()">Close</button>
+      <button id="downloadPdfBtn" class="btn-download-pdf"><i class="fas fa-download"></i> Download</button>
+    </div>
+  </div>
+</div>
+
 <!-- Note Modal -->
 <div id="noteModal" class="modal">
   <div class="modal-content">
@@ -79,7 +101,8 @@
     </div>
     <div class="modal-body">
       <input type="text" id="noteTitle" placeholder="Note title..." style="margin-bottom: 16px;">
-      <textarea id="noteContent" placeholder="Write your note here... (Markdown supported)"></textarea>
+      <textarea id="noteContent" placeholder="Write your note here... (Markdown supported, images will be compressed automatically)"></textarea>
+      <div class="note-image-info"><small><i class="fas fa-image"></i> Paste images (Ctrl+V) - will be compressed automatically</small></div>
     </div>
     <div class="modal-footer">
       <button onclick="closeNoteModal()">Cancel</button>
@@ -88,8 +111,39 @@
   </div>
 </div>
 
+<!-- Settings Modal -->
+<div id="settingsModal" class="modal">
+  <div class="modal-content settings-content">
+    <div class="modal-header">
+      <h3><i class="fas fa-sliders-h"></i> Compression Settings</h3>
+      <button class="modal-close" onclick="closeSettingsModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="settings-section">
+        <div class="setting-item">
+          <label>
+            <input type="checkbox" id="pdfCompressionToggle"> 
+            <span><i class="fas fa-file-pdf"></i> PDF Compression</span>
+          </label>
+          <p class="setting-desc">Compress PDF files before saving to reduce storage (uses pdf-lib optimization)</p>
+        </div>
+        <div class="setting-item">
+          <label>
+            <input type="checkbox" id="imageCompressionToggle"> 
+            <span><i class="fas fa-image"></i> Note Image Compression</span>
+          </label>
+          <p class="setting-desc">Automatically compress pasted images in notes (max width: 800px, quality: 0.7)</p>
+        </div>
+      </div>
+      <div class="settings-actions">
+        <button class="settings-save-btn" onclick="saveCompressionSettings()">Save Settings</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="toast" class="toast hidden"><div class="toast-icon"><i class="fas fa-check-circle"></i></div><span></span></div>
-<div id="loadingOverlay" class="loading-overlay hidden"><div class="loading-spinner"><div class="spinner-ring"></div><div class="spinner-ring"></div><div class="spinner-ring"></div></div><p>Loading...</p></div>
+<div id="loadingOverlay" class="loading-overlay hidden"><div class="loading-spinner"><div class="spinner-ring"></div><div class="spinner-ring"></div><div class="spinner-ring"></div></div><p>Processing...</p></div>
 
 <script src="app.js"></script>
 
