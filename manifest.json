@@ -1,7 +1,7 @@
 {
   "name": "OARCEL Document Manager",
   "short_name": "OARCEL",
-  "description": "Professional document management system for organizing and viewing PDF files with folder structure and offline access",
+  "description": "Professional document management system with PDF compression, offline access, and note taking",
   "start_url": "/oarcel-pwa/index.html",
   "scope": "/oarcel-pwa/",
   "display": "standalone",
@@ -55,7 +55,6 @@
     }
   ],
   "categories": ["productivity", "business"],
-  "screenshots": [],
   "prefer_related_applications": false,
   "shortcuts": [
     {
