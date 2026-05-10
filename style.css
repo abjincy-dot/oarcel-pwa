@@ -1,6 +1,7 @@
 /* ============================================
    OARCEL Document Manager - ULTRA COMPACT CARDS
    with STRONG 3D DEPTH TOUCH EFFECT & FIXES
+   + PDF MODAL & SETTINGS STYLES
    ============================================ */
 
 * {
@@ -279,7 +280,7 @@ body.light-mode .header-title h1 { background: linear-gradient(135deg, #0f172a, 
     background: var(--input-bg);
     color: var(--text-primary);
     outline: none;
-    font-size: 16px !important;  /* Prevents auto-zoom on iOS */
+    font-size: 16px !important;
 }
 #clearSearchBtn {
     position: absolute;
@@ -296,7 +297,23 @@ body.light-mode .header-title h1 { background: linear-gradient(135deg, #0f172a, 
 }
 .top-bar-actions { display: flex; align-items: center; gap: 12px; }
 
-/* ========== THEME TOGGLE ========== */
+/* Settings & Theme Toggle */
+.settings-toggle {
+    width: 48px !important;
+    height: 48px !important;
+    background: linear-gradient(135deg, rgba(99,102,241,0.25), rgba(139,92,246,0.2)) !important;
+    border: 1px solid rgba(99,102,241,0.5) !important;
+    border-radius: 50% !important;
+    cursor: pointer;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.28s cubic-bezier(0.22, 1, 0.36, 1) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+.settings-toggle:hover { transform: scale(1.08) !important; border-color: rgba(99,102,241, 0.8) !important; }
+.settings-toggle i { font-size: 1.3rem !important; color: #818cf8 !important; }
+
 .theme-toggle {
     width: 48px !important;
     height: 48px !important;
@@ -311,11 +328,11 @@ body.light-mode .header-title h1 { background: linear-gradient(135deg, #0f172a, 
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
 }
 .theme-toggle:hover { transform: scale(1.08) !important; border-color: rgba(168,85,247, 0.8) !important; box-shadow: 0 8px 20px rgba(168,85,247, 0.5) !important; }
-.theme-toggle i { font-size: 1.3rem !important; transition: color 0.2s ease; }
+.theme-toggle i { font-size: 1.3rem !important; }
 .theme-toggle i { color: #fbbf24 !important; }
 body.light-mode .theme-toggle i { color: #f59e0b !important; }
 
-/* ========== UPLOAD & NEW NOTE BUTTONS ========== */
+/* Upload Buttons */
 #uploadBtn, #newNoteBtn {
     display: flex;
     align-items: center;
@@ -341,7 +358,7 @@ body.light-mode .theme-toggle i { color: #f59e0b !important; }
 }
 #fileInput { display: none; }
 
-/* ========== STATS BAR ========== */
+/* Stats Bar */
 .stats-bar {
     display: flex;
     align-items: center;
@@ -375,7 +392,7 @@ body.light-mode .theme-toggle i { color: #f59e0b !important; }
 .stat-data label { font-size: 0.7rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
 .stat-divider { width: 1px; height: 32px; background: var(--glass-border); flex-shrink: 0; }
 
-/* ========== BREADCRUMB ========== */
+/* Breadcrumb */
 .breadcrumb {
     display: flex;
     align-items: center;
@@ -402,7 +419,7 @@ body.light-mode .theme-toggle i { color: #f59e0b !important; }
 }
 .breadcrumb-item:first-child { color: #3b82f6; }
 
-/* ========== DEPARTMENTS ========== */
+/* Departments */
 .section-title {
     font-size: 0.85rem;
     font-weight: 700;
@@ -456,7 +473,7 @@ body.light-mode .theme-toggle i { color: #f59e0b !important; }
 .dept-card[data-dept="SLITTER"] .dept-oval { background: linear-gradient(145deg, #4f46e5, #4338ca); }
 .dept-card[data-dept="UTILITY"] .dept-oval { background: linear-gradient(145deg, #dc2626, #b91c1c); }
 
-/* ========== CONTENT & CARDS - ULTRA COMPACT ========== */
+/* Content & Cards */
 .content { display: flex; flex-direction: column; gap: 8px; }
 
 .card {
@@ -540,7 +557,7 @@ body.light-mode .card { background: rgba(255,255,255,0.96); }
 .rename-file-btn, .edit-note-btn { background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.25); color: #93c5fd; }
 .delete-btn, .delete-note-btn { background: rgba(244,63,94,0.12); border: 1px solid rgba(244,63,94,0.25); color: #fda4af; }
 
-/* Folder cards - thin white glow */
+/* Folder cards */
 .card.glow-folder {
     border-radius: 60px !important;
     box-shadow: 0 0 0 1px rgba(255,255,255,0.3), 0 0 0 2px rgba(59,130,246,0.2);
@@ -559,7 +576,6 @@ body.light-mode .card.glow-folder:hover {
     box-shadow: 0 0 0 2px rgba(0,0,0,0.15), 0 0 0 3px rgba(59,130,246,0.3);
 }
 
-/* Note cards - same glow */
 .note-card {
     border-radius: 60px !important;
     box-shadow: 0 0 0 1px rgba(255,255,255,0.3), 0 0 0 2px rgba(59,130,246,0.2) !important;
@@ -574,7 +590,28 @@ body.light-mode .note-card:hover {
     box-shadow: 0 0 0 2px rgba(0,0,0,0.15), 0 0 0 3px rgba(59,130,246,0.3) !important;
 }
 
-/* ========== ACTION BAR (FIXED BACKGROUND) ========== */
+.card,
+.card.glow-folder,
+.note-card {
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+}
+body.light-mode .card,
+body.light-mode .card.glow-folder,
+body.light-mode .note-card {
+    border: 1px solid rgba(0, 0, 0, 0.15) !important;
+}
+.card:hover,
+.card.glow-folder:hover,
+.note-card:hover {
+    border-color: rgba(255, 255, 255, 0.45) !important;
+}
+body.light-mode .card:hover,
+body.light-mode .card.glow-folder:hover,
+body.light-mode .note-card:hover {
+    border-color: rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Action Bar */
 .action-bar {
     background: #0f172a !important;
     backdrop-filter: blur(20px) !important;
@@ -613,7 +650,7 @@ body.light-mode .action-btn {
     border-color: #94a3b8 !important;
 }
 
-/* ========== MODAL ========== */
+/* Modals */
 .modal {
     display: none;
     position: fixed;
@@ -636,26 +673,49 @@ body.light-mode .action-btn {
     max-height: 80vh;
     overflow-y: auto;
 }
+.pdf-viewer-content {
+    max-width: 90vw;
+    width: 90vw;
+}
+.pdf-viewer-body {
+    padding: 0 !important;
+}
+#pdfIframe {
+    width: 100%;
+    height: 70vh;
+    border: none;
+    border-radius: var(--radius-md);
+}
 .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; border-bottom: 1px solid var(--glass-border); }
 .modal-close { background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; }
 .modal-body { padding: 24px; }
 .modal-body input, .modal-body textarea { width: 100%; padding: 12px 16px; background: var(--input-bg); border: 1px solid var(--glass-border); border-radius: var(--radius-md); color: var(--text-primary); font-family: inherit; outline: none; font-size: 16px; }
 .modal-body textarea { min-height: 200px; resize: vertical; }
+.note-image-info { margin-top: 8px; color: var(--text-muted); font-size: 0.7rem; }
 .modal-footer { padding: 16px 24px; border-top: 1px solid var(--glass-border); display: flex; justify-content: flex-end; gap: 12px; }
 .modal-footer button { padding: 10px 20px; border-radius: var(--radius-full); border: none; cursor: pointer; font-weight: 600; }
 .modal-footer button:first-child { background: rgba(100,100,100,0.3); color: var(--text-primary); }
 .modal-footer button:last-child { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: white; }
+.btn-download-pdf { background: linear-gradient(135deg, #3b82f6, #2563eb) !important; }
 
-/* ========== EMPTY STATE ========== */
+/* Settings Modal */
+.settings-content { max-width: 500px; }
+.settings-section { margin: 16px 0; }
+.setting-item { margin-bottom: 20px; padding: 12px; background: rgba(255,255,255,0.05); border-radius: var(--radius-md); }
+.setting-item label { display: flex; align-items: center; gap: 10px; font-weight: 600; cursor: pointer; margin-bottom: 8px; }
+.setting-item input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; }
+.setting-desc { font-size: 0.75rem; color: var(--text-muted); margin-left: 30px; }
+.settings-actions { display: flex; justify-content: flex-end; margin-top: 20px; }
+.settings-save-btn { background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; padding: 10px 24px; border: none; border-radius: var(--radius-full); cursor: pointer; font-weight: 600; }
+
+/* Empty State */
 .empty-state { text-align: center; padding: 48px 24px; background: var(--card-bg); border-radius: var(--radius-lg); border: 1px solid var(--glass-border); backdrop-filter: blur(12px); }
 .empty-state i { font-size: 3rem; margin-bottom: 16px; opacity: 0.5; color: #3b82f6; display: block; animation: floatIcon 3s ease-in-out infinite; }
 .empty-state-note i { color: #fbbf24; }
 @keyframes floatIcon { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 
-/* ========== SEARCH INFO ========== */
 #searchInfo { margin: 0 0 16px 0; padding: 10px 18px; font-size: 0.85rem; font-weight: 500; background: var(--glass-bg); border-radius: var(--radius-full); border: 1px solid var(--glass-border); backdrop-filter: blur(12px); display: inline-flex; align-items: center; gap: 10px; }
 
-/* ========== TOAST ========== */
 .toast {
     position: fixed;
     bottom: 32px;
@@ -675,7 +735,6 @@ body.light-mode .action-btn {
 .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 .toast.error { background: linear-gradient(135deg, #ef4444, #dc2626); }
 
-/* ========== LOADING ========== */
 .loading-overlay {
     position: fixed;
     inset: 0;
@@ -703,7 +762,7 @@ body.light-mode .action-btn {
 
 .hidden { display: none !important; }
 
-/* ========== 3D DEPTH TOUCH EFFECTS (STRONG) ========== */
+/* 3D Depth Touch Effects */
 button, 
 .dept-card, 
 .card, 
@@ -711,6 +770,7 @@ button,
 .breadcrumb-item,
 .type-btn,
 .theme-toggle,
+.settings-toggle,
 #backBtn,
 #uploadBtn,
 #newNoteBtn,
@@ -737,7 +797,6 @@ button,
     transition: all 0.04s cubic-bezier(0.2, 0.9, 0.4, 1.2) !important;
 }
 
-/* Department oval 3D */
 .dept-oval {
     transform: translateY(0px);
     transition: all 0.08s cubic-bezier(0.2, 0.9, 0.4, 1.2) !important;
@@ -748,7 +807,6 @@ button,
     box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3), 0 2px 6px rgba(0, 0, 0, 0.15) !important;
 }
 
-/* Cards 3D */
 .card {
     transform: translateY(0px);
     box-shadow: 0 4px 0 rgba(0, 0, 0, 0.25), 0 3px 10px rgba(0, 0, 0, 0.15) !important;
@@ -758,7 +816,6 @@ button,
     box-shadow: 0 1px 0 rgba(0, 0, 0, 0.25), 0 1px 4px rgba(0, 0, 0, 0.1) !important;
 }
 
-/* Special buttons depth */
 #uploadBtn, #newNoteBtn {
     transform: translateY(0px);
     box-shadow: 0 6px 0 rgba(0, 0, 0, 0.3), 0 5px 15px rgba(0, 0, 0, 0.2) !important;
@@ -786,7 +843,6 @@ button,
     box-shadow: 0 0px 0 rgba(0, 0, 0, 0.25) !important;
 }
 
-/* Ripple animation */
 .touch-ripple {
     position: absolute;
     border-radius: 50%;
@@ -811,12 +867,14 @@ button,
     .card { min-height: 40px !important; height: auto !important; flex-wrap: wrap; padding: 4px 12px !important; }
     .card-filename { white-space: normal; }
     .card-buttons { margin-top: 2px; width: 100%; justify-content: flex-end; }
-    #uploadBtn, #newNoteBtn { padding: 10px !important; width: 48px !important; height: 48px !important; border-radius: 50% !important; justify-content: center !important; }
+    #uploadBtn, #newNoteBtn, .settings-toggle, .theme-toggle { padding: 10px !important; width: 48px !important; height: 48px !important; border-radius: 50% !important; justify-content: center !important; }
     #uploadBtn span, #newNoteBtn span { display: none !important; }
     .stats-bar { gap: 4px; padding: 10px 12px; }
     .stat-icon-bg { width: 36px; height: 36px; }
     .stat-number { font-size: 1rem; }
     .stat-data label { font-size: 0.55rem; }
+    .pdf-viewer-content { max-width: 95vw; width: 95vw; }
+    #pdfIframe { height: 60vh; }
 }
 @media (max-width: 380px) {
     .card-buttons { flex-direction: column; gap: 4px; }
