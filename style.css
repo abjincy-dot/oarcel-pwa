@@ -1,7 +1,6 @@
 /* ============================================
    OARCEL Document Manager - ULTRA COMPACT CARDS
-   with Yellow New Note Button, Proper Theme Toggle
-   & PRESS EFFECT CLASS
+   with STRONG 3D DEPTH TOUCH EFFECT & FIXES
    ============================================ */
 
 * {
@@ -280,6 +279,7 @@ body.light-mode .header-title h1 { background: linear-gradient(135deg, #0f172a, 
     background: var(--input-bg);
     color: var(--text-primary);
     outline: none;
+    font-size: 16px !important;  /* Prevents auto-zoom on iOS */
 }
 #clearSearchBtn {
     position: absolute;
@@ -345,7 +345,11 @@ body.light-mode .theme-toggle i { color: #f59e0b !important; }
 .stats-bar {
     display: flex;
     align-items: center;
-    gap: 16px;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    white-space: nowrap;
     margin-bottom: 20px;
     padding: 14px 24px;
     background: var(--glass-bg);
@@ -354,7 +358,7 @@ body.light-mode .theme-toggle i { color: #f59e0b !important; }
     border-radius: var(--radius-lg);
     box-shadow: 0 0 0 2px rgba(59,130,246,0.4), 0 0 20px rgba(59,130,246,0.6);
 }
-.stat-item { display: flex; align-items: center; gap: 14px; flex: 1; }
+.stat-item { display: flex; align-items: center; gap: 10px; flex: 1 1 auto; min-width: 0; }
 .stat-icon-bg {
     width: 44px; height: 44px;
     border-radius: var(--radius-md);
@@ -363,12 +367,13 @@ body.light-mode .theme-toggle i { color: #f59e0b !important; }
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
 }
 .stat-icon-files { background: linear-gradient(135deg, rgba(244,63,94,0.2), rgba(244,63,94,0.05)); border-color: rgba(244,63,94,0.2); color: #f43f5e; }
 .stat-icon-notes { background: linear-gradient(135deg, rgba(251,191,36,0.2), rgba(251,191,36,0.05)); border-color: rgba(251,191,36,0.2); color: #fbbf24; }
 .stat-number { font-size: 1.4rem; font-weight: 800; line-height: 1; }
 .stat-data label { font-size: 0.7rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
-.stat-divider { width: 1px; height: 32px; background: var(--glass-border); }
+.stat-divider { width: 1px; height: 32px; background: var(--glass-border); flex-shrink: 0; }
 
 /* ========== BREADCRUMB ========== */
 .breadcrumb {
@@ -569,31 +574,43 @@ body.light-mode .note-card:hover {
     box-shadow: 0 0 0 2px rgba(0,0,0,0.15), 0 0 0 3px rgba(59,130,246,0.3) !important;
 }
 
-/* ========== ACTION BAR ========== */
+/* ========== ACTION BAR (FIXED BACKGROUND) ========== */
 .action-bar {
+    background: #0f172a !important;
+    backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(255,255,255,0.2) !important;
+    border-radius: 60px !important;
+    padding: 10px 16px !important;
+    margin: 16px 0 20px 0 !important;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
     display: flex;
-    gap: 6px;
-    padding: 10px;
-    flex-wrap: wrap;
+    gap: 10px;
     justify-content: center;
-    margin: 12px 0 8px;
-    background: var(--glass-bg);
-    border-radius: var(--radius-full);
-    border: 1px solid var(--glass-border);
-    backdrop-filter: blur(12px);
+    flex-wrap: wrap;
 }
 .action-btn {
-    background: rgba(20,40,60,0.7);
-    border: 1px solid var(--glass-border);
-    padding: 5px 14px;
-    border-radius: var(--radius-full);
-    color: var(--text-primary);
+    background: #1e293b !important;
+    border: 1px solid #3b82f6 !important;
+    border-radius: 40px !important;
+    padding: 8px 18px !important;
+    font-weight: 600 !important;
+    color: #f1f5f9 !important;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2) !important;
+    transition: all 0.08s ease !important;
     cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.75rem;
-    font-weight: 600;
+}
+.action-btn:active {
+    transform: translateY(2px) !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+}
+body.light-mode .action-bar {
+    background: #e2e8f0 !important;
+    border-color: #cbd5e1 !important;
+}
+body.light-mode .action-btn {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border-color: #94a3b8 !important;
 }
 
 /* ========== MODAL ========== */
@@ -622,7 +639,7 @@ body.light-mode .note-card:hover {
 .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; border-bottom: 1px solid var(--glass-border); }
 .modal-close { background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; }
 .modal-body { padding: 24px; }
-.modal-body input, .modal-body textarea { width: 100%; padding: 12px 16px; background: var(--input-bg); border: 1px solid var(--glass-border); border-radius: var(--radius-md); color: var(--text-primary); font-family: inherit; outline: none; }
+.modal-body input, .modal-body textarea { width: 100%; padding: 12px 16px; background: var(--input-bg); border: 1px solid var(--glass-border); border-radius: var(--radius-md); color: var(--text-primary); font-family: inherit; outline: none; font-size: 16px; }
 .modal-body textarea { min-height: 200px; resize: vertical; }
 .modal-footer { padding: 16px 24px; border-top: 1px solid var(--glass-border); display: flex; justify-content: flex-end; gap: 12px; }
 .modal-footer button { padding: 10px 20px; border-radius: var(--radius-full); border: none; cursor: pointer; font-weight: 600; }
@@ -686,14 +703,109 @@ body.light-mode .note-card:hover {
 
 .hidden { display: none !important; }
 
-/* ========== PRESS EFFECT CLASS (for JavaScript) ========== */
-.press-active {
-    transform: scale(0.97) translateY(2px) !important;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.2) !important;
-    transition: transform 0.06s linear, box-shadow 0.1s ease !important;
+/* ========== 3D DEPTH TOUCH EFFECTS (STRONG) ========== */
+button, 
+.dept-card, 
+.card, 
+.action-btn, 
+.breadcrumb-item,
+.type-btn,
+.theme-toggle,
+#backBtn,
+#uploadBtn,
+#newNoteBtn,
+.clear-search,
+.modal-footer button,
+.modal-close,
+.rename-file-btn,
+.edit-note-btn,
+.delete-btn,
+.delete-note-btn {
+    position: relative;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    transform: translateY(0px);
+    transition: all 0.08s cubic-bezier(0.2, 0.9, 0.4, 1.2) !important;
+    cursor: pointer;
 }
 
-/* ========== RESPONSIVE ========== */
+.press-depth-3d {
+    transform: translateY(4px) scale(0.98) !important;
+    transition: all 0.04s cubic-bezier(0.2, 0.9, 0.4, 1.2) !important;
+}
+
+/* Department oval 3D */
+.dept-oval {
+    transform: translateY(0px);
+    transition: all 0.08s cubic-bezier(0.2, 0.9, 0.4, 1.2) !important;
+    box-shadow: 0 6px 0 rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+}
+.dept-card:active .dept-oval {
+    transform: translateY(4px) !important;
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3), 0 2px 6px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Cards 3D */
+.card {
+    transform: translateY(0px);
+    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.25), 0 3px 10px rgba(0, 0, 0, 0.15) !important;
+}
+.card:active {
+    transform: translateY(3px) !important;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.25), 0 1px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Special buttons depth */
+#uploadBtn, #newNoteBtn {
+    transform: translateY(0px);
+    box-shadow: 0 6px 0 rgba(0, 0, 0, 0.3), 0 5px 15px rgba(0, 0, 0, 0.2) !important;
+}
+#uploadBtn:active, #newNoteBtn:active {
+    transform: translateY(5px) !important;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+}
+
+#backBtn {
+    transform: translateY(0px);
+    box-shadow: 0 5px 0 rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+}
+#backBtn:active {
+    transform: translateY(4px) !important;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.3), 0 2px 6px rgba(0, 0, 0, 0.15) !important;
+}
+
+.type-btn {
+    transform: translateY(0px);
+    box-shadow: 0 3px 0 rgba(0, 0, 0, 0.25) !important;
+}
+.type-btn:active {
+    transform: translateY(3px) !important;
+    box-shadow: 0 0px 0 rgba(0, 0, 0, 0.25) !important;
+}
+
+/* Ripple animation */
+.touch-ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.1) 100%);
+    transform: scale(0);
+    pointer-events: none;
+    will-change: transform, opacity;
+    animation: rippleBurst 0.35s ease-out forwards;
+}
+@keyframes rippleBurst {
+    0% { transform: scale(0); opacity: 0.6; }
+    100% { transform: scale(2.5); opacity: 0; }
+}
+
+* {
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Responsive */
 @media (max-width: 640px) {
     .app { padding: 16px 14px 32px; }
     .card { min-height: 40px !important; height: auto !important; flex-wrap: wrap; padding: 4px 12px !important; }
@@ -701,363 +813,12 @@ body.light-mode .note-card:hover {
     .card-buttons { margin-top: 2px; width: 100%; justify-content: flex-end; }
     #uploadBtn, #newNoteBtn { padding: 10px !important; width: 48px !important; height: 48px !important; border-radius: 50% !important; justify-content: center !important; }
     #uploadBtn span, #newNoteBtn span { display: none !important; }
+    .stats-bar { gap: 4px; padding: 10px 12px; }
+    .stat-icon-bg { width: 36px; height: 36px; }
+    .stat-number { font-size: 1rem; }
+    .stat-data label { font-size: 0.55rem; }
 }
 @media (max-width: 380px) {
     .card-buttons { flex-direction: column; gap: 4px; }
     .dept-info { display: none; }
-}
-/* ========== 3D PRESS EFFECT FOR ALL BUTTONS & CARDS (GUARANTEED) ========== */
-/* Ensure all interactive elements have a smooth transition for transform and shadow */
-#backBtn,
-.type-btn,
-.theme-toggle,
-#uploadBtn,
-#newNoteBtn,
-.action-btn,
-.rename-file-btn,
-.edit-note-btn,
-.delete-btn,
-.delete-note-btn,
-.clear-search,
-.modal-close,
-.modal-footer button,
-.breadcrumb-item,
-.dept-card,
-.card {
-    transition: transform 0.08s cubic-bezier(0.2, 0.9, 0.4, 1.1), box-shadow 0.1s ease !important;
-    -webkit-tap-highlight-color: transparent !important;
-}
-
-/* PRESS EFFECT (active state) - noticeable scale down + move down + shadow shrink */
-#backBtn:active,
-.type-btn:active,
-.theme-toggle:active,
-#uploadBtn:active,
-#newNoteBtn:active,
-.action-btn:active,
-.rename-file-btn:active,
-.edit-note-btn:active,
-.delete-btn:active,
-.delete-note-btn:active,
-.clear-search:active,
-.modal-close:active,
-.modal-footer button:active,
-.breadcrumb-item:active,
-.dept-card:active,
-.card:active {
-    transform: scale(0.97) translateY(2px) !important;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
-}
-
-/* For cards (folders, notes) also add a special press effect */
-.card:active {
-    transform: scale(0.98) translateY(1px) !important;
-}
-
-/* For department cards (REMELT, CASTER, etc.) - more pronounced */
-.dept-card:active {
-    transform: scale(0.96) translateX(2px) !important;
-}
-
-/* For touch devices, ensure active state fires instantly */
-@media (hover: none) and (pointer: coarse) {
-    #backBtn:active,
-    .type-btn:active,
-    .theme-toggle:active,
-    #uploadBtn:active,
-    #newNoteBtn:active,
-    .action-btn:active,
-    .rename-file-btn:active,
-    .edit-note-btn:active,
-    .delete-btn:active,
-    .delete-note-btn:active,
-    .clear-search:active,
-    .modal-close:active,
-    .modal-footer button:active,
-    .breadcrumb-item:active,
-    .dept-card:active,
-    .card:active {
-        transform: scale(0.96) translateY(2px) !important;
-        transition: transform 0.05s linear !important;
-    }
-}
-/* Press effect class - used by JavaScript */
-.btn-press-effect {
-    transform: scale(0.96) translateY(2px) !important;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
-    transition: transform 0.06s linear, box-shadow 0.08s ease !important;
-}
-/* ========== 3D PRESS EFFECT - PURE CSS, NO JS ========== */
-/* Give all interactive elements a pressed shadow effect */
-#backBtn,
-.type-btn,
-.theme-toggle,
-#uploadBtn,
-#newNoteBtn,
-.action-btn,
-.rename-file-btn,
-.edit-note-btn,
-.delete-btn,
-.delete-note-btn,
-.clear-search,
-.modal-close,
-.modal-footer button,
-.breadcrumb-item,
-.dept-card,
-.card {
-    transition: all 0.08s linear !important;
-}
-
-/* Press effect - dark inset shadow gives a "pushed in" feel */
-#backBtn:active,
-.type-btn:active,
-.theme-toggle:active,
-#uploadBtn:active,
-#newNoteBtn:active,
-.action-btn:active,
-.rename-file-btn:active,
-.edit-note-btn:active,
-.delete-btn:active,
-.delete-note-btn:active,
-.clear-search:active,
-.modal-close:active,
-.modal-footer button:active,
-.breadcrumb-item:active,
-.dept-card:active,
-.card:active {
-    transform: scale(0.98) !important;
-    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0,0,0,0.2) !important;
-}
-
-/* For department cards, also shift slightly right for realism */
-.dept-card:active {
-    transform: scale(0.97) translateX(2px) !important;
-}
-
-/* For round buttons like theme toggle, keep shape */
-.theme-toggle:active {
-    transform: scale(0.94) !important;
-}
-/* Press effect class added by JavaScript (safe, no app breakage) */
-.touch-press-effect {
-    transform: scale(0.96) translateY(2px) !important;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
-    transition: transform 0.06s linear, box-shadow 0.08s ease !important;
-}/* Press effect class added by JavaScript (safe, no app breakage) */
-.touch-press-effect {
-    transform: scale(0.96) translateY(2px) !important;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
-    transition: transform 0.06s linear, box-shadow 0.08s ease !important;
-}
-/* ========== STATS BAR ALIGNMENT FIX ========== */
-.stats-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    white-space: nowrap;
-}
-
-.stat-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex: 1 1 auto;
-    min-width: 0; /* prevents overflow */
-}
-
-.stat-data {
-    display: flex;
-    flex-direction: column;
-    line-height: 1.2;
-}
-
-.stat-number {
-    font-size: 1.3rem;
-    font-weight: 800;
-}
-
-.stat-data label {
-    font-size: 0.65rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.stat-divider {
-    width: 1px;
-    height: 30px;
-    background: var(--glass-border);
-    flex-shrink: 0;
-}
-
-/* Ensure the last item (Notes) does not wrap or go outside */
-@media (max-width: 480px) {
-    .stats-bar {
-        gap: 4px;
-        padding: 10px 12px;
-    }
-    .stat-icon-bg {
-        width: 36px;
-        height: 36px;
-    }
-    .stat-number {
-        font-size: 1rem;
-    }
-    .stat-data label {
-        font-size: 0.55rem;
-    }
-}
-/* ========== FORCE FIX FOR STATS BAR & NOTES COUNT ========== */
-.stats-bar {
-    display: flex !important;
-    flex-direction: row !important;
-    flex-wrap: nowrap !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    gap: 8px !important;
-    overflow-x: auto !important;
-    white-space: nowrap !important;
-}
-
-.stat-item {
-    display: flex !important;
-    flex-direction: row !important;
-    align-items: center !important;
-    gap: 8px !important;
-    flex: 1 1 0 !important;
-    min-width: 0 !important;
-}
-
-.stat-icon-bg {
-    flex-shrink: 0 !important;
-}
-
-.stat-data {
-    display: flex !important;
-    flex-direction: column !important;
-    line-height: 1.2 !important;
-    overflow: hidden !important;
-}
-
-.stat-number {
-    font-size: 1.2rem !important;
-    font-weight: 800 !important;
-    white-space: nowrap !important;
-}
-
-.stat-data label {
-    font-size: 0.6rem !important;
-    font-weight: 600 !important;
-    white-space: nowrap !important;
-}
-
-.stat-divider {
-    flex-shrink: 0 !important;
-}
-
-/* Special fix for the last stat (Notes) */
-.stat-item:last-child .stat-data {
-    text-align: left !important;
-}
-
-/* Responsive adjustments */
-@media (max-width: 550px) {
-    .stats-bar {
-        gap: 4px !important;
-        padding: 10px 12px !important;
-    }
-    .stat-icon-bg {
-        width: 32px !important;
-        height: 32px !important;
-    }
-    .stat-number {
-        font-size: 1rem !important;
-    }
-    .stat-data label {
-        font-size: 0.5rem !/* ========== 3D FEEL FOR DEPARTMENTS & SUBFOLDERS (ONLY) ========== */
-
-/* Department oval buttons - 3D depth */
-.dept-oval {
-    transform: translateY(0);
-    transition: all 0.08s cubic-bezier(0.2, 0.9, 0.4, 1.2) !important;
-    box-shadow: 0 6px 0 rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.2) !important;
-}
-
-/* Department press effect */
-.dept-card:active .dept-oval {
-    transform: translateY(4px) !important;
-    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3), 0 2px 6px rgba(0, 0, 0, 0.15) !important;
-    transition: all 0.04s cubic-bezier(0.2, 0.9, 0.4, 1.2) !important;
-}
-
-/* Subfolder cards - 3D depth */
-.card.glow-folder {
-    transform: translateY(0);
-    transition: all 0.08s cubic-bezier(0.2, 0.9, 0.4, 1.2) !important;
-    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.25), 0 3px 10px rgba(0, 0, 0, 0.15) !important;
-}
-
-/* Subfolder press effect */
-.card.glow-folder:active {
-    transform: translateY(3px) !important;
-    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.25), 0 1px 4px rgba(0, 0, 0, 0.1) !important;
-    transition: all 0.04s cubic-bezier(0.2, 0.9, 0.4, 1.2) !important;
-}
-
-/* Note cards & PDF cards (if you want same for them) - optional */
-.note-card, .card:not(.glow-folder):not(.note-card) {
-    transform: translateY(0);
-    transition: all 0.08s cubic-bezier(0.2, 0.9, 0.4, 1.2) !important;
-    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.25), 0 3px 10px rgba(0, 0, 0, 0.15) !important;
-}
-
-.note-card:active, .card:not(.glow-folder):not(.note-card):active {
-    transform: translateY(3px) !important;
-    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.25), 0 1px 4px rgba(0, 0, 0, 0.1) !important;
-    transition: all 0.04s cubic-bezier(0.2, 0.9, 0.4, 1.2) !important;
-}
-/* ========== FORCE ACTION BAR STYLING (NO MERGE) ========== */
-div.action-bar,
-.action-bar {
-    background: #0f172a !important;
-    backdrop-filter: blur(20px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-    border-radius: 60px !important;
-    padding: 10px 16px !important;
-    margin: 16px 0 20px 0 !important;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
-}
-
-div.action-bar .action-btn,
-.action-bar .action-btn {
-    background: #1e293b !important;
-    border: 1px solid #3b82f6 !important;
-    border-radius: 40px !important;
-    padding: 8px 18px !important;
-    font-weight: 600 !important;
-    color: #f1f5f9 !important;
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2) !important;
-    transition: all 0.08s ease !important;
-}
-
-div.action-bar .action-btn:active,
-.action-bar .action-btn:active {
-    transform: translateY(2px) !important;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
-}
-
-/* Light mode */
-body.light-mode div.action-bar,
-body.light-mode .action-bar {
-    background: #e2e8f0 !important;
-    border-color: #cbd5e1 !important;
-}
-body.light-mode div.action-bar .action-btn,
-body.light-mode .action-bar .action-btn {
-    background: #ffffff !important;
-    color: #0f172a !important;
-    border-color: #94a3b8 !important;
 }
