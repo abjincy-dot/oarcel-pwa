@@ -1,6 +1,6 @@
 // ==================== INDEXEDDB CORE ====================
 const DB_NAME = 'OarcelDB';
-const DB_VERSION = 7; // Incremented version for compression changes
+const DB_VERSION = 7;
 let db = null;
 let allFiles = {};
 let allNotes = {};
@@ -10,13 +10,12 @@ let isSearchMode = false;
 let currentActiveTab = 'pdfs';
 let editingNoteId = null;
 
-// Global compression settings
 let compressPDFEnabled = true;
 let compressNoteImagesEnabled = true;
 
-// Current PDF blob URL for download
 let currentPdfBlob = null;
 let currentPdfFileName = null;
+let currentPdfObjectUrl = null;
 
 // ==================== COMPRESSION SETTINGS ====================
 function loadCompressionSettings() {
@@ -24,7 +23,6 @@ function loadCompressionSettings() {
     const savedImages = localStorage.getItem('oarcel_compress_images');
     compressPDFEnabled = savedPDF !== null ? savedPDF === 'true' : true;
     compressNoteImagesEnabled = savedImages !== null ? savedImages === 'true' : true;
-    
     const pdfToggle = document.getElementById('pdfCompressionToggle');
     const imgToggle = document.getElementById('imageCompressionToggle');
     if (pdfToggle) pdfToggle.checked = compressPDFEnabled;
@@ -44,7 +42,6 @@ function saveCompressionSettings() {
 
 function openSettingsModal() {
     const modal = document.getElementById('settingsModal');
-    // Sync checkboxes with current settings
     const pdfToggle = document.getElementById('pdfCompressionToggle');
     const imgToggle = document.getElementById('imageCompressionToggle');
     if (pdfToggle) pdfToggle.checked = compressPDFEnabled;
@@ -56,157 +53,89 @@ function closeSettingsModal() {
     document.getElementById('settingsModal').classList.remove('show');
 }
 
-// ==================== PDF COMPRESSION USING PDF-LIB ====================
-async function compressPDFBlob(file) {
+// ==================== PDF COMPRESSION WITH TIMEOUT ====================
+async function compressPDFBlob(file, onProgress) {
     if (!compressPDFEnabled) return file;
-    
+    const MAX_COMPRESSION_TIME = 8000;
+    const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Compression timeout')), MAX_COMPRESSION_TIME)
+    );
     try {
-        // Show loading indicator
-        const loadingOverlay = document.getElementById('loadingOverlay');
-        if (loadingOverlay) loadingOverlay.classList.remove('hidden');
-        
         const originalSize = file.size;
+        if (originalSize > 15 * 1024 * 1024) {
+            showToast(`⚠️ PDF large (${formatFileSize(originalSize)}), skipping compression for speed`, false);
+            return file;
+        }
+        if (onProgress) onProgress('Reading PDF...');
         const arrayBuffer = await file.arrayBuffer();
-        
-        // Load PDF using pdf-lib
-        const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer, {
-            updateMetadata: false,
-            ignoreEncryption: false
-        });
-        
-        // Optimize: compress streams, remove unused objects
-        // Save with compression options
-        const compressedBytes = await pdfDoc.save({
-            useObjectStreams: true,
-            addDefaultPage: false,
-            objectsPerTick: 50
-        });
-        
+        if (onProgress) onProgress('Optimizing...');
+        const compressPromise = (async () => {
+            const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer, {
+                updateMetadata: false,
+                ignoreEncryption: true
+            });
+            if (pdfDoc.getPageCount() === 0) throw new Error('Empty PDF');
+            const compressedBytes = await pdfDoc.save({
+                useObjectStreams: true,
+                addDefaultPage: false,
+                objectsPerTick: 50
+            });
+            return compressedBytes;
+        })();
+        const compressedBytes = await Promise.race([compressPromise, timeoutPromise]);
         const compressedSize = compressedBytes.byteLength;
         const compressionRatio = ((originalSize - compressedSize) / originalSize * 100).toFixed(1);
-        
         const compressedBlob = new Blob([compressedBytes], { type: 'application/pdf' });
-        
-        if (loadingOverlay) loadingOverlay.classList.add('hidden');
-        
         if (compressedSize < originalSize) {
             showToast(`📦 PDF compressed: ${formatFileSize(originalSize)} → ${formatFileSize(compressedSize)} (${compressionRatio}% saved)`);
         } else {
-            showToast(`📄 PDF size unchanged (compression not beneficial)`);
+            showToast(`📄 PDF size unchanged`, false);
         }
-        
-        // Create a new File object from compressed blob
         return new File([compressedBlob], file.name, { type: 'application/pdf' });
-        
     } catch (error) {
-        console.error('PDF compression error:', error);
-        const loadingOverlay = document.getElementById('loadingOverlay');
-        if (loadingOverlay) loadingOverlay.classList.add('hidden');
-        showToast(`⚠️ Could not compress PDF, using original`, true);
+        console.warn('PDF compression skipped:', error.message);
+        showToast(`⚠️ Using original PDF (compression ${error.message === 'Compression timeout' ? 'timed out' : 'failed'})`, false);
         return file;
     }
 }
 
-// ==================== IMAGE COMPRESSION FOR NOTES ====================
-async function compressImagesInNoteContent(content) {
-    if (!compressNoteImagesEnabled) return content;
-    
-    // Find all base64 images in the content (data:image/...;base64,...)
-    const imageRegex = /data:image\/(png|jpeg|jpg|webp|gif);base64,([A-Za-z0-9+/=]+)/g;
-    const matches = [...content.matchAll(imageRegex)];
-    
-    if (matches.length === 0) return content;
-    
-    let compressedContent = content;
-    
-    for (const match of matches) {
-        const fullMatch = match[0];
-        const format = match[1];
-        const base64Data = match[2];
-        
-        try {
-            // Convert base64 to blob
-            const byteCharacters = atob(base64Data);
-            const byteNumbers = new Array(byteCharacters.length);
-            for (let i = 0; i < byteCharacters.length; i++) {
-                byteNumbers[i] = byteCharacters.charCodeAt(i);
-            }
-            const byteArray = new Uint8Array(byteNumbers);
-            const blob = new Blob([byteArray], { type: `image/${format}` });
-            const file = new File([blob], 'image.jpg', { type: `image/${format}` });
-            
-            // Compress image using browser-image-compression
-            const options = {
-                maxSizeMB: 0.5,
-                maxWidthOrHeight: 800,
-                useWebWorker: true,
-                fileType: `image/${format}`
-            };
-            
-            const compressedFile = await imageCompression(file, options);
-            const compressedBase64 = await imageCompression.getDataUrlFromFile(compressedFile);
-            
-            // Replace in content
-            compressedContent = compressedContent.replace(fullMatch, compressedBase64);
-            
-        } catch (err) {
-            console.warn('Failed to compress image in note:', err);
-        }
-    }
-    
-    if (compressedContent !== content) {
-        showToast(`🖼️ Compressed ${matches.length} image(s) in note`);
-    }
-    
-    return compressedContent;
-}
-
-// Helper: format file size
 function formatFileSize(bytes) {
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
 }
 
-// ==================== PDF VIEWER MODAL ====================
-let currentPdfObjectUrl = null;
-
+// ==================== PDF MODAL VIEWER (embed) ====================
 function openPDFModal(dataUrl, fileName) {
-    closePDFModal(); // Clean up any existing
-    
+    closePDFModal();
     currentPdfFileName = fileName;
     document.getElementById('pdfModalTitle').innerHTML = `<i class="fas fa-file-pdf"></i> ${escapeHtml(fileName)}`;
-    
-    // Convert dataUrl to blob URL if it's a data URL
     let blobUrl;
+    let blob;
     if (dataUrl.startsWith('data:')) {
-        // Convert data URL to blob URL
-        const blob = dataURLToBlob(dataUrl);
+        blob = dataURLToBlob(dataUrl);
         blobUrl = URL.createObjectURL(blob);
         currentPdfBlob = blob;
     } else if (dataUrl.startsWith('blob:')) {
         blobUrl = dataUrl;
-        // Fetch blob for download
-        fetch(blobUrl).then(res => res.blob()).then(blob => currentPdfBlob = blob);
+        fetch(blobUrl).then(res => res.blob()).then(b => currentPdfBlob = b);
     } else {
         blobUrl = dataUrl;
     }
-    
     currentPdfObjectUrl = blobUrl;
-    
-    const iframe = document.getElementById('pdfIframe');
-    iframe.src = blobUrl;
-    
+    const embed = document.getElementById('pdfEmbed');
+    if (embed) {
+        embed.src = blobUrl;
+        embed.type = 'application/pdf';
+    }
     document.getElementById('pdfModal').classList.add('show');
 }
 
 function closePDFModal() {
     const modal = document.getElementById('pdfModal');
     if (modal) modal.classList.remove('show');
-    
-    const iframe = document.getElementById('pdfIframe');
-    if (iframe) iframe.src = 'about:blank';
-    
+    const embed = document.getElementById('pdfEmbed');
+    if (embed) embed.src = '';
     if (currentPdfObjectUrl) {
         URL.revokeObjectURL(currentPdfObjectUrl);
         currentPdfObjectUrl = null;
@@ -226,7 +155,6 @@ function downloadCurrentPDF() {
         URL.revokeObjectURL(url);
         showToast(`📥 Downloading ${currentPdfFileName}`);
     } else if (currentPdfObjectUrl) {
-        // Fallback: fetch from blob URL
         fetch(currentPdfObjectUrl).then(res => res.blob()).then(blob => {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -246,19 +174,43 @@ function dataURLToBlob(dataUrl) {
     const bstr = atob(arr[1]);
     let n = bstr.length;
     const u8arr = new Uint8Array(n);
-    while (n--) {
-        u8arr[n] = bstr.charCodeAt(n);
-    }
+    while (n--) u8arr[n] = bstr.charCodeAt(n);
     return new Blob([u8arr], { type: mime });
 }
 
-// Override the original openPDF function
 function openPDF(dataUrl, fileName) {
     openPDFModal(dataUrl, fileName);
 }
 
-// ==================== NOTE FUNCTIONS WITH IMAGE COMPRESSION ====================
+// ==================== IMAGE COMPRESSION FOR NOTES ====================
+async function compressImagesInNoteContent(content) {
+    if (!compressNoteImagesEnabled) return content;
+    const imageRegex = /data:image\/(png|jpeg|jpg|webp|gif);base64,([A-Za-z0-9+/=]+)/g;
+    const matches = [...content.matchAll(imageRegex)];
+    if (matches.length === 0) return content;
+    let compressedContent = content;
+    for (const match of matches) {
+        const fullMatch = match[0];
+        const format = match[1];
+        const base64Data = match[2];
+        try {
+            const byteCharacters = atob(base64Data);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) byteNumbers[i] = byteCharacters.charCodeAt(i);
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: `image/${format}` });
+            const file = new File([blob], 'image.jpg', { type: `image/${format}` });
+            const options = { maxSizeMB: 0.5, maxWidthOrHeight: 800, useWebWorker: true, fileType: `image/${format}` };
+            const compressedFile = await imageCompression(file, options);
+            const compressedBase64 = await imageCompression.getDataUrlFromFile(compressedFile);
+            compressedContent = compressedContent.replace(fullMatch, compressedBase64);
+        } catch (err) { console.warn('Image compression failed:', err); }
+    }
+    if (compressedContent !== content) showToast(`🖼️ Compressed ${matches.length} image(s) in note`);
+    return compressedContent;
+}
 
+// ==================== NOTE FUNCTIONS ====================
 function getNotesForCurrentFolder() {
     const folderPath = currentPath.join('/');
     return allNotes[folderPath] || [];
@@ -267,10 +219,7 @@ function getNotesForCurrentFolder() {
 async function addNoteToCurrentFolder(title, content) {
     const folderPath = currentPath.join('/');
     if (!allNotes[folderPath]) allNotes[folderPath] = [];
-    
-    // Compress images in content
     let compressedContent = await compressImagesInNoteContent(content);
-    
     const note = {
         id: Date.now().toString() + Math.random().toString(36).substr(2, 6),
         title: title.trim(),
@@ -278,7 +227,6 @@ async function addNoteToCurrentFolder(title, content) {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
     };
-    
     allNotes[folderPath].push(note);
     await saveAllNotesToDB();
     render();
@@ -290,7 +238,6 @@ async function updateNote(folderPath, noteId, title, content) {
     if (allNotes[folderPath]) {
         const index = allNotes[folderPath].findIndex(n => n.id === noteId);
         if (index !== -1) {
-            // Compress images in updated content
             let compressedContent = await compressImagesInNoteContent(content);
             allNotes[folderPath][index].title = title.trim();
             allNotes[folderPath][index].content = compressedContent;
@@ -362,9 +309,7 @@ function saveAllFilesToDB() {
 
 function createFurnaceDataLogs() {
     const logs = { "Data Logs": {} };
-    for (let i = 1; i <= 20; i++) {
-        logs[`Data Log ${i}`] = {};
-    }
+    for (let i = 1; i <= 20; i++) logs[`Data Log ${i}`] = {};
     return logs;
 }
 
@@ -376,9 +321,7 @@ function migrateFurnacesDataLogs() {
     for (const furnace of furnaces) {
         const furnaceObj = remelt[furnace];
         if (furnaceObj && typeof furnaceObj === 'object') {
-            const hasDataLog = Object.keys(furnaceObj).some(key => 
-                key === "Data Logs" || /^Data Log \d+$/.test(key)
-            );
+            const hasDataLog = Object.keys(furnaceObj).some(key => key === "Data Logs" || /^Data Log \d+$/.test(key));
             if (!hasDataLog) {
                 Object.assign(furnaceObj, createFurnaceDataLogs());
                 changed = true;
@@ -394,10 +337,7 @@ async function loadFromIndexedDB() {
         if (folderReq.result) {
             fileSystem = folderReq.result.value;
             const migrated = migrateFurnacesDataLogs();
-            if (migrated) {
-                saveFolderStructure();
-                showToast("✅ Added Data Log folders to FURNACE 2, 3, 4");
-            }
+            if (migrated) { saveFolderStructure(); showToast("✅ Added Data Log folders to FURNACE 2, 3, 4"); }
         } else {
             fileSystem = {
                 "REMELT": {
@@ -406,14 +346,8 @@ async function loadFromIndexedDB() {
                     "FURNACE 3": createFurnaceDataLogs(),
                     "FURNACE 4": createFurnaceDataLogs(),
                     "FURNACE 5": {},
-                    "ACD": {},
-                    "DBF": {},
-                    "ROD FEEDER": {},
-                    "LAUNDER HEATERS": {},
-                    "LAUNDER PANEL ": {},
-                    "HPU 1": {},
-                    "HPU 2": {},
-                    "M": {}, "N": {}, "O": {}, "P": {}, "Q": {}, "R": {}, "S": {}, "T": {}, "U": {}, "V": {}, "W": {}, "X": {}, "Y": {}, "Z": {}
+                    "ACD": {}, "DBF": {}, "ROD FEEDER": {}, "LAUNDER HEATERS": {}, "LAUNDER PANEL ": {},
+                    "HPU 1": {}, "HPU 2": {}, "M": {}, "N": {}, "O": {}, "P": {}, "Q": {}, "R": {}, "S": {}, "T": {}, "U": {}, "V": {}, "W": {}, "X": {}, "Y": {}, "Z": {}
                 },
                 "CASTER": { "Quality Reports": {}, "Mechanical": {}, "Maintenance": {}, "Production Data": {}, "Testing": {}, "Checklists": {}, "Safety": {}, "Training": {} },
                 "HRM": { "Employee Records": {}, "Attendance": {}, "Performance": {}, "Training Logs": {}, "Safety Compliance": {}, "Policies": {}, "Reports": {}, "Certifications": {} },
@@ -425,20 +359,14 @@ async function loadFromIndexedDB() {
             };
             saveFolderStructure();
         }
-        
         const fileReq = db.transaction('files', 'readonly').objectStore('files').getAll();
         fileReq.onsuccess = () => {
             allFiles = {};
-            for (let item of fileReq.result) {
-                allFiles[item.folderPath] = item.files;
-            }
-            
+            for (let item of fileReq.result) allFiles[item.folderPath] = item.files;
             const notesReq = db.transaction('notes', 'readonly').objectStore('notes').getAll();
             notesReq.onsuccess = () => {
                 allNotes = {};
-                for (let item of notesReq.result) {
-                    allNotes[item.folderPath] = item.notes;
-                }
+                for (let item of notesReq.result) allNotes[item.folderPath] = item.notes;
                 render();
             };
         };
@@ -448,16 +376,16 @@ async function loadFromIndexedDB() {
 function getCurrentFolderObject() { return currentPath.reduce((o, p) => o?.[p], fileSystem); }
 function getFilesForCurrentFolder() { return allFiles[currentPath.join('/')] || []; }
 
-async function addFileToCurrentFolder(file) {
+async function addFileToCurrentFolder(file, fileIndex, totalFiles) {
     const folderPath = currentPath.join('/');
     if (!allFiles[folderPath]) allFiles[folderPath] = [];
-    
-    // Compress PDF before storing
+    if (totalFiles) showToast(`📄 Processing ${fileIndex}/${totalFiles}: ${file.name}...`, false);
     let fileToStore = file;
     if (file.type === 'application/pdf') {
-        fileToStore = await compressPDFBlob(file);
+        const loadingText = document.querySelector('#loadingOverlay p');
+        if (loadingText && totalFiles) loadingText.textContent = `Compressing ${fileIndex}/${totalFiles}...`;
+        fileToStore = await compressPDFBlob(file, (status) => { if (loadingText) loadingText.textContent = status; });
     }
-    
     const base64 = await new Promise(r => { const rd = new FileReader(); rd.onload = e => r(e.target.result); rd.readAsDataURL(fileToStore); });
     allFiles[folderPath].push({ name: file.name, dataUrl: base64 });
     await saveAllFilesToDB();
@@ -502,24 +430,8 @@ function clearSearch() {
 function searchFiles(q) {
     if (!q.trim()) return [];
     const results = [];
-    for (const path in allFiles) {
-        if (allFiles[path]) {
-            allFiles[path].forEach(f => {
-                if (f.name.toLowerCase().includes(q.toLowerCase())) {
-                    results.push({ ...f, folder: path, type: 'pdf' });
-                }
-            });
-        }
-    }
-    for (const path in allNotes) {
-        if (allNotes[path]) {
-            allNotes[path].forEach(n => {
-                if (n.title.toLowerCase().includes(q.toLowerCase()) || n.content.toLowerCase().includes(q.toLowerCase())) {
-                    results.push({ ...n, folder: path, type: 'note' });
-                }
-            });
-        }
-    }
+    for (const path in allFiles) if (allFiles[path]) allFiles[path].forEach(f => { if (f.name.toLowerCase().includes(q.toLowerCase())) results.push({ ...f, folder: path, type: 'pdf' }); });
+    for (const path in allNotes) if (allNotes[path]) allNotes[path].forEach(n => { if (n.title.toLowerCase().includes(q.toLowerCase()) || n.content.toLowerCase().includes(q.toLowerCase())) results.push({ ...n, folder: path, type: 'note' }); });
     return results;
 }
 
@@ -533,12 +445,8 @@ function openNote(note) {
     saveBtn.onclick = async () => {
         const newTitle = document.getElementById('noteTitle').value;
         const newContent = document.getElementById('noteContent').value;
-        if (newTitle.trim()) {
-            await updateNote(note.folder, note.id, newTitle, newContent);
-            closeNoteModal();
-        } else {
-            showToast("Title cannot be empty", true);
-        }
+        if (newTitle.trim()) { await updateNote(note.folder, note.id, newTitle, newContent); closeNoteModal(); }
+        else showToast("Title cannot be empty", true);
     };
     modal.classList.add('show');
 }
@@ -573,20 +481,13 @@ function openNewNoteModal() {
     saveBtn.onclick = async () => {
         const title = document.getElementById('noteTitle').value;
         const content = document.getElementById('noteContent').value;
-        if (title.trim()) {
-            await addNoteToCurrentFolder(title, content);
-            closeNoteModal();
-        } else {
-            showToast("Title cannot be empty", true);
-        }
+        if (title.trim()) { await addNoteToCurrentFolder(title, content); closeNoteModal(); }
+        else showToast("Title cannot be empty", true);
     };
     document.getElementById('noteModal').classList.add('show');
 }
 
-function closeNoteModal() {
-    document.getElementById('noteModal').classList.remove('show');
-    editingNoteId = null;
-}
+function closeNoteModal() { document.getElementById('noteModal').classList.remove('show'); editingNoteId = null; }
 
 function editNote(folderPath, noteId) {
     const note = allNotes[folderPath]?.find(n => n.id === noteId);
@@ -599,22 +500,14 @@ function editNote(folderPath, noteId) {
         saveBtn.onclick = async () => {
             const newTitle = document.getElementById('noteTitle').value;
             const newContent = document.getElementById('noteContent').value;
-            if (newTitle.trim()) {
-                await updateNote(folderPath, noteId, newTitle, newContent);
-                closeNoteModal();
-            } else {
-                showToast("Title cannot be empty", true);
-            }
+            if (newTitle.trim()) { await updateNote(folderPath, noteId, newTitle, newContent); closeNoteModal(); }
+            else showToast("Title cannot be empty", true);
         };
         document.getElementById('noteModal').classList.add('show');
     }
 }
 
-function deleteNote(folderPath, noteId) {
-    if (confirm('Delete this note?')) {
-        deleteNoteFromFolder(folderPath, noteId);
-    }
-}
+function deleteNote(folderPath, noteId) { if (confirm('Delete this note?')) deleteNoteFromFolder(folderPath, noteId); }
 
 function setActiveTab(tab) {
     currentActiveTab = tab;
@@ -622,7 +515,6 @@ function setActiveTab(tab) {
     const notesTabBtn = document.getElementById('notesTabBtn');
     const uploadBtn = document.getElementById('uploadBtn');
     const newNoteBtn = document.getElementById('newNoteBtn');
-    
     if (tab === 'pdfs') {
         pdfTabBtn.classList.add('active');
         notesTabBtn.classList.remove('active');
@@ -654,7 +546,6 @@ function createCard(title, onClick, isFolder = false, showDel = false, delPath =
 
 function render() {
     const query = document.getElementById('searchInput').value.trim().toLowerCase();
-    
     if (query) {
         isSearchMode = true;
         document.getElementById('clearSearchBtn').classList.remove('hidden');
@@ -670,40 +561,23 @@ function render() {
         document.getElementById('breadcrumb').innerHTML = '';
         const typeSelector = document.querySelector('.type-selector');
         if (typeSelector) typeSelector.style.display = 'none';
-        if (!results.length) {
-            contentDiv.innerHTML = '<div class="empty-state"><i class="fas fa-search"></i><p>No results found.</p></div>';
-        } else {
-            results.forEach(item => {
-                if (item.type === 'pdf') {
-                    contentDiv.appendChild(createPdfCard(item, item.folder));
-                } else {
-                    contentDiv.appendChild(createNoteCard(item, item.folder));
-                }
-            });
-        }
+        if (!results.length) contentDiv.innerHTML = '<div class="empty-state"><i class="fas fa-search"></i><p>No results found.</p></div>';
+        else results.forEach(item => { if (item.type === 'pdf') contentDiv.appendChild(createPdfCard(item, item.folder)); else contentDiv.appendChild(createNoteCard(item, item.folder)); });
         updateStats();
         attachPressEffects();
         return;
     }
-    
     isSearchMode = false;
     document.getElementById('clearSearchBtn').classList.add('hidden');
     document.getElementById('searchInfo').classList.add('hidden');
     document.getElementById('content').innerHTML = '';
-    
     const folder = getCurrentFolderObject();
     if (!folder) { currentPath = []; render(); return; }
-    
     document.getElementById('backBtn').classList.toggle('hidden', currentPath.length === 0);
-    
     const bcDiv = document.getElementById('breadcrumb');
     bcDiv.innerHTML = `<div class="breadcrumb-item" onclick="navigateToBreadcrumb(-1)"><i class="fas fa-home"></i> Home</div>`;
-    currentPath.forEach((f, i) => {
-        bcDiv.innerHTML += `<span class="breadcrumb-separator">/</span><div class="breadcrumb-item" onclick="navigateToBreadcrumb(${i})">${escapeHtml(f)}</div>`;
-    });
-    
+    currentPath.forEach((f, i) => { bcDiv.innerHTML += `<span class="breadcrumb-separator">/</span><div class="breadcrumb-item" onclick="navigateToBreadcrumb(${i})">${escapeHtml(f)}</div>`; });
     const isRoot = currentPath.length === 0;
-    
     if (isRoot) {
         let html = '<div class="section-title"><i class="fas fa-building"></i> Departments</div><div class="departments-grid">';
         for (let dept in fileSystem) {
@@ -716,84 +590,39 @@ function render() {
         document.getElementById('departmentsSection').innerHTML = html;
         document.getElementById('uploadBtn').classList.add('hidden');
         document.getElementById('newNoteBtn').classList.add('hidden');
-    } else {
-        document.getElementById('departmentsSection').innerHTML = '';
-    }
-    
+    } else document.getElementById('departmentsSection').innerHTML = '';
     const hasSubfolders = Object.keys(folder).length > 0;
     const isLeafFolder = !isRoot && !hasSubfolders;
-    
     const typeSelector = document.querySelector('.type-selector');
-    if (typeSelector) {
-        if (isLeafFolder) {
-            typeSelector.style.display = 'flex';
-        } else {
-            typeSelector.style.display = 'none';
-        }
-    }
-    
+    if (typeSelector) typeSelector.style.display = isLeafFolder ? 'flex' : 'none';
     if (isLeafFolder) {
-        if (currentActiveTab === 'pdfs') {
-            document.getElementById('uploadBtn').classList.remove('hidden');
-            document.getElementById('newNoteBtn').classList.add('hidden');
-        } else {
-            document.getElementById('uploadBtn').classList.add('hidden');
-            document.getElementById('newNoteBtn').classList.remove('hidden');
-        }
-    } else {
-        document.getElementById('uploadBtn').classList.add('hidden');
-        document.getElementById('newNoteBtn').classList.add('hidden');
-    }
-    
+        if (currentActiveTab === 'pdfs') { document.getElementById('uploadBtn').classList.remove('hidden'); document.getElementById('newNoteBtn').classList.add('hidden'); }
+        else { document.getElementById('uploadBtn').classList.add('hidden'); document.getElementById('newNoteBtn').classList.remove('hidden'); }
+    } else { document.getElementById('uploadBtn').classList.add('hidden'); document.getElementById('newNoteBtn').classList.add('hidden'); }
     const actionDiv = document.createElement('div');
     actionDiv.className = 'action-bar';
-    if (!isRoot) {
-        actionDiv.innerHTML = `
-            <button class="action-btn" onclick="renameCurrentFolder()"><i class="fas fa-edit"></i> Rename Folder</button>
-            <button class="action-btn" onclick="deleteCurrentFolder()"><i class="fas fa-trash-alt"></i> Delete Folder</button>
-            <button class="action-btn" onclick="addNewFolder()"><i class="fas fa-plus"></i> Add Subfolder</button>
-        `;
-    } else {
-        actionDiv.innerHTML = `<button class="action-btn" onclick="addNewDepartment()"><i class="fas fa-building"></i> Add Department</button>`;
-    }
+    if (!isRoot) actionDiv.innerHTML = `<button class="action-btn" onclick="renameCurrentFolder()"><i class="fas fa-edit"></i> Rename Folder</button><button class="action-btn" onclick="deleteCurrentFolder()"><i class="fas fa-trash-alt"></i> Delete Folder</button><button class="action-btn" onclick="addNewFolder()"><i class="fas fa-plus"></i> Add Subfolder</button>`;
+    else actionDiv.innerHTML = `<button class="action-btn" onclick="addNewDepartment()"><i class="fas fa-building"></i> Add Department</button>`;
     document.getElementById('content').appendChild(actionDiv);
-    
-    if (!isRoot && hasSubfolders) {
-        for (let key in folder) {
-            document.getElementById('content').appendChild(createCard(key, () => { currentPath.push(key); render(); }, true));
-        }
-    }
-    
+    if (!isRoot && hasSubfolders) for (let key in folder) document.getElementById('content').appendChild(createCard(key, () => { currentPath.push(key); render(); }, true));
     if (isLeafFolder) {
         if (currentActiveTab === 'pdfs') {
             const files = getFilesForCurrentFolder();
             const path = currentPath.join('/');
-            if (files.length) {
-                files.forEach(f => document.getElementById('content').appendChild(createPdfCard(f, path)));
-            } else {
-                document.getElementById('content').innerHTML += '<div class="empty-state"><i class="fas fa-cloud-upload-alt"></i><p>No PDFs yet. Click Upload to add files.</p></div>';
-            }
+            if (files.length) files.forEach(f => document.getElementById('content').appendChild(createPdfCard(f, path)));
+            else document.getElementById('content').innerHTML += '<div class="empty-state"><i class="fas fa-cloud-upload-alt"></i><p>No PDFs yet. Click Upload to add files.</p></div>';
         } else {
             const notes = getNotesForCurrentFolder();
             const path = currentPath.join('/');
-            if (notes.length) {
-                notes.forEach(n => document.getElementById('content').appendChild(createNoteCard(n, path)));
-            } else {
-                document.getElementById('content').innerHTML += '<div class="empty-state empty-state-note"><i class="fas fa-sticky-note"></i><p>No notes yet. Click + New Note to add.</p></div>';
-            }
+            if (notes.length) notes.forEach(n => document.getElementById('content').appendChild(createNoteCard(n, path)));
+            else document.getElementById('content').innerHTML += '<div class="empty-state empty-state-note"><i class="fas fa-sticky-note"></i><p>No notes yet. Click + New Note to add.</p></div>';
         }
     }
-    
     updateStats();
     attachPressEffects();
 }
 
-function navigateToBreadcrumb(idx) {
-    if (idx === -1) { currentPath = []; } 
-    else { currentPath = currentPath.slice(0, idx + 1); }
-    render();
-}
-
+function navigateToBreadcrumb(idx) { if (idx === -1) currentPath = []; else currentPath = currentPath.slice(0, idx + 1); render(); }
 function renameCurrentFolder() {
     if (!currentPath.length) return;
     const old = currentPath[currentPath.length - 1];
@@ -807,99 +636,68 @@ function renameCurrentFolder() {
         if (allFiles[oldPath]) { allFiles[newPath] = allFiles[oldPath]; delete allFiles[oldPath]; }
         if (allNotes[oldPath]) { allNotes[newPath] = allNotes[oldPath]; delete allNotes[oldPath]; }
         currentPath[currentPath.length - 1] = newName;
-        saveFolderStructure();
-        saveAllFilesToDB();
-        saveAllNotesToDB();
-        render();
+        saveFolderStructure(); saveAllFilesToDB(); saveAllNotesToDB(); render();
         showToast(`✅ Renamed to "${newName}"`);
     }
 }
-
 function deleteCurrentFolder() {
     if (!currentPath.length) return;
     const name = currentPath[currentPath.length - 1];
     if (confirm(`Delete "${name}" and all contents?`)) {
         const path = currentPath.join('/');
-        delete allFiles[path];
-        delete allNotes[path];
+        delete allFiles[path]; delete allNotes[path];
         const parent = currentPath.slice(0, -1).reduce((o, p) => o[p], fileSystem);
         delete parent[name];
         currentPath.pop();
-        saveFolderStructure();
-        saveAllFilesToDB();
-        saveAllNotesToDB();
-        render();
+        saveFolderStructure(); saveAllFilesToDB(); saveAllNotesToDB(); render();
         showToast(`🗑️ Folder "${name}" deleted`);
     }
 }
-
 function addNewFolder() {
     const name = prompt("Folder name:");
     if (name && name.trim()) {
         const cur = getCurrentFolderObject();
-        if (cur && !cur[name]) {
-            cur[name] = {};
-            saveFolderStructure();
-            render();
-            showToast(`✅ Folder "${name}" created`);
-        } else { showToast("Exists", true); }
+        if (cur && !cur[name]) { cur[name] = {}; saveFolderStructure(); render(); showToast(`✅ Folder "${name}" created`); }
+        else showToast("Exists", true);
     }
 }
-
 function addNewDepartment() {
     const name = prompt("Department name:");
-    if (name && name.trim() && !fileSystem[name]) {
-        fileSystem[name] = {};
-        saveFolderStructure();
-        render();
-        showToast(`✅ Department "${name}" created`);
-    } else if (fileSystem[name]) { showToast("Department exists", true); }
+    if (name && name.trim() && !fileSystem[name]) { fileSystem[name] = {}; saveFolderStructure(); render(); showToast(`✅ Department "${name}" created`); }
+    else if (fileSystem[name]) showToast("Department exists", true);
 }
-
 function updateStats() {
     let folderCount = 0, fileCount = 0, notesCount = 0;
     function countFolders(obj) { for (let k in obj) { if (typeof obj[k] === 'object') { folderCount++; countFolders(obj[k]); } } }
     countFolders(fileSystem);
-    for (let k in allFiles) { if (allFiles[k]) { fileCount += allFiles[k].length; } }
-    for (let k in allNotes) { if (allNotes[k]) { notesCount += allNotes[k].length; } }
+    for (let k in allFiles) if (allFiles[k]) fileCount += allFiles[k].length;
+    for (let k in allNotes) if (allNotes[k]) notesCount += allNotes[k].length;
     document.getElementById('folderCount').textContent = folderCount;
     document.getElementById('fileCount').textContent = fileCount;
     document.getElementById('notesCount').textContent = notesCount;
 }
-
 function showToast(msg, isErr = false) {
     const toast = document.getElementById('toast');
     toast.querySelector('span').textContent = msg;
     toast.style.background = isErr ? "linear-gradient(135deg,#ef4444,#dc2626)" : "linear-gradient(135deg,#10b981,#059669)";
-    toast.classList.remove('hidden');
+    toast.classList.remove('hidden', 'show');
     toast.classList.add('show');
-    setTimeout(() => {
-        toast.classList.remove('show');
-        toast.classList.add('hidden');
-    }, 3000);
+    setTimeout(() => { toast.classList.remove('show'); toast.classList.add('hidden'); }, 3000);
 }
-
 function escapeHtml(str) { const div = document.createElement('div'); div.textContent = str; return div.innerHTML; }
-
 function toggleTheme() { document.body.classList.toggle('light-mode'); localStorage.setItem('oarcel_theme', document.body.classList.contains('light-mode') ? 'light-mode' : ''); updateThemeIcon(); }
-
 function updateThemeIcon() {
     const isDark = !document.body.classList.contains('light-mode');
     const themeBtn = document.getElementById('themeToggle');
-    if (themeBtn) { themeBtn.innerHTML = `<div class="theme-icon-wrapper"><i class="fas ${isDark ? 'fa-sun' : 'fa-moon'}"></i></div>`; }
+    if (themeBtn) themeBtn.innerHTML = `<div class="theme-icon-wrapper"><i class="fas ${isDark ? 'fa-sun' : 'fa-moon'}"></i></div>`;
 }
 
-// ========== 3D DEPTH TOUCH EFFECT WITH RIPPLE ==========
+// ========== 3D DEPTH TOUCH EFFECT ==========
 function addDepthEffect(element, event) {
     if (!element || element.hasAttribute('data-press-animating')) return;
     element.setAttribute('data-press-animating', 'true');
-    
     element.classList.add('press-depth-3d');
-    
-    if (window.navigator && window.navigator.vibrate) {
-        window.navigator.vibrate(12);
-    }
-    
+    if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(12);
     const ripple = document.createElement('span');
     ripple.classList.add('touch-ripple');
     ripple.style.position = 'absolute';
@@ -908,78 +706,47 @@ function addDepthEffect(element, event) {
     ripple.style.pointerEvents = 'none';
     ripple.style.transform = 'scale(0)';
     ripple.style.transition = 'transform 0.4s ease-out, opacity 0.3s ease-out';
-    ripple.style.willChange = 'transform, opacity';
-    
     let clientX, clientY;
-    if (event.touches) {
-        clientX = event.touches[0].clientX;
-        clientY = event.touches[0].clientY;
-    } else {
-        clientX = event.clientX;
-        clientY = event.clientY;
-    }
-    
+    if (event.touches) { clientX = event.touches[0].clientX; clientY = event.touches[0].clientY; }
+    else { clientX = event.clientX; clientY = event.clientY; }
     const rect = element.getBoundingClientRect();
     const x = clientX - rect.left;
     const y = clientY - rect.top;
-    
     ripple.style.left = x + 'px';
     ripple.style.top = y + 'px';
     ripple.style.width = '0';
     ripple.style.height = '0';
-    
     element.style.position = 'relative';
     element.style.overflow = 'hidden';
     element.appendChild(ripple);
-    
     const size = Math.max(rect.width, rect.height);
     ripple.style.width = size * 2 + 'px';
     ripple.style.height = size * 2 + 'px';
     ripple.style.transform = 'scale(1)';
     ripple.style.opacity = '0';
-    
     setTimeout(() => {
         element.classList.remove('press-depth-3d');
-        if (ripple && ripple.parentNode) {
-            ripple.parentNode.removeChild(ripple);
-        }
+        if (ripple && ripple.parentNode) ripple.parentNode.removeChild(ripple);
         element.removeAttribute('data-press-animating');
     }, 150);
 }
-
 function pressHandler(e) {
     if (this.hasAttribute('data-press-animating') || (e.button === 2)) return;
-    
     if (e.type === 'touchstart' && this.hasAttribute('data-touch-processing')) return;
-    if (e.type === 'touchstart') {
-        this.setAttribute('data-touch-processing', 'true');
-        setTimeout(() => this.removeAttribute('data-touch-processing'), 200);
-    }
-    
+    if (e.type === 'touchstart') { this.setAttribute('data-touch-processing', 'true'); setTimeout(() => this.removeAttribute('data-touch-processing'), 200); }
     addDepthEffect(this, e);
 }
-
 function attachPressEffects() {
-    const selectors = [
-        '#backBtn', '.type-btn', '.theme-toggle', '.settings-toggle', '#uploadBtn', '#newNoteBtn',
-        '.action-btn', '.rename-file-btn', '.edit-note-btn', '.delete-btn', '.delete-note-btn',
-        '.clear-search', '.modal-close', '.modal-footer button', '.breadcrumb-item', '.dept-card', '.card'
-    ];
-    
+    const selectors = ['#backBtn', '.type-btn', '.theme-toggle', '.settings-toggle', '#uploadBtn', '#newNoteBtn', '.action-btn', '.rename-file-btn', '.edit-note-btn', '.delete-btn', '.delete-note-btn', '.clear-search', '.modal-close', '.modal-footer button', '.breadcrumb-item', '.dept-card', '.card'];
     document.querySelectorAll(selectors.join(',')).forEach(el => {
         el.removeEventListener('click', pressHandler);
         el.removeEventListener('touchstart', pressHandler);
         el.removeEventListener('mousedown', pressHandler);
-        
         el.addEventListener('mousedown', pressHandler);
         el.addEventListener('touchstart', pressHandler, { passive: false });
-        
-        if (window.getComputedStyle(el).cursor === 'auto') {
-            el.style.cursor = 'pointer';
-        }
+        if (window.getComputedStyle(el).cursor === 'auto') el.style.cursor = 'pointer';
     });
 }
-
 function styleActionBar() {
     const actionBar = document.querySelector('.action-bar');
     if (actionBar) {
@@ -990,7 +757,6 @@ function styleActionBar() {
         actionBar.style.setProperty('padding', '10px 16px', 'important');
         actionBar.style.setProperty('margin', '16px 0 20px 0', 'important');
         actionBar.style.setProperty('box-shadow', '0 8px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)', 'important');
-        
         const btns = actionBar.querySelectorAll('.action-btn');
         btns.forEach(btn => {
             btn.style.setProperty('background', '#1e293b', 'important');
@@ -1002,27 +768,13 @@ function styleActionBar() {
         });
     }
 }
-
 function fixSearchBarZoom() {
     const searchInput = document.getElementById('searchInput');
-    if (searchInput) {
-        searchInput.addEventListener('blur', function() {
-            setTimeout(() => {
-                const viewport = document.querySelector('meta[name=viewport]');
-                if (viewport) {
-                    viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover');
-                }
-                window.scrollTo(0, 0);
-            }, 10);
-        });
-    }
+    if (searchInput) searchInput.addEventListener('blur', () => { setTimeout(() => { const viewport = document.querySelector('meta[name=viewport]'); if (viewport) viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover'); window.scrollTo(0, 0); }, 10); });
 }
-
-// Handle image paste in note textarea
 function setupNoteImagePaste() {
     const noteContent = document.getElementById('noteContent');
     if (!noteContent) return;
-    
     noteContent.addEventListener('paste', async (e) => {
         const items = e.clipboardData.items;
         for (const item of items) {
@@ -1030,19 +782,12 @@ function setupNoteImagePaste() {
                 e.preventDefault();
                 const file = item.getAsFile();
                 if (file) {
-                    // Compress image before inserting
                     let imageFile = file;
                     if (compressNoteImagesEnabled) {
                         try {
-                            const options = {
-                                maxSizeMB: 0.3,
-                                maxWidthOrHeight: 600,
-                                useWebWorker: true
-                            };
+                            const options = { maxSizeMB: 0.3, maxWidthOrHeight: 600, useWebWorker: true };
                             imageFile = await imageCompression(file, options);
-                        } catch (err) {
-                            console.warn('Image compression failed:', err);
-                        }
+                        } catch (err) { console.warn('Image compression failed:', err); }
                     }
                     const reader = new FileReader();
                     reader.onload = (event) => {
@@ -1064,16 +809,9 @@ function setupNoteImagePaste() {
 }
 
 const originalRender = render;
-render = function() {
-    originalRender();
-    setTimeout(() => {
-        styleActionBar();
-        attachPressEffects();
-        setupNoteImagePaste();
-    }, 30);
-};
+render = function() { originalRender(); setTimeout(() => { styleActionBar(); attachPressEffects(); setupNoteImagePaste(); }, 30); };
 
-// Global functions for inline handlers
+// Global handlers
 window.selectDepartment = selectDepartment;
 window.goBack = goBack;
 window.triggerUpload = triggerUpload;
@@ -1102,58 +840,46 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (themeBtn) themeBtn.onclick = toggleTheme;
     const settingsBtn = document.getElementById('settingsBtn');
     if (settingsBtn) settingsBtn.onclick = openSettingsModal;
-    
-    if (localStorage.getItem('oarcel_theme') === 'light-mode') { document.body.classList.add('light-mode'); }
+    if (localStorage.getItem('oarcel_theme') === 'light-mode') document.body.classList.add('light-mode');
     updateThemeIcon();
     loadCompressionSettings();
-    
     document.getElementById('pdfTabBtn').onclick = () => setActiveTab('pdfs');
     document.getElementById('notesTabBtn').onclick = () => setActiveTab('notes');
-    
     const downloadBtn = document.getElementById('downloadPdfBtn');
     if (downloadBtn) downloadBtn.onclick = downloadCurrentPDF;
-    
     const fileInput = document.getElementById('fileInput');
     if (fileInput) {
         fileInput.addEventListener('change', async (e) => {
-            const files = Array.from(e.target.files);
-            let compressedCount = 0;
-            for (let f of files) {
-                if (f.type === 'application/pdf') { 
-                    await addFileToCurrentFolder(f);
-                    compressedCount++;
-                }
+            const files = Array.from(e.target.files).filter(f => f.type === 'application/pdf');
+            if (files.length === 0) return;
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            const loadingText = document.querySelector('#loadingOverlay p');
+            loadingOverlay.classList.remove('hidden');
+            let successCount = 0;
+            for (let i = 0; i < files.length; i++) {
+                const f = files[i];
+                loadingText.textContent = `Processing ${i+1}/${files.length}: ${f.name}`;
+                try {
+                    await addFileToCurrentFolder(f, i+1, files.length);
+                    successCount++;
+                } catch (err) { console.error(`Failed: ${f.name}`, err); showToast(`❌ Failed: ${f.name}`, true); }
             }
-            showToast(`${compressedCount} PDF(s) saved with compression (${compressPDFEnabled ? 'enabled' : 'disabled'})!`);
+            loadingOverlay.classList.add('hidden');
+            showToast(`✅ ${successCount} of ${files.length} PDF(s) saved!`);
             render();
             e.target.value = '';
         });
     }
-    
     const newNoteBtn = document.getElementById('newNoteBtn');
     if (newNoteBtn) newNoteBtn.onclick = triggerNewNote;
-    
     const searchInput = document.getElementById('searchInput');
-    if (searchInput) { searchInput.addEventListener('input', () => render()); }
-    
+    if (searchInput) searchInput.addEventListener('input', () => render());
     const clearSearchBtn = document.getElementById('clearSearchBtn');
-    if (clearSearchBtn) { clearSearchBtn.addEventListener('click', clearSearch); }
-    
+    if (clearSearchBtn) clearSearchBtn.addEventListener('click', clearSearch);
     const backBtn = document.getElementById('backBtn');
-    if (backBtn) { backBtn.addEventListener('click', goBack); }
-    
+    if (backBtn) backBtn.addEventListener('click', goBack);
     const uploadBtn = document.getElementById('uploadBtn');
-    if (uploadBtn) { uploadBtn.addEventListener('click', triggerUpload); }
-    
-    try {
-        await initDB();
-        await loadFromIndexedDB();
-    } catch (e) { console.error(e); showToast('Database error', true); }
-    
-    setTimeout(() => {
-        attachPressEffects();
-        styleActionBar();
-        fixSearchBarZoom();
-        setupNoteImagePaste();
-    }, 200);
+    if (uploadBtn) uploadBtn.addEventListener('click', triggerUpload);
+    try { await initDB(); await loadFromIndexedDB(); } catch (e) { console.error(e); showToast('Database error', true); }
+    setTimeout(() => { attachPressEffects(); styleActionBar(); fixSearchBarZoom(); setupNoteImagePaste(); }, 200);
 });
