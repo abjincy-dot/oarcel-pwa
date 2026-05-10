@@ -1,6 +1,6 @@
 // ==================== INDEXEDDB CORE ====================
 const DB_NAME = 'OarcelDB';
-const DB_VERSION = 6;
+const DB_VERSION = 7; // Incremented version for compression changes
 let db = null;
 let allFiles = {};
 let allNotes = {};
@@ -10,24 +10,254 @@ let isSearchMode = false;
 let currentActiveTab = 'pdfs';
 let editingNoteId = null;
 
-// ==================== PDF VIEWER ====================
-function openPDF(dataUrl, fileName) {
-    showToast(`Opening ${fileName}...`);
-    fetch(dataUrl)
-        .then(response => response.blob())
-        .then(blob => {
-            const blobUrl = URL.createObjectURL(blob);
-            window.open(blobUrl, '_blank');
-            showToast(`PDF opened in new tab.`);
-            setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
-        })
-        .catch(err => {
-            console.error('PDF error:', err);
-            showToast(`Failed to open PDF: ${err.message}`, true);
-        });
+// Global compression settings
+let compressPDFEnabled = true;
+let compressNoteImagesEnabled = true;
+
+// Current PDF blob URL for download
+let currentPdfBlob = null;
+let currentPdfFileName = null;
+
+// ==================== COMPRESSION SETTINGS ====================
+function loadCompressionSettings() {
+    const savedPDF = localStorage.getItem('oarcel_compress_pdf');
+    const savedImages = localStorage.getItem('oarcel_compress_images');
+    compressPDFEnabled = savedPDF !== null ? savedPDF === 'true' : true;
+    compressNoteImagesEnabled = savedImages !== null ? savedImages === 'true' : true;
+    
+    const pdfToggle = document.getElementById('pdfCompressionToggle');
+    const imgToggle = document.getElementById('imageCompressionToggle');
+    if (pdfToggle) pdfToggle.checked = compressPDFEnabled;
+    if (imgToggle) imgToggle.checked = compressNoteImagesEnabled;
 }
 
-// ==================== NOTE FUNCTIONS ====================
+function saveCompressionSettings() {
+    const pdfToggle = document.getElementById('pdfCompressionToggle');
+    const imgToggle = document.getElementById('imageCompressionToggle');
+    compressPDFEnabled = pdfToggle ? pdfToggle.checked : true;
+    compressNoteImagesEnabled = imgToggle ? imgToggle.checked : true;
+    localStorage.setItem('oarcel_compress_pdf', compressPDFEnabled);
+    localStorage.setItem('oarcel_compress_images', compressNoteImagesEnabled);
+    closeSettingsModal();
+    showToast('✅ Compression settings saved');
+}
+
+function openSettingsModal() {
+    const modal = document.getElementById('settingsModal');
+    // Sync checkboxes with current settings
+    const pdfToggle = document.getElementById('pdfCompressionToggle');
+    const imgToggle = document.getElementById('imageCompressionToggle');
+    if (pdfToggle) pdfToggle.checked = compressPDFEnabled;
+    if (imgToggle) imgToggle.checked = compressNoteImagesEnabled;
+    modal.classList.add('show');
+}
+
+function closeSettingsModal() {
+    document.getElementById('settingsModal').classList.remove('show');
+}
+
+// ==================== PDF COMPRESSION USING PDF-LIB ====================
+async function compressPDFBlob(file) {
+    if (!compressPDFEnabled) return file;
+    
+    try {
+        // Show loading indicator
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        if (loadingOverlay) loadingOverlay.classList.remove('hidden');
+        
+        const originalSize = file.size;
+        const arrayBuffer = await file.arrayBuffer();
+        
+        // Load PDF using pdf-lib
+        const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer, {
+            updateMetadata: false,
+            ignoreEncryption: false
+        });
+        
+        // Optimize: compress streams, remove unused objects
+        // Save with compression options
+        const compressedBytes = await pdfDoc.save({
+            useObjectStreams: true,
+            addDefaultPage: false,
+            objectsPerTick: 50
+        });
+        
+        const compressedSize = compressedBytes.byteLength;
+        const compressionRatio = ((originalSize - compressedSize) / originalSize * 100).toFixed(1);
+        
+        const compressedBlob = new Blob([compressedBytes], { type: 'application/pdf' });
+        
+        if (loadingOverlay) loadingOverlay.classList.add('hidden');
+        
+        if (compressedSize < originalSize) {
+            showToast(`📦 PDF compressed: ${formatFileSize(originalSize)} → ${formatFileSize(compressedSize)} (${compressionRatio}% saved)`);
+        } else {
+            showToast(`📄 PDF size unchanged (compression not beneficial)`);
+        }
+        
+        // Create a new File object from compressed blob
+        return new File([compressedBlob], file.name, { type: 'application/pdf' });
+        
+    } catch (error) {
+        console.error('PDF compression error:', error);
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        if (loadingOverlay) loadingOverlay.classList.add('hidden');
+        showToast(`⚠️ Could not compress PDF, using original`, true);
+        return file;
+    }
+}
+
+// ==================== IMAGE COMPRESSION FOR NOTES ====================
+async function compressImagesInNoteContent(content) {
+    if (!compressNoteImagesEnabled) return content;
+    
+    // Find all base64 images in the content (data:image/...;base64,...)
+    const imageRegex = /data:image\/(png|jpeg|jpg|webp|gif);base64,([A-Za-z0-9+/=]+)/g;
+    const matches = [...content.matchAll(imageRegex)];
+    
+    if (matches.length === 0) return content;
+    
+    let compressedContent = content;
+    
+    for (const match of matches) {
+        const fullMatch = match[0];
+        const format = match[1];
+        const base64Data = match[2];
+        
+        try {
+            // Convert base64 to blob
+            const byteCharacters = atob(base64Data);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: `image/${format}` });
+            const file = new File([blob], 'image.jpg', { type: `image/${format}` });
+            
+            // Compress image using browser-image-compression
+            const options = {
+                maxSizeMB: 0.5,
+                maxWidthOrHeight: 800,
+                useWebWorker: true,
+                fileType: `image/${format}`
+            };
+            
+            const compressedFile = await imageCompression(file, options);
+            const compressedBase64 = await imageCompression.getDataUrlFromFile(compressedFile);
+            
+            // Replace in content
+            compressedContent = compressedContent.replace(fullMatch, compressedBase64);
+            
+        } catch (err) {
+            console.warn('Failed to compress image in note:', err);
+        }
+    }
+    
+    if (compressedContent !== content) {
+        showToast(`🖼️ Compressed ${matches.length} image(s) in note`);
+    }
+    
+    return compressedContent;
+}
+
+// Helper: format file size
+function formatFileSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+// ==================== PDF VIEWER MODAL ====================
+let currentPdfObjectUrl = null;
+
+function openPDFModal(dataUrl, fileName) {
+    closePDFModal(); // Clean up any existing
+    
+    currentPdfFileName = fileName;
+    document.getElementById('pdfModalTitle').innerHTML = `<i class="fas fa-file-pdf"></i> ${escapeHtml(fileName)}`;
+    
+    // Convert dataUrl to blob URL if it's a data URL
+    let blobUrl;
+    if (dataUrl.startsWith('data:')) {
+        // Convert data URL to blob URL
+        const blob = dataURLToBlob(dataUrl);
+        blobUrl = URL.createObjectURL(blob);
+        currentPdfBlob = blob;
+    } else if (dataUrl.startsWith('blob:')) {
+        blobUrl = dataUrl;
+        // Fetch blob for download
+        fetch(blobUrl).then(res => res.blob()).then(blob => currentPdfBlob = blob);
+    } else {
+        blobUrl = dataUrl;
+    }
+    
+    currentPdfObjectUrl = blobUrl;
+    
+    const iframe = document.getElementById('pdfIframe');
+    iframe.src = blobUrl;
+    
+    document.getElementById('pdfModal').classList.add('show');
+}
+
+function closePDFModal() {
+    const modal = document.getElementById('pdfModal');
+    if (modal) modal.classList.remove('show');
+    
+    const iframe = document.getElementById('pdfIframe');
+    if (iframe) iframe.src = 'about:blank';
+    
+    if (currentPdfObjectUrl) {
+        URL.revokeObjectURL(currentPdfObjectUrl);
+        currentPdfObjectUrl = null;
+    }
+    currentPdfBlob = null;
+}
+
+function downloadCurrentPDF() {
+    if (currentPdfBlob) {
+        const url = URL.createObjectURL(currentPdfBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = currentPdfFileName || 'document.pdf';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast(`📥 Downloading ${currentPdfFileName}`);
+    } else if (currentPdfObjectUrl) {
+        // Fallback: fetch from blob URL
+        fetch(currentPdfObjectUrl).then(res => res.blob()).then(blob => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = currentPdfFileName || 'document.pdf';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+    }
+}
+
+function dataURLToBlob(dataUrl) {
+    const arr = dataUrl.split(',');
+    const mime = arr[0].match(/:(.*?);/)[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], { type: mime });
+}
+
+// Override the original openPDF function
+function openPDF(dataUrl, fileName) {
+    openPDFModal(dataUrl, fileName);
+}
+
+// ==================== NOTE FUNCTIONS WITH IMAGE COMPRESSION ====================
 
 function getNotesForCurrentFolder() {
     const folderPath = currentPath.join('/');
@@ -38,10 +268,13 @@ async function addNoteToCurrentFolder(title, content) {
     const folderPath = currentPath.join('/');
     if (!allNotes[folderPath]) allNotes[folderPath] = [];
     
+    // Compress images in content
+    let compressedContent = await compressImagesInNoteContent(content);
+    
     const note = {
         id: Date.now().toString() + Math.random().toString(36).substr(2, 6),
         title: title.trim(),
-        content: content.trim(),
+        content: compressedContent,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
     };
@@ -57,8 +290,10 @@ async function updateNote(folderPath, noteId, title, content) {
     if (allNotes[folderPath]) {
         const index = allNotes[folderPath].findIndex(n => n.id === noteId);
         if (index !== -1) {
+            // Compress images in updated content
+            let compressedContent = await compressImagesInNoteContent(content);
             allNotes[folderPath][index].title = title.trim();
-            allNotes[folderPath][index].content = content.trim();
+            allNotes[folderPath][index].content = compressedContent;
             allNotes[folderPath][index].updatedAt = new Date().toISOString();
             await saveAllNotesToDB();
             render();
@@ -216,7 +451,14 @@ function getFilesForCurrentFolder() { return allFiles[currentPath.join('/')] || 
 async function addFileToCurrentFolder(file) {
     const folderPath = currentPath.join('/');
     if (!allFiles[folderPath]) allFiles[folderPath] = [];
-    const base64 = await new Promise(r => { const rd = new FileReader(); rd.onload = e => r(e.target.result); rd.readAsDataURL(file); });
+    
+    // Compress PDF before storing
+    let fileToStore = file;
+    if (file.type === 'application/pdf') {
+        fileToStore = await compressPDFBlob(file);
+    }
+    
+    const base64 = await new Promise(r => { const rd = new FileReader(); rd.onload = e => r(e.target.result); rd.readAsDataURL(fileToStore); });
     allFiles[folderPath].push({ name: file.name, dataUrl: base64 });
     await saveAllFilesToDB();
 }
@@ -288,11 +530,11 @@ function openNote(note) {
     document.getElementById('noteContent').value = note.content;
     editingNoteId = note.id;
     const saveBtn = document.getElementById('saveNoteBtn');
-    saveBtn.onclick = () => {
+    saveBtn.onclick = async () => {
         const newTitle = document.getElementById('noteTitle').value;
         const newContent = document.getElementById('noteContent').value;
         if (newTitle.trim()) {
-            updateNote(note.folder, note.id, newTitle, newContent);
+            await updateNote(note.folder, note.id, newTitle, newContent);
             closeNoteModal();
         } else {
             showToast("Title cannot be empty", true);
@@ -328,11 +570,11 @@ function openNewNoteModal() {
     document.getElementById('noteTitle').value = '';
     document.getElementById('noteContent').value = '';
     const saveBtn = document.getElementById('saveNoteBtn');
-    saveBtn.onclick = () => {
+    saveBtn.onclick = async () => {
         const title = document.getElementById('noteTitle').value;
         const content = document.getElementById('noteContent').value;
         if (title.trim()) {
-            addNoteToCurrentFolder(title, content);
+            await addNoteToCurrentFolder(title, content);
             closeNoteModal();
         } else {
             showToast("Title cannot be empty", true);
@@ -354,11 +596,11 @@ function editNote(folderPath, noteId) {
         document.getElementById('noteContent').value = note.content;
         editingNoteId = noteId;
         const saveBtn = document.getElementById('saveNoteBtn');
-        saveBtn.onclick = () => {
+        saveBtn.onclick = async () => {
             const newTitle = document.getElementById('noteTitle').value;
             const newContent = document.getElementById('noteContent').value;
             if (newTitle.trim()) {
-                updateNote(folderPath, noteId, newTitle, newContent);
+                await updateNote(folderPath, noteId, newTitle, newContent);
                 closeNoteModal();
             } else {
                 showToast("Title cannot be empty", true);
@@ -719,7 +961,7 @@ function pressHandler(e) {
 
 function attachPressEffects() {
     const selectors = [
-        '#backBtn', '.type-btn', '.theme-toggle', '#uploadBtn', '#newNoteBtn',
+        '#backBtn', '.type-btn', '.theme-toggle', '.settings-toggle', '#uploadBtn', '#newNoteBtn',
         '.action-btn', '.rename-file-btn', '.edit-note-btn', '.delete-btn', '.delete-note-btn',
         '.clear-search', '.modal-close', '.modal-footer button', '.breadcrumb-item', '.dept-card', '.card'
     ];
@@ -738,7 +980,6 @@ function attachPressEffects() {
     });
 }
 
-// ========== FORCE ACTION BAR STYLING (JavaScript) ==========
 function styleActionBar() {
     const actionBar = document.querySelector('.action-bar');
     if (actionBar) {
@@ -762,13 +1003,73 @@ function styleActionBar() {
     }
 }
 
-// Override render to reattach after dynamic content AND apply action bar style
+function fixSearchBarZoom() {
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('blur', function() {
+            setTimeout(() => {
+                const viewport = document.querySelector('meta[name=viewport]');
+                if (viewport) {
+                    viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover');
+                }
+                window.scrollTo(0, 0);
+            }, 10);
+        });
+    }
+}
+
+// Handle image paste in note textarea
+function setupNoteImagePaste() {
+    const noteContent = document.getElementById('noteContent');
+    if (!noteContent) return;
+    
+    noteContent.addEventListener('paste', async (e) => {
+        const items = e.clipboardData.items;
+        for (const item of items) {
+            if (item.type.indexOf('image') !== -1) {
+                e.preventDefault();
+                const file = item.getAsFile();
+                if (file) {
+                    // Compress image before inserting
+                    let imageFile = file;
+                    if (compressNoteImagesEnabled) {
+                        try {
+                            const options = {
+                                maxSizeMB: 0.3,
+                                maxWidthOrHeight: 600,
+                                useWebWorker: true
+                            };
+                            imageFile = await imageCompression(file, options);
+                        } catch (err) {
+                            console.warn('Image compression failed:', err);
+                        }
+                    }
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const imgBase64 = event.target.result;
+                        const imgMarkdown = `![image](${imgBase64})`;
+                        const start = noteContent.selectionStart;
+                        const end = noteContent.selectionEnd;
+                        const currentContent = noteContent.value;
+                        const newContent = currentContent.substring(0, start) + imgMarkdown + currentContent.substring(end);
+                        noteContent.value = newContent;
+                        noteContent.dispatchEvent(new Event('input'));
+                    };
+                    reader.readAsDataURL(imageFile);
+                }
+                break;
+            }
+        }
+    });
+}
+
 const originalRender = render;
 render = function() {
     originalRender();
     setTimeout(() => {
         styleActionBar();
         attachPressEffects();
+        setupNoteImagePaste();
     }, 30);
 };
 
@@ -788,26 +1089,42 @@ window.openNote = openNote;
 window.editNote = editNote;
 window.deleteNote = deleteNote;
 window.closeNoteModal = closeNoteModal;
+window.closePDFModal = closePDFModal;
+window.downloadCurrentPDF = downloadCurrentPDF;
+window.openSettingsModal = openSettingsModal;
+window.closeSettingsModal = closeSettingsModal;
+window.saveCompressionSettings = saveCompressionSettings;
 window.renameFile = (p, old) => { const nu = prompt("New name:", old.replace('.pdf', '')); if (nu && nu.trim()) renameFileInFolder(p, old, nu.trim()); };
 window.deleteFile = (p, n) => { if (confirm(`Delete "${n}"?`)) deleteFileFromFolder(p, n); };
 
 document.addEventListener('DOMContentLoaded', async () => {
     const themeBtn = document.getElementById('themeToggle');
     if (themeBtn) themeBtn.onclick = toggleTheme;
+    const settingsBtn = document.getElementById('settingsBtn');
+    if (settingsBtn) settingsBtn.onclick = openSettingsModal;
+    
     if (localStorage.getItem('oarcel_theme') === 'light-mode') { document.body.classList.add('light-mode'); }
     updateThemeIcon();
+    loadCompressionSettings();
     
     document.getElementById('pdfTabBtn').onclick = () => setActiveTab('pdfs');
     document.getElementById('notesTabBtn').onclick = () => setActiveTab('notes');
+    
+    const downloadBtn = document.getElementById('downloadPdfBtn');
+    if (downloadBtn) downloadBtn.onclick = downloadCurrentPDF;
     
     const fileInput = document.getElementById('fileInput');
     if (fileInput) {
         fileInput.addEventListener('change', async (e) => {
             const files = Array.from(e.target.files);
+            let compressedCount = 0;
             for (let f of files) {
-                if (f.type === 'application/pdf') { await addFileToCurrentFolder(f); }
+                if (f.type === 'application/pdf') { 
+                    await addFileToCurrentFolder(f);
+                    compressedCount++;
+                }
             }
-            showToast(`${files.length} PDF(s) saved!`);
+            showToast(`${compressedCount} PDF(s) saved with compression (${compressPDFEnabled ? 'enabled' : 'disabled'})!`);
             render();
             e.target.value = '';
         });
@@ -836,5 +1153,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     setTimeout(() => {
         attachPressEffects();
         styleActionBar();
+        fixSearchBarZoom();
+        setupNoteImagePaste();
     }, 200);
 });
