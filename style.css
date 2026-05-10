@@ -1019,47 +1019,45 @@ body.light-mode .note-card:hover {
     box-shadow: 0 1px 0 rgba(0, 0, 0, 0.25), 0 1px 4px rgba(0, 0, 0, 0.1) !important;
     transition: all 0.04s cubic-bezier(0.2, 0.9, 0.4, 1.2) !important;
 }
-/* ========== FIX ACTION BUTTONS BACKGROUND & SHADOW ========== */
+/* ========== FORCE ACTION BAR STYLING (NO MERGE) ========== */
+div.action-bar,
 .action-bar {
-    background: var(--card-bg) !important;
-    backdrop-filter: blur(16px) !important;
-    border: 1px solid var(--glass-border) !important;
+    background: #0f172a !important;
+    backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
     border-radius: 60px !important;
-    padding: 8px 12px !important;
-    margin: 12px 0 16px 0 !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+    padding: 10px 16px !important;
+    margin: 16px 0 20px 0 !important;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
 }
 
-.action-btn {
-    background: rgba(20, 30, 50, 0.8) !important;
-    backdrop-filter: blur(8px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+div.action-bar .action-btn,
+.action-bar .action-btn {
+    background: #1e293b !important;
+    border: 1px solid #3b82f6 !important;
     border-radius: 40px !important;
     padding: 8px 18px !important;
     font-weight: 600 !important;
-    color: var(--text-primary) !important;
-    transition: all 0.2s ease !important;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+    color: #f1f5f9 !important;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2) !important;
+    transition: all 0.08s ease !important;
 }
 
-.action-btn:hover {
-    background: rgba(30, 45, 70, 0.9) !important;
-    transform: translateY(-1px) !important;
-}
-
-.action-btn:active {
+div.action-bar .action-btn:active,
+.action-bar .action-btn:active {
     transform: translateY(2px) !important;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
 }
 
-/* Light mode compatibility */
+/* Light mode */
+body.light-mode div.action-bar,
 body.light-mode .action-bar {
-    background: rgba(255, 255, 255, 0.85) !important;
-    border-color: rgba(0, 0, 0, 0.1) !important;
+    background: #e2e8f0 !important;
+    border-color: #cbd5e1 !important;
 }
-
-body.light-mode .action-btn {
-    background: rgba(240, 245, 255, 0.9) !important;
-    color: #1e293b !important;
-    border-color: rgba(0, 0, 0, 0.1) !important;
+body.light-mode div.action-bar .action-btn,
+body.light-mode .action-bar .action-btn {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border-color: #94a3b8 !important;
 }
