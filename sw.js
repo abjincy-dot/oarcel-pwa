@@ -1,4 +1,4 @@
-const CACHE_NAME = 'oarcel-cache-v2';
+const CACHE_NAME = 'oarcel-cache-v1';
 const urlsToCache = [
   '/oarcel-pwa/',
   '/oarcel-pwa/index.html',
@@ -6,16 +6,12 @@ const urlsToCache = [
   '/oarcel-pwa/app.js',
   '/oarcel-pwa/manifest.json',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
-  'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap',
-  'https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js',
-  'https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.min.js'
+  'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap'
 ];
 
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(urlsToCache))
-      .then(() => self.skipWaiting())
+    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache)).then(() => self.skipWaiting())
   );
 });
 
