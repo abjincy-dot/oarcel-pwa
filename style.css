@@ -296,22 +296,6 @@ body.light-mode .header-title h1 { background: linear-gradient(135deg, #0f172a, 
 }
 .top-bar-actions { display: flex; align-items: center; gap: 12px; }
 
-.settings-toggle {
-    width: 48px !important;
-    height: 48px !important;
-    background: linear-gradient(135deg, rgba(99,102,241,0.25), rgba(139,92,246,0.2)) !important;
-    border: 1px solid rgba(99,102,241,0.5) !important;
-    border-radius: 50% !important;
-    cursor: pointer;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    transition: all 0.28s cubic-bezier(0.22, 1, 0.36, 1) !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
-}
-.settings-toggle:hover { transform: scale(1.08) !important; border-color: rgba(99,102,241, 0.8) !important; }
-.settings-toggle i { font-size: 1.3rem !important; color: #818cf8 !important; }
-
 .theme-toggle {
     width: 48px !important;
     height: 48px !important;
@@ -658,43 +642,18 @@ body.light-mode .action-btn {
     border-radius: var(--radius-lg);
     width: 100%;
     max-width: 600px;
-    max-height: 85vh;
+    max-height: 80vh;
     overflow-y: auto;
-}
-.pdf-viewer-content {
-    max-width: 90vw;
-    width: 90vw;
-    max-height: 85vh;
-}
-.pdf-viewer-body {
-    padding: 0 !important;
-}
-#pdfEmbed {
-    width: 100%;
-    height: 70vh;
-    border-radius: var(--radius-md);
-    background: #fff;
 }
 .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; border-bottom: 1px solid var(--glass-border); }
 .modal-close { background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; }
 .modal-body { padding: 24px; }
 .modal-body input, .modal-body textarea { width: 100%; padding: 12px 16px; background: var(--input-bg); border: 1px solid var(--glass-border); border-radius: var(--radius-md); color: var(--text-primary); font-family: inherit; outline: none; font-size: 16px; }
 .modal-body textarea { min-height: 200px; resize: vertical; }
-.note-image-info { margin-top: 8px; color: var(--text-muted); font-size: 0.7rem; }
 .modal-footer { padding: 16px 24px; border-top: 1px solid var(--glass-border); display: flex; justify-content: flex-end; gap: 12px; }
 .modal-footer button { padding: 10px 20px; border-radius: var(--radius-full); border: none; cursor: pointer; font-weight: 600; }
 .modal-footer button:first-child { background: rgba(100,100,100,0.3); color: var(--text-primary); }
 .modal-footer button:last-child { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: white; }
-.btn-download-pdf { background: linear-gradient(135deg, #3b82f6, #2563eb) !important; }
-
-.settings-content { max-width: 500px; }
-.settings-section { margin: 16px 0; }
-.setting-item { margin-bottom: 20px; padding: 12px; background: rgba(255,255,255,0.05); border-radius: var(--radius-md); }
-.setting-item label { display: flex; align-items: center; gap: 10px; font-weight: 600; cursor: pointer; margin-bottom: 8px; }
-.setting-item input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; }
-.setting-desc { font-size: 0.75rem; color: var(--text-muted); margin-left: 30px; }
-.settings-actions { display: flex; justify-content: flex-end; margin-top: 20px; }
-.settings-save-btn { background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; padding: 10px 24px; border: none; border-radius: var(--radius-full); cursor: pointer; font-weight: 600; }
 
 .empty-state { text-align: center; padding: 48px 24px; background: var(--card-bg); border-radius: var(--radius-lg); border: 1px solid var(--glass-border); backdrop-filter: blur(12px); }
 .empty-state i { font-size: 3rem; margin-bottom: 16px; opacity: 0.5; color: #3b82f6; display: block; animation: floatIcon 3s ease-in-out infinite; }
@@ -756,7 +715,6 @@ button,
 .breadcrumb-item,
 .type-btn,
 .theme-toggle,
-.settings-toggle,
 #backBtn,
 #uploadBtn,
 #newNoteBtn,
@@ -852,14 +810,12 @@ button,
     .card { min-height: 40px !important; height: auto !important; flex-wrap: wrap; padding: 4px 12px !important; }
     .card-filename { white-space: normal; }
     .card-buttons { margin-top: 2px; width: 100%; justify-content: flex-end; }
-    #uploadBtn, #newNoteBtn, .settings-toggle, .theme-toggle { padding: 10px !important; width: 48px !important; height: 48px !important; border-radius: 50% !important; justify-content: center !important; }
+    #uploadBtn, #newNoteBtn { padding: 10px !important; width: 48px !important; height: 48px !important; border-radius: 50% !important; justify-content: center !important; }
     #uploadBtn span, #newNoteBtn span { display: none !important; }
     .stats-bar { gap: 4px; padding: 10px 12px; }
     .stat-icon-bg { width: 36px; height: 36px; }
     .stat-number { font-size: 1rem; }
     .stat-data label { font-size: 0.55rem; }
-    .pdf-viewer-content { max-width: 95vw; width: 95vw; }
-    #pdfEmbed { height: 60vh; }
 }
 @media (max-width: 380px) {
     .card-buttons { flex-direction: column; gap: 4px; }
