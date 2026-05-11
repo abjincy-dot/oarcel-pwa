@@ -70,6 +70,26 @@
   <div id="content" class="content"></div>
 </div>
 
+<!-- PDF Viewer Modal -->
+<div id="pdfModal" class="modal">
+  <div class="modal-content pdf-viewer-content">
+    <div class="modal-header">
+      <h3 id="pdfModalTitle"><i class="fas fa-file-pdf"></i> PDF Viewer</h3>
+      <button class="modal-close" onclick="closePDFModal()">&times;</button>
+    </div>
+    <div class="modal-body pdf-viewer-body" style="position: relative;">
+      <div id="pdfLoadingSpinner" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: none;">
+        <div class="loading-spinner" style="width: 40px; height: 40px;"></div>
+      </div>
+      <iframe id="pdfIframe" src="" frameborder="0" style="width:100%; height:70vh; display: none;"></iframe>
+    </div>
+    <div class="modal-footer">
+      <button onclick="closePDFModal()">Close</button>
+      <button id="downloadPdfBtn" class="btn-download-pdf"><i class="fas fa-download"></i> Download</button>
+    </div>
+  </div>
+</div>
+
 <!-- Note Modal -->
 <div id="noteModal" class="modal">
   <div class="modal-content">
@@ -92,7 +112,6 @@
 <div id="loadingOverlay" class="loading-overlay hidden"><div class="loading-spinner"><div class="spinner-ring"></div><div class="spinner-ring"></div><div class="spinner-ring"></div></div><p>Loading...</p></div>
 
 <script src="app.js"></script>
-
 <script>
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js')
