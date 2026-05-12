@@ -10,6 +10,7 @@ let isSearchMode = false;
 let currentActiveTab = 'pdfs';
 let editingNoteId = null;
 
+// ==================== HELPER FUNCTIONS ====================
 function showToast(msg, isErr = false) {
     const toast = document.getElementById('toast');
     toast.querySelector('span').textContent = msg;
@@ -302,7 +303,11 @@ function render(){
         document.getElementById('departmentsSection').innerHTML = html;
         document.getElementById('uploadBtn').classList.add('hidden');
         document.getElementById('newNoteBtn').classList.add('hidden');
+        
+        // Attach manual 3D press handlers to department ovals (fix for inconsistent :active)
+        attachDepartmentPressEffects();
     } else document.getElementById('departmentsSection').innerHTML = '';
+    
     const hasSubfolders = Object.keys(folder).length>0;
     const isLeafFolder = !isRoot && !hasSubfolders;
     const typeSelector = document.querySelector('.type-selector');
@@ -338,6 +343,42 @@ function render(){
     updateStats();
     attachPressEffects();
 }
+
+// ========== MANUAL 3D PRESS FOR DEPARTMENT OVALS (FIXES "WORKS ONCE" ISSUE) ==========
+function attachDepartmentPressEffects() {
+    const ovals = document.querySelectorAll('.dept-oval');
+    ovals.forEach(oval => {
+        // Remove any existing listeners to avoid duplicates
+        oval.removeEventListener('mousedown', addPressClass);
+        oval.removeEventListener('touchstart', addPressClass);
+        oval.removeEventListener('mouseup', removePressClass);
+        oval.removeEventListener('touchend', removePressClass);
+        oval.removeEventListener('mouseleave', removePressClass);
+        oval.removeEventListener('touchcancel', removePressClass);
+        
+        oval.addEventListener('mousedown', addPressClass);
+        oval.addEventListener('touchstart', addPressClass, { passive: true });
+        oval.addEventListener('mouseup', removePressClass);
+        oval.addEventListener('touchend', removePressClass);
+        oval.addEventListener('mouseleave', removePressClass);
+        oval.addEventListener('touchcancel', removePressClass);
+    });
+}
+
+function addPressClass(e) {
+    // Prevent adding class if already pressed (avoid double triggers)
+    if (this.classList.contains('press-3d-oval')) return;
+    this.classList.add('press-3d-oval');
+    // Optional: haptic feedback
+    if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(10);
+}
+
+function removePressClass(e) {
+    this.classList.remove('press-3d-oval');
+}
+
+// ========== END DEPARTMENT PRESS FIX ==========
+
 function selectDepartment(d){ currentPath=[d]; render(); }
 function goBack(){ if(currentPath.length && !isSearchMode){ currentPath.pop(); render(); } else if(isSearchMode) clearSearch(); }
 function triggerUpload(){ document.getElementById('fileInput').click(); }
@@ -484,7 +525,7 @@ function pressHandler(e){
     addDepthEffect(this,e);
 }
 function attachPressEffects(){
-    // Exclude .dept-card entirely
+    // Exclude .dept-card and .dept-oval from global press (handled separately)
     const selectors = ['#backBtn','.type-btn','.theme-toggle','#uploadBtn','#newNoteBtn','.action-btn','.rename-file-btn','.delete-file-btn','.rename-note-btn','.delete-note-btn','.clear-search','.modal-close','.modal-footer button','.breadcrumb-item','.card'];
     document.querySelectorAll(selectors.join(',')).forEach(el=>{
         el.removeEventListener('click', pressHandler);
