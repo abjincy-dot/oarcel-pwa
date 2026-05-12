@@ -1,6 +1,6 @@
 /* ============================================
-   OARCEL Document Manager - COMPLETE FINAL CSS
-   Fixed: Only Oval Presses, Not Whole Line
+   OARCEL Document Manager - FINAL CORRECTED CSS
+   Only Department Oval Presses (Whole Card Static)
    ============================================ */
 
 * {
@@ -38,7 +38,6 @@
     --radius-full: 9999px;
     --transition-fast: 0.18s cubic-bezier(0.22, 1, 0.36, 1);
     --transition-base: 0.28s cubic-bezier(0.22, 1, 0.36, 1);
-    --transition-bounce: 0.42s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 body.light-mode {
@@ -437,7 +436,7 @@ body.light-mode .theme-toggle i { color: #f59e0b !important; }
 
 .breadcrumb-item:first-child { color: #3b82f6; }
 
-/* ========== DEPARTMENTS - ONLY OVAL PRESSES (NOT WHOLE LINE) ========== */
+/* ========== DEPARTMENTS - ONLY OVAL PRESSES ========== */
 .section-title {
     font-size: 0.85rem;
     font-weight: 700;
@@ -453,7 +452,7 @@ body.light-mode .theme-toggle i { color: #f59e0b !important; }
 
 .departments-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
 
-/* Card container - clickable but no visual press */
+/* Card container - no visual press */
 .dept-card {
     display: flex;
     align-items: center;
@@ -462,7 +461,7 @@ body.light-mode .theme-toggle i { color: #f59e0b !important; }
     padding: 6px;
     border-radius: var(--radius-lg);
     position: relative;
-    /* No transform or box-shadow here - only the oval will move */
+    /* No transform or transition here */
 }
 
 /* The oval (pill) gets the 3D press effect */
@@ -490,7 +489,7 @@ body.light-mode .theme-toggle i { color: #f59e0b !important; }
     transition: transform 0.04s, box-shadow 0.04s;
 }
 
-/* Hover effect (optional, raises oval slightly) */
+/* Hover effect (optional, raises oval slightly) - but we disable hover on mobile? Keep it. */
 .dept-card:hover .dept-oval {
     transform: translateY(-2px);
     box-shadow: 0 8px 0 rgba(0, 0, 0, 0.3), 0 6px 16px rgba(0, 0, 0, 0.25);
@@ -530,10 +529,9 @@ body.light-mode .theme-toggle i { color: #f59e0b !important; }
 .dept-card[data-dept="SLITTER"] .dept-oval { background: linear-gradient(145deg, #4f46e5, #4338ca); }
 .dept-card[data-dept="UTILITY"] .dept-oval { background: linear-gradient(145deg, #dc2626, #b91c1c); }
 
-/* ========== CONTENT & CARDS - WITH GLOWING BORDERS ========== */
+/* ========== CONTENT & CARDS - GLOWING BORDERS ========== */
 .content { display: flex; flex-direction: column; gap: 8px; }
 
-/* Base card style */
 .card {
     background: rgba(12,28,48,0.92);
     backdrop-filter: blur(14px);
@@ -549,7 +547,6 @@ body.light-mode .theme-toggle i { color: #f59e0b !important; }
     min-height: 36px !important;
     height: auto !important;
     line-height: 1;
-    /* Glowing outer border */
     box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.4),
                 0 0 0 2px rgba(59, 130, 246, 0.2),
                 0 4px 8px rgba(0, 0, 0, 0.2) !important;
@@ -570,30 +567,19 @@ body.light-mode .card { background: rgba(255,255,255,0.96); }
 
 .card:hover::before { opacity: 1; }
 
-/* Stronger glow on hover */
-.card:hover,
-.card.glow-folder:hover,
-.note-card:hover,
-.pdf-card:hover {
+.card:hover {
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.7),
                 0 0 8px 2px rgba(59, 130, 246, 0.5),
                 0 6px 12px rgba(0, 0, 0, 0.3) !important;
 }
 
-/* Light mode glow */
-body.light-mode .card,
-body.light-mode .card.glow-folder,
-body.light-mode .note-card,
-body.light-mode .pdf-card {
+body.light-mode .card {
     box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15),
                 0 0 0 2px rgba(59, 130, 246, 0.2),
                 0 2px 6px rgba(0, 0, 0, 0.1) !important;
 }
 
-body.light-mode .card:hover,
-body.light-mode .card.glow-folder:hover,
-body.light-mode .note-card:hover,
-body.light-mode .pdf-card:hover {
+body.light-mode .card:hover {
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5),
                 0 0 6px 1px rgba(59, 130, 246, 0.4),
                 0 4px 10px rgba(0, 0, 0, 0.15) !important;
@@ -626,7 +612,7 @@ body.light-mode .pdf-card:hover {
     line-height: 1.2;
 }
 
-/* ========== RENAME/DELETE BUTTONS – ALWAYS VISIBLE ========== */
+/* ========== RENAME/DELETE BUTTONS ========== */
 .card-buttons {
     display: flex !important;
     gap: 8px !important;
@@ -662,12 +648,7 @@ body.light-mode .pdf-card:hover {
     color: #fda4af !important;
 }
 
-/* Folder and note specific card styles */
-.card.glow-folder {
-    border-radius: 60px !important;
-}
-
-.note-card {
+.card.glow-folder, .note-card {
     border-radius: 60px !important;
 }
 
@@ -811,8 +792,8 @@ body.light-mode .action-btn {
 
 .hidden { display: none !important; }
 
-/* ========== 3D DEPTH TOUCH EFFECTS ========== */
-button, .dept-card, .card, .action-btn, .breadcrumb-item, .type-btn, .theme-toggle, #backBtn, #uploadBtn, #newNoteBtn, .clear-search, .modal-footer button, .modal-close, .rename-file-btn, .delete-file-btn, .rename-note-btn, .delete-note-btn {
+/* ========== 3D DEPTH TOUCH EFFECTS (excluding dept-card) ========== */
+button, .card, .action-btn, .breadcrumb-item, .type-btn, .theme-toggle, #backBtn, #uploadBtn, #newNoteBtn, .clear-search, .modal-footer button, .modal-close, .rename-file-btn, .delete-file-btn, .rename-note-btn, .delete-note-btn {
     position: relative;
     overflow: hidden;
     -webkit-tap-highlight-color: transparent;
@@ -829,7 +810,6 @@ button, .dept-card, .card, .action-btn, .breadcrumb-item, .type-btn, .theme-togg
     transition: all 0.04s cubic-bezier(0.2, 0.9, 0.4, 1.2) !important;
 }
 
-/* Card 3D */
 .card {
     transform: translateY(0px);
     box-shadow: 0 4px 0 rgba(0, 0, 0, 0.25), 0 3px 10px rgba(0, 0, 0, 0.15) !important;
@@ -840,7 +820,6 @@ button, .dept-card, .card, .action-btn, .breadcrumb-item, .type-btn, .theme-togg
     box-shadow: 0 1px 0 rgba(0, 0, 0, 0.25), 0 1px 4px rgba(0, 0, 0, 0.1) !important;
 }
 
-/* Upload buttons */
 #uploadBtn, #newNoteBtn {
     transform: translateY(0px);
     box-shadow: 0 6px 0 rgba(0, 0, 0, 0.3), 0 5px 15px rgba(0, 0, 0, 0.2) !important;
