@@ -1,5 +1,6 @@
 /* ============================================
-   OARCEL Document Manager - STRONG 3D OVAL PRESS
+   OARCEL Document Manager - STRONG 3D OVAL PRESS ONLY
+   (Whole card static, oval moves with thick shadow)
    ============================================ */
 
 * {
@@ -451,7 +452,7 @@ body.light-mode .theme-toggle i { color: #f59e0b !important; }
 
 .departments-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
 
-/* Card container - no visual press, just clickable */
+/* Card container - absolutely no transform or shadow */
 .dept-card {
     display: flex;
     align-items: center;
@@ -460,10 +461,10 @@ body.light-mode .theme-toggle i { color: #f59e0b !important; }
     padding: 6px;
     border-radius: var(--radius-lg);
     position: relative;
-    /* No transform on container */
+    /* No transition, no transform, no press effect here */
 }
 
-/* The oval (pill) - thick 3D raised button */
+/* The oval - thick raised button */
 .dept-oval {
     padding: 12px 28px;
     border-radius: var(--radius-full);
@@ -476,26 +477,26 @@ body.light-mode .theme-toggle i { color: #f59e0b !important; }
     overflow: hidden;
     transition: transform 0.06s cubic-bezier(0.2, 0.9, 0.4, 1.2), box-shadow 0.06s cubic-bezier(0.2, 0.9, 0.4, 1.2);
     transform: translateY(0);
-    /* Strong 3D shadow - thick bottom edge */
-    box-shadow: 0 8px 0 rgba(0, 0, 0, 0.4), 0 6px 12px rgba(0, 0, 0, 0.3);
+    /* Massive 3D bottom shadow */
+    box-shadow: 0 10px 0 rgba(0, 0, 0, 0.4), 0 6px 12px rgba(0, 0, 0, 0.3);
     will-change: transform;
     background-size: 100% 100%;
 }
 
-/* Press effect - sinks down with reduced shadow */
+/* Press effect - sink down dramatically */
 .dept-card:active .dept-oval {
-    transform: translateY(5px) !important;
+    transform: translateY(6px) !important;
     box-shadow: 0 2px 0 rgba(0, 0, 0, 0.4), 0 3px 8px rgba(0, 0, 0, 0.2) !important;
     transition: transform 0.04s, box-shadow 0.04s;
 }
 
-/* Hover effect - lifts slightly */
+/* Hover effect - lift slightly */
 .dept-card:hover .dept-oval {
     transform: translateY(-2px);
-    box-shadow: 0 10px 0 rgba(0, 0, 0, 0.4), 0 8px 16px rgba(0, 0, 0, 0.35);
+    box-shadow: 0 12px 0 rgba(0, 0, 0, 0.4), 0 8px 16px rgba(0, 0, 0, 0.35);
 }
 
-/* Inner shine for extra depth */
+/* Inner glossy shine */
 .dept-oval::before {
     content: '';
     position: absolute;
