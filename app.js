@@ -484,7 +484,7 @@ function pressHandler(e){
     addDepthEffect(this,e);
 }
 function attachPressEffects(){
-    // IMPORTANT: Removed .dept-card from selector list so that JS does NOT add press effect to department cards
+    // Exclude .dept-card entirely
     const selectors = ['#backBtn','.type-btn','.theme-toggle','#uploadBtn','#newNoteBtn','.action-btn','.rename-file-btn','.delete-file-btn','.rename-note-btn','.delete-note-btn','.clear-search','.modal-close','.modal-footer button','.breadcrumb-item','.card'];
     document.querySelectorAll(selectors.join(',')).forEach(el=>{
         el.removeEventListener('click', pressHandler);
