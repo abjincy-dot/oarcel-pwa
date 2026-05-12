@@ -1,5 +1,6 @@
 /* ============================================
-   OARCEL Document Manager - FINAL CSS WITH RELIABLE 3D OVAL PRESS
+   OARCEL Document Manager - FINAL CSS
+   (white glow + icon-only buttons)
    ============================================ */
 
 * {
@@ -435,7 +436,7 @@ body.light-mode .theme-toggle i { color: #f59e0b !important; }
 
 .breadcrumb-item:first-child { color: #3b82f6; }
 
-/* ========== DEPARTMENTS - CSS-ONLY 3D PRESS (FIXED) ========== */
+/* ========== DEPARTMENTS - CSS-ONLY 3D PRESS ========== */
 .section-title {
     font-size: 0.85rem;
     font-weight: 700;
@@ -461,7 +462,6 @@ body.light-mode .theme-toggle i { color: #f59e0b !important; }
     position: relative;
 }
 
-/* The oval - thick 3D button */
 .dept-oval {
     padding: 12px 28px;
     border-radius: var(--radius-full);
@@ -476,23 +476,19 @@ body.light-mode .theme-toggle i { color: #f59e0b !important; }
     transform: translateY(0);
     box-shadow: 0 10px 0 rgba(0, 0, 0, 0.4), 0 6px 12px rgba(0, 0, 0, 0.3);
     will-change: transform;
-    background-size: 100% 100%;
 }
 
-/* Press effect - CSS :active, works every time */
 .dept-oval:active {
     transform: translateY(6px) !important;
     box-shadow: 0 2px 0 rgba(0, 0, 0, 0.4), 0 3px 8px rgba(0, 0, 0, 0.2) !important;
     transition: transform 0.04s, box-shadow 0.04s;
 }
 
-/* Hover effect (desktop) */
 .dept-card:hover .dept-oval {
     transform: translateY(-2px);
     box-shadow: 0 12px 0 rgba(0, 0, 0, 0.4), 0 8px 16px rgba(0, 0, 0, 0.35);
 }
 
-/* Inner glossy shine */
 .dept-oval::before {
     content: '';
     position: absolute;
@@ -609,28 +605,32 @@ body.light-mode .card:hover {
     line-height: 1.2;
 }
 
-/* ========== RENAME/DELETE BUTTONS ========== */
+/* ========== ICON-ONLY BUTTONS (compact) ========== */
 .card-buttons {
     display: flex !important;
-    gap: 8px !important;
+    gap: 4px !important;
     flex-shrink: 0 !important;
     margin-left: 8px !important;
-    visibility: visible !important;
-    opacity: 1 !important;
 }
 
 .card-buttons button {
-    padding: 4px 10px !important;
-    font-size: 0.7rem !important;
+    padding: 4px 8px !important;
+    font-size: 0.8rem !important;
     border-radius: 40px !important;
-    white-space: nowrap !important;
+    min-width: 30px;
+    width: 30px;
+    height: 30px;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
     cursor: pointer !important;
-    font-weight: 600 !important;
     transition: all 0.2s ease !important;
     border: none !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    gap: 4px !important;
+}
+
+.card-buttons button i {
+    margin: 0;
+    font-size: 0.85rem;
 }
 
 .rename-file-btn, .rename-note-btn {
@@ -645,8 +645,42 @@ body.light-mode .card:hover {
     color: #fda4af !important;
 }
 
+/* Folder cards styling */
 .card.glow-folder, .note-card {
     border-radius: 60px !important;
+}
+
+/* ========== WHITE GLOW FOR FURNACE, DATA LOGS, PDF & NOTE CARDS ========== */
+.card.glow-folder,
+.pdf-card,
+.note-card {
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4),
+                0 0 8px 2px rgba(255, 255, 255, 0.3),
+                0 4px 8px rgba(0, 0, 0, 0.2) !important;
+}
+
+.card.glow-folder:hover,
+.pdf-card:hover,
+.note-card:hover {
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.6),
+                0 0 15px 4px rgba(255, 255, 255, 0.4),
+                0 6px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+body.light-mode .card.glow-folder,
+body.light-mode .pdf-card,
+body.light-mode .note-card {
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8),
+                0 0 8px 2px rgba(255, 255, 255, 0.5),
+                0 2px 6px rgba(0, 0, 0, 0.1) !important;
+}
+
+body.light-mode .card.glow-folder:hover,
+body.light-mode .pdf-card:hover,
+body.light-mode .note-card:hover {
+    box-shadow: 0 0 0 3px white,
+                0 0 15px 4px rgba(255, 255, 255, 0.7),
+                0 4px 10px rgba(0, 0, 0, 0.15) !important;
 }
 
 /* ========== ACTION BAR ========== */
@@ -789,7 +823,7 @@ body.light-mode .action-btn {
 
 .hidden { display: none !important; }
 
-/* ========== 3D DEPTH EFFECTS FOR OTHER ELEMENTS ========== */
+/* ========== 3D DEPTH EFFECTS ========== */
 button, .card, .action-btn, .breadcrumb-item, .type-btn, .theme-toggle, #backBtn, #uploadBtn, #newNoteBtn, .clear-search, .modal-footer button, .modal-close, .rename-file-btn, .delete-file-btn, .rename-note-btn, .delete-note-btn {
     position: relative;
     overflow: hidden;
@@ -868,7 +902,8 @@ button, .card, .action-btn, .breadcrumb-item, .type-btn, .theme-toggle, #backBtn
     .card { flex-wrap: wrap !important; height: auto !important; padding: 8px 12px !important; }
     .card-filename { white-space: normal !important; word-break: break-word; margin-right: 8px; }
     .card-buttons { width: 100% !important; justify-content: flex-start !important; margin-top: 6px !important; margin-left: 0 !important; }
-    .card-buttons button { padding: 4px 8px !important; font-size: 0.65rem !important; }
+    .card-buttons button { width: 32px; height: 32px; padding: 0 !important; }
+    .card-buttons button i { font-size: 0.9rem; }
     #uploadBtn, #newNoteBtn { padding: 10px !important; width: 48px !important; height: 48px !important; border-radius: 50% !important; justify-content: center !important; }
     #uploadBtn span, #newNoteBtn span { display: none !important; }
     .stats-bar { gap: 4px; padding: 10px 12px; }
@@ -880,46 +915,4 @@ button, .card, .action-btn, .breadcrumb-item, .type-btn, .theme-toggle, #backBtn
 @media (max-width: 380px) {
     .card-buttons { flex-direction: column; gap: 4px; }
     .dept-info { display: none; }
-}
-/* ========== THIN WHITE GLOW LINE FOR SPECIFIC CARDS ========== */
-/* Applies to: Furnace folders, Data Logs folders, PDF cards, Note cards */
-/* ========== ADDITIONAL WHITE GLOW FOR FURNACE FOLDERS, DATA LOGS, PDF & NOTE CARDS ========== */
-/* This adds a thin white outer glow without removing the existing blue glow */
-
-.card.glow-folder,
-.pdf-card,
-.note-card {
-    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.4),
-                0 0 0 2px rgba(59, 130, 246, 0.2),
-                0 0 0 3px rgba(255, 255, 255, 0.3),
-                0 4px 8px rgba(0, 0, 0, 0.2) !important;
-}
-
-/* On hover, increase the white glow */
-.card.glow-folder:hover,
-.pdf-card:hover,
-.note-card:hover {
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.7),
-                0 0 0 3px rgba(59, 130, 246, 0.5),
-                0 0 0 5px rgba(255, 255, 255, 0.5),
-                0 6px 12px rgba(0, 0, 0, 0.3) !important;
-}
-
-/* Light mode version */
-body.light-mode .card.glow-folder,
-body.light-mode .pdf-card,
-body.light-mode .note-card {
-    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15),
-                0 0 0 2px rgba(59, 130, 246, 0.2),
-                0 0 0 3px rgba(255, 255, 255, 0.7),
-                0 2px 6px rgba(0, 0, 0, 0.1) !important;
-}
-
-body.light-mode .card.glow-folder:hover,
-body.light-mode .pdf-card:hover,
-body.light-mode .note-card:hover {
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5),
-                0 0 0 3px rgba(59, 130, 246, 0.4),
-                0 0 0 5px rgba(255, 255, 255, 0.9),
-                0 4px 10px rgba(0, 0, 0, 0.15) !important;
 }
