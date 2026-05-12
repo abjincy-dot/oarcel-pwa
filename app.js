@@ -10,7 +10,6 @@ let isSearchMode = false;
 let currentActiveTab = 'pdfs';
 let editingNoteId = null;
 
-// ==================== HELPER FUNCTIONS ====================
 function showToast(msg, isErr = false) {
     const toast = document.getElementById('toast');
     toast.querySelector('span').textContent = msg;
@@ -22,7 +21,6 @@ function showToast(msg, isErr = false) {
 
 function escapeHtml(str) { const div = document.createElement('div'); div.textContent = str; return div.innerHTML; }
 
-// ==================== PDF VIEWER ====================
 function openPDF(dataUrl, fileName) {
     showToast(`Opening ${fileName}...`);
     fetch(dataUrl).then(r=>r.blob()).then(blob=>{
@@ -33,62 +31,6 @@ function openPDF(dataUrl, fileName) {
     }).catch(err=>showToast(`Failed: ${err.message}`,true));
 }
 
-// ==================== NOTE FUNCTIONS ====================
-function getNotesForCurrentFolder() { return allNotes[currentPath.join('/')] || []; }
-
-async function addNoteToCurrentFolder(title, content) {
-    const folderPath = currentPath.join('/');
-    if(!allNotes[folderPath]) allNotes[folderPath] = [];
-    const note = {
-        id: Date.now()+'-'+Math.random().toString(36).substr(2,6),
-        title: title.trim(),
-        content: content.trim(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-    };
-    allNotes[folderPath].push(note);
-    await saveAllNotesToDB();
-    render();
-    showToast(`✅ Note "${title}" created`);
-}
-
-async function updateNote(folderPath, noteId, title, content) {
-    const idx = allNotes[folderPath]?.findIndex(n=>n.id===noteId);
-    if(idx!==-1){
-        allNotes[folderPath][idx].title = title.trim();
-        allNotes[folderPath][idx].content = content.trim();
-        allNotes[folderPath][idx].updatedAt = new Date().toISOString();
-        await saveAllNotesToDB();
-        render();
-        showToast(`✅ Note updated`);
-        return true;
-    }
-    return false;
-}
-
-async function renameNote(folderPath, noteId, newTitle) {
-    if(!newTitle?.trim()) return showToast("Title empty",true);
-    const idx = allNotes[folderPath]?.findIndex(n=>n.id===noteId);
-    if(idx!==-1){
-        allNotes[folderPath][idx].title = newTitle.trim();
-        allNotes[folderPath][idx].updatedAt = new Date().toISOString();
-        await saveAllNotesToDB();
-        render();
-        showToast(`✅ Note renamed to "${newTitle.trim()}"`);
-    }
-}
-
-async function deleteNoteFromFolder(folderPath, noteId) {
-    if(allNotes[folderPath]){
-        const note = allNotes[folderPath].find(n=>n.id===noteId);
-        allNotes[folderPath] = allNotes[folderPath].filter(n=>n.id!==noteId);
-        if(!allNotes[folderPath].length) delete allNotes[folderPath];
-        await saveAllNotesToDB();
-        render();
-        showToast(`🗑️ Note "${note?.title}" deleted`);
-    }
-}
-
 async function saveAllNotesToDB() {
     const tx = db.transaction('notes','readwrite');
     const store = tx.objectStore('notes');
@@ -96,42 +38,6 @@ async function saveAllNotesToDB() {
     for(const folderPath in allNotes) if(allNotes[folderPath]?.length) store.put({id:folderPath, folderPath, notes:allNotes[folderPath]});
     tx.commit();
 }
-
-// ==================== FILE FUNCTIONS ====================
-async function addFileToCurrentFolder(file) {
-    const folderPath = currentPath.join('/');
-    if(!allFiles[folderPath]) allFiles[folderPath] = [];
-    const base64 = await new Promise(r=>{const rd=new FileReader(); rd.onload=e=>r(e.target.result); rd.readAsDataURL(file);});
-    allFiles[folderPath].push({name:file.name, dataUrl:base64});
-    await saveAllFilesToDB();
-}
-
-function deleteFileFromFolder(folderPath, fileName) {
-    if(confirm(`Delete PDF "${fileName}"?`)){
-        if(allFiles[folderPath]){
-            allFiles[folderPath] = allFiles[folderPath].filter(f=>f.name!==fileName);
-            if(!allFiles[folderPath].length) delete allFiles[folderPath];
-            saveAllFilesToDB();
-            render();
-            showToast(`✅ Deleted "${fileName}"`);
-        }
-    }
-}
-
-function renameFileInFolder(folderPath, oldName, newName){
-    if(!newName?.trim()) return showToast("Name empty",true);
-    if(allFiles[folderPath]){
-        const idx = allFiles[folderPath].findIndex(f=>f.name===oldName);
-        if(idx!==-1){
-            if(!newName.toLowerCase().endsWith('.pdf')) newName += '.pdf';
-            allFiles[folderPath][idx].name = newName;
-            saveAllFilesToDB();
-            render();
-            showToast(`✅ Renamed to "${newName}"`);
-        }
-    }
-}
-
 async function saveAllFilesToDB() {
     const tx = db.transaction('files','readwrite');
     const store = tx.objectStore('files');
@@ -139,8 +45,10 @@ async function saveAllFilesToDB() {
     for(const folderPath in allFiles) if(allFiles[folderPath]?.length) store.put({id:folderPath, folderPath, files:allFiles[folderPath]});
     tx.commit();
 }
+function saveFolderStructure() {
+    db.transaction('folderStructure','readwrite').objectStore('folderStructure').put({key:'structure', value:fileSystem});
+}
 
-// ==================== INDEXEDDB SETUP ====================
 function initDB() {
     return new Promise((resolve,reject)=>{
         const req = indexedDB.open(DB_NAME,DB_VERSION);
@@ -153,10 +61,6 @@ function initDB() {
             if(!db2.objectStoreNames.contains('notes')) db2.createObjectStore('notes',{keyPath:'id'});
         };
     });
-}
-
-function saveFolderStructure() {
-    db.transaction('folderStructure','readwrite').objectStore('folderStructure').put({key:'structure', value:fileSystem});
 }
 
 function createFurnaceDataLogs() {
@@ -200,7 +104,98 @@ async function loadFromIndexedDB() {
     };
 }
 
-// ==================== CARD CREATION (WITH BUTTONS) ====================
+function getCurrentFolderObject() { return currentPath.reduce((o,p)=>o?.[p], fileSystem); }
+function getFilesForCurrentFolder() { return allFiles[currentPath.join('/')] || []; }
+function getNotesForCurrentFolder() { return allNotes[currentPath.join('/')] || []; }
+
+async function addFileToCurrentFolder(file) {
+    const folderPath = currentPath.join('/');
+    if(!allFiles[folderPath]) allFiles[folderPath] = [];
+    const base64 = await new Promise(r=>{const rd=new FileReader(); rd.onload=e=>r(e.target.result); rd.readAsDataURL(file);});
+    allFiles[folderPath].push({name:file.name, dataUrl:base64});
+    await saveAllFilesToDB();
+}
+function deleteFileFromFolder(folderPath, fileName) {
+    if(confirm(`Delete PDF "${fileName}"?`)){
+        if(allFiles[folderPath]){
+            allFiles[folderPath] = allFiles[folderPath].filter(f=>f.name!==fileName);
+            if(!allFiles[folderPath].length) delete allFiles[folderPath];
+            saveAllFilesToDB();
+            render();
+            showToast(`✅ Deleted "${fileName}"`);
+        }
+    }
+}
+function renameFileInFolder(folderPath, oldName, newName){
+    if(!newName?.trim()) return showToast("Name empty",true);
+    if(allFiles[folderPath]){
+        const idx = allFiles[folderPath].findIndex(f=>f.name===oldName);
+        if(idx!==-1){
+            if(!newName.toLowerCase().endsWith('.pdf')) newName += '.pdf';
+            allFiles[folderPath][idx].name = newName;
+            saveAllFilesToDB();
+            render();
+            showToast(`✅ Renamed to "${newName}"`);
+        }
+    }
+}
+async function addNoteToCurrentFolder(title, content){
+    const folderPath = currentPath.join('/');
+    if(!allNotes[folderPath]) allNotes[folderPath]=[];
+    const note = { id: Date.now()+'-'+Math.random().toString(36).substr(2,6), title:title.trim(), content:content.trim(), createdAt:new Date().toISOString(), updatedAt:new Date().toISOString() };
+    allNotes[folderPath].push(note);
+    await saveAllNotesToDB();
+    render();
+    showToast(`✅ Note "${title}" created`);
+}
+async function updateNote(folderPath, noteId, title, content){
+    const idx = allNotes[folderPath]?.findIndex(n=>n.id===noteId);
+    if(idx!==-1){
+        allNotes[folderPath][idx].title = title.trim();
+        allNotes[folderPath][idx].content = content.trim();
+        allNotes[folderPath][idx].updatedAt = new Date().toISOString();
+        await saveAllNotesToDB();
+        render();
+        showToast(`✅ Note updated`);
+        return true;
+    }
+    return false;
+}
+async function renameNote(folderPath, noteId, newTitle){
+    if(!newTitle?.trim()) return showToast("Title empty",true);
+    const idx = allNotes[folderPath]?.findIndex(n=>n.id===noteId);
+    if(idx!==-1){
+        allNotes[folderPath][idx].title = newTitle.trim();
+        allNotes[folderPath][idx].updatedAt = new Date().toISOString();
+        await saveAllNotesToDB();
+        render();
+        showToast(`✅ Note renamed to "${newTitle.trim()}"`);
+    }
+}
+async function deleteNoteFromFolder(folderPath, noteId){
+    if(allNotes[folderPath]){
+        const note = allNotes[folderPath].find(n=>n.id===noteId);
+        allNotes[folderPath] = allNotes[folderPath].filter(n=>n.id!==noteId);
+        if(!allNotes[folderPath].length) delete allNotes[folderPath];
+        await saveAllNotesToDB();
+        render();
+        showToast(`🗑️ Note "${note?.title}" deleted`);
+    }
+}
+function openNote(note){
+    const modal = document.getElementById('noteModal');
+    document.getElementById('noteModalTitle').textContent = `📝 ${note.title}`;
+    document.getElementById('noteTitle').value = note.title;
+    document.getElementById('noteContent').value = note.content;
+    editingNoteId = note.id;
+    document.getElementById('saveNoteBtn').onclick = async ()=>{
+        const newTitle = document.getElementById('noteTitle').value;
+        const newContent = document.getElementById('noteContent').value;
+        if(newTitle.trim()){ await updateNote(note.folder, note.id, newTitle, newContent); closeNoteModal(); }
+        else showToast("Title empty",true);
+    };
+    modal.classList.add('show');
+}
 function createPdfCard(file, folderPath){
     const div = document.createElement('div');
     div.className = 'card pdf-card';
@@ -227,7 +222,6 @@ function createPdfCard(file, folderPath){
     });
     return div;
 }
-
 function createNoteCard(note, folderPath){
     const div = document.createElement('div');
     div.className = 'card note-card';
@@ -254,7 +248,6 @@ function createNoteCard(note, folderPath){
     });
     return div;
 }
-
 function createCard(title, onClick, isFolder=false){
     const div = document.createElement('div');
     div.className = isFolder ? 'card glow-folder' : 'card';
@@ -262,12 +255,9 @@ function createCard(title, onClick, isFolder=false){
     div.onclick = onClick;
     return div;
 }
-
-// ==================== RENDER ENGINE ====================
-function render() {
+function render(){
     const query = document.getElementById('searchInput').value.trim().toLowerCase();
     if(query){
-        // Search mode
         isSearchMode=true;
         document.getElementById('clearSearchBtn').classList.remove('hidden');
         const results=[];
@@ -289,19 +279,16 @@ function render() {
         attachPressEffects();
         return;
     }
-    
     isSearchMode=false;
     document.getElementById('clearSearchBtn').classList.add('hidden');
     document.getElementById('searchInfo').classList.add('hidden');
     document.getElementById('content').innerHTML = '';
     const folder = getCurrentFolderObject();
     if(!folder){ currentPath=[]; render(); return; }
-    
     document.getElementById('backBtn').classList.toggle('hidden', currentPath.length===0);
     const bcDiv = document.getElementById('breadcrumb');
     bcDiv.innerHTML = `<div class="breadcrumb-item" onclick="navigateToBreadcrumb(-1)"><i class="fas fa-home"></i> Home</div>`;
     currentPath.forEach((f,i)=>{ bcDiv.innerHTML += `<span class="breadcrumb-separator">/</span><div class="breadcrumb-item" onclick="navigateToBreadcrumb(${i})">${escapeHtml(f)}</div>`; });
-    
     const isRoot = currentPath.length===0;
     if(isRoot){
         let html = '<div class="section-title"><i class="fas fa-building"></i> Departments</div><div class="departments-grid">';
@@ -316,17 +303,14 @@ function render() {
         document.getElementById('uploadBtn').classList.add('hidden');
         document.getElementById('newNoteBtn').classList.add('hidden');
     } else document.getElementById('departmentsSection').innerHTML = '';
-    
     const hasSubfolders = Object.keys(folder).length>0;
     const isLeafFolder = !isRoot && !hasSubfolders;
     const typeSelector = document.querySelector('.type-selector');
     if(typeSelector) typeSelector.style.display = isLeafFolder ? 'flex' : 'none';
-    
     if(isLeafFolder){
         if(currentActiveTab==='pdfs'){ document.getElementById('uploadBtn').classList.remove('hidden'); document.getElementById('newNoteBtn').classList.add('hidden'); }
         else { document.getElementById('uploadBtn').classList.add('hidden'); document.getElementById('newNoteBtn').classList.remove('hidden'); }
     } else { document.getElementById('uploadBtn').classList.add('hidden'); document.getElementById('newNoteBtn').classList.add('hidden'); }
-    
     const actionDiv = document.createElement('div');
     actionDiv.className = 'action-bar';
     if(!isRoot){
@@ -335,11 +319,9 @@ function render() {
                                <button class="action-btn" onclick="addNewFolder()"><i class="fas fa-plus"></i> Add Subfolder</button>`;
     } else actionDiv.innerHTML = `<button class="action-btn" onclick="addNewDepartment()"><i class="fas fa-building"></i> Add Department</button>`;
     document.getElementById('content').appendChild(actionDiv);
-    
     if(!isRoot && hasSubfolders){
         for(let key in folder) document.getElementById('content').appendChild(createCard(key, ()=>{ currentPath.push(key); render(); }, true));
     }
-    
     if(isLeafFolder){
         if(currentActiveTab==='pdfs'){
             const files = getFilesForCurrentFolder();
@@ -356,9 +338,6 @@ function render() {
     updateStats();
     attachPressEffects();
 }
-
-function getCurrentFolderObject() { return currentPath.reduce((o,p)=>o?.[p], fileSystem); }
-function getFilesForCurrentFolder() { return allFiles[currentPath.join('/')] || []; }
 function selectDepartment(d){ currentPath=[d]; render(); }
 function goBack(){ if(currentPath.length && !isSearchMode){ currentPath.pop(); render(); } else if(isSearchMode) clearSearch(); }
 function triggerUpload(){ document.getElementById('fileInput').click(); }
@@ -431,21 +410,16 @@ function updateStats(){
     document.getElementById('fileCount').textContent = fileCount;
     document.getElementById('notesCount').textContent = notesCount;
 }
-function openNote(note){
-    const modal = document.getElementById('noteModal');
-    document.getElementById('noteModalTitle').textContent = `📝 ${note.title}`;
-    document.getElementById('noteTitle').value = note.title;
-    document.getElementById('noteContent').value = note.content;
-    editingNoteId = note.id;
-    document.getElementById('saveNoteBtn').onclick = async ()=>{
-        const newTitle = document.getElementById('noteTitle').value;
-        const newContent = document.getElementById('noteContent').value;
-        if(newTitle.trim()){ await updateNote(note.folder, note.id, newTitle, newContent); closeNoteModal(); }
-        else showToast("Title empty",true);
-    };
-    modal.classList.add('show');
+function setActiveTab(tab){
+    currentActiveTab = tab;
+    const pdfBtn = document.getElementById('pdfTabBtn');
+    const notesBtn = document.getElementById('notesTabBtn');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const newNoteBtn = document.getElementById('newNoteBtn');
+    if(tab==='pdfs'){ pdfBtn.classList.add('active'); notesBtn.classList.remove('active'); uploadBtn.classList.remove('hidden'); newNoteBtn.classList.add('hidden'); }
+    else { pdfBtn.classList.remove('active'); notesBtn.classList.add('active'); uploadBtn.classList.add('hidden'); newNoteBtn.classList.remove('hidden'); }
+    render();
 }
-function closeNoteModal(){ document.getElementById('noteModal').classList.remove('show'); editingNoteId = null; }
 function openNewNoteModal(){
     editingNoteId = null;
     document.getElementById('noteModalTitle').textContent = 'New Note';
@@ -459,21 +433,12 @@ function openNewNoteModal(){
     };
     document.getElementById('noteModal').classList.add('show');
 }
+function closeNoteModal(){ document.getElementById('noteModal').classList.remove('show'); editingNoteId = null; }
 function toggleTheme(){ document.body.classList.toggle('light-mode'); localStorage.setItem('oarcel_theme', document.body.classList.contains('light-mode') ? 'light-mode' : ''); updateThemeIcon(); }
 function updateThemeIcon(){
     const isDark = !document.body.classList.contains('light-mode');
     const themeBtn = document.getElementById('themeToggle');
     if(themeBtn) themeBtn.innerHTML = `<div class="theme-icon-wrapper"><i class="fas ${isDark ? 'fa-sun' : 'fa-moon'}"></i></div>`;
-}
-function setActiveTab(tab){
-    currentActiveTab = tab;
-    const pdfBtn = document.getElementById('pdfTabBtn');
-    const notesBtn = document.getElementById('notesTabBtn');
-    const uploadBtn = document.getElementById('uploadBtn');
-    const newNoteBtn = document.getElementById('newNoteBtn');
-    if(tab==='pdfs'){ pdfBtn.classList.add('active'); notesBtn.classList.remove('active'); uploadBtn.classList.remove('hidden'); newNoteBtn.classList.add('hidden'); }
-    else { pdfBtn.classList.remove('active'); notesBtn.classList.add('active'); uploadBtn.classList.add('hidden'); newNoteBtn.classList.remove('hidden'); }
-    render();
 }
 function addDepthEffect(element, event){
     if(!element || element.hasAttribute('data-press-animating')) return;
@@ -519,7 +484,8 @@ function pressHandler(e){
     addDepthEffect(this,e);
 }
 function attachPressEffects(){
-    const selectors = ['#backBtn','.type-btn','.theme-toggle','#uploadBtn','#newNoteBtn','.action-btn','.rename-file-btn','.delete-file-btn','.rename-note-btn','.delete-note-btn','.clear-search','.modal-close','.modal-footer button','.breadcrumb-item','.dept-card','.card'];
+    // IMPORTANT: Removed .dept-card from selector list so that JS does NOT add press effect to department cards
+    const selectors = ['#backBtn','.type-btn','.theme-toggle','#uploadBtn','#newNoteBtn','.action-btn','.rename-file-btn','.delete-file-btn','.rename-note-btn','.delete-note-btn','.clear-search','.modal-close','.modal-footer button','.breadcrumb-item','.card'];
     document.querySelectorAll(selectors.join(',')).forEach(el=>{
         el.removeEventListener('click', pressHandler);
         el.removeEventListener('touchstart', pressHandler);
@@ -529,7 +495,6 @@ function attachPressEffects(){
         if(window.getComputedStyle(el).cursor==='auto') el.style.cursor='pointer';
     });
 }
-// Global exports
 window.selectDepartment = selectDepartment;
 window.goBack = goBack;
 window.triggerUpload = triggerUpload;
