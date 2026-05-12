@@ -917,3 +917,18 @@ body.light-mode .note-card:hover {
                 0 0 12px 2px rgba(255, 255, 255, 0.6),
                 0 4px 8px rgba(0, 0, 0, 0.15) !important;
 }
+.card.glow-folder,
+.pdf-card,
+.note-card {
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4),
+                0 0 8px 2px rgba(255, 255, 255, 0.3),
+                0 4px 8px rgba(0, 0, 0, 0.2) !important;
+}
+
+.card.glow-folder:hover,
+.pdf-card:hover,
+.note-card:hover {
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.6),
+                0 0 15px 4px rgba(255, 255, 255, 0.4),
+                0 6px 12px rgba(0, 0, 0, 0.3) !important;
+}
