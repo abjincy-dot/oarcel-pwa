@@ -911,3 +911,39 @@ body.light-mode .pdf-card:hover {
                 0 0 6px 1px rgba(59, 130, 246, 0.4),
                 0 4px 10px rgba(0, 0, 0, 0.15) !important;
 }
+/* ========== 3D DEPARTMENT CARDS (RAISED BUTTON STYLE) ========== */
+.dept-card {
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.dept-oval {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 0 rgba(0, 0, 0, 0.3), 0 5px 15px rgba(0, 0, 0, 0.2);
+    transition: all 0.08s linear;
+    background-size: 100% 100%;
+}
+
+/* Hover raises a bit more */
+.dept-card:hover .dept-oval {
+    transform: translateY(-4px);
+    box-shadow: 0 14px 0 rgba(0, 0, 0, 0.35), 0 8px 20px rgba(0, 0, 0, 0.25);
+}
+
+/* Active / Click = pressed down 3D effect */
+.dept-card:active .dept-oval {
+    transform: translateY(4px);
+    box-shadow: 0 3px 0 rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Optional: inner glossy shine */
+.dept-oval::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 40%;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.3), transparent);
+    border-radius: 60px 60px 20px 20px;
+    pointer-events: none;
+}
