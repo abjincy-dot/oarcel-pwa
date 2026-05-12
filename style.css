@@ -1,7 +1,6 @@
 /* ============================================
    OARCEL Document Manager - COMPLETE FINAL CSS
-   with Department Card Press (Whole Card)
-   & Glowing Borders
+   Fixed: Only Oval Presses, Not Whole Line
    ============================================ */
 
 * {
@@ -438,7 +437,7 @@ body.light-mode .theme-toggle i { color: #f59e0b !important; }
 
 .breadcrumb-item:first-child { color: #3b82f6; }
 
-/* ========== DEPARTMENTS - 3D WHOLE CARD PRESS ========== */
+/* ========== DEPARTMENTS - ONLY OVAL PRESSES (NOT WHOLE LINE) ========== */
 .section-title {
     font-size: 0.85rem;
     font-weight: 700;
@@ -454,7 +453,7 @@ body.light-mode .theme-toggle i { color: #f59e0b !important; }
 
 .departments-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
 
-/* Department card – whole card presses down */
+/* Card container - clickable but no visual press */
 .dept-card {
     display: flex;
     align-items: center;
@@ -462,25 +461,11 @@ body.light-mode .theme-toggle i { color: #f59e0b !important; }
     cursor: pointer;
     padding: 6px;
     border-radius: var(--radius-lg);
-    transition: transform 0.08s cubic-bezier(0.2, 0.9, 0.4, 1.2), box-shadow 0.08s cubic-bezier(0.2, 0.9, 0.4, 1.2);
-    transform: translateY(0);
-    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.2), 0 2px 8px rgba(0, 0, 0, 0.15);
     position: relative;
+    /* No transform or box-shadow here - only the oval will move */
 }
 
-/* Press effect – whole card goes down */
-.dept-card:active {
-    transform: translateY(4px) !important;
-    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.2), 0 1px 4px rgba(0, 0, 0, 0.1) !important;
-}
-
-/* Hover raises card slightly */
-.dept-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 0 rgba(0, 0, 0, 0.25), 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-/* Inner oval – no separate animation, stays attached to card */
+/* The oval (pill) gets the 3D press effect */
 .dept-oval {
     padding: 12px 28px;
     border-radius: var(--radius-full);
@@ -491,13 +476,27 @@ body.light-mode .theme-toggle i { color: #f59e0b !important; }
     gap: 10px;
     position: relative;
     overflow: hidden;
-    transition: none; /* Prevent individual press */
-    transform: translateY(0) !important;
-    box-shadow: none; /* Shadow is on parent card */
+    transition: transform 0.08s cubic-bezier(0.2, 0.9, 0.4, 1.2), box-shadow 0.08s cubic-bezier(0.2, 0.9, 0.4, 1.2);
+    transform: translateY(0);
+    box-shadow: 0 6px 0 rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.2);
+    will-change: transform;
     background-size: 100% 100%;
 }
 
-/* Optional inner shine */
+/* Press effect on the oval only */
+.dept-card:active .dept-oval {
+    transform: translateY(4px) !important;
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3), 0 2px 6px rgba(0, 0, 0, 0.15) !important;
+    transition: transform 0.04s, box-shadow 0.04s;
+}
+
+/* Hover effect (optional, raises oval slightly) */
+.dept-card:hover .dept-oval {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 0 rgba(0, 0, 0, 0.3), 0 6px 16px rgba(0, 0, 0, 0.25);
+}
+
+/* Inner shine */
 .dept-oval::before {
     content: '';
     position: absolute;
@@ -512,7 +511,6 @@ body.light-mode .theme-toggle i { color: #f59e0b !important; }
 
 .dept-oval span { font-size: 0.85rem; font-weight: 700; color: white; }
 .dept-arrow { color: var(--text-muted); font-size: 0.8rem; margin-left: auto; }
-
 .dept-info {
     font-size: 0.75rem;
     font-weight: 600;
