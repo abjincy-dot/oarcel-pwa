@@ -1,6 +1,5 @@
 /* ============================================
-   OARCEL Document Manager - FINAL CORRECTED CSS
-   Only Department Oval Presses (Whole Card Static)
+   OARCEL Document Manager - STRONG 3D OVAL PRESS
    ============================================ */
 
 * {
@@ -436,7 +435,7 @@ body.light-mode .theme-toggle i { color: #f59e0b !important; }
 
 .breadcrumb-item:first-child { color: #3b82f6; }
 
-/* ========== DEPARTMENTS - ONLY OVAL PRESSES ========== */
+/* ========== DEPARTMENTS - STRONG 3D OVAL PRESS ========== */
 .section-title {
     font-size: 0.85rem;
     font-weight: 700;
@@ -452,7 +451,7 @@ body.light-mode .theme-toggle i { color: #f59e0b !important; }
 
 .departments-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
 
-/* Card container - no visual press */
+/* Card container - no visual press, just clickable */
 .dept-card {
     display: flex;
     align-items: center;
@@ -461,54 +460,55 @@ body.light-mode .theme-toggle i { color: #f59e0b !important; }
     padding: 6px;
     border-radius: var(--radius-lg);
     position: relative;
-    /* No transform or transition here */
+    /* No transform on container */
 }
 
-/* The oval (pill) gets the 3D press effect */
+/* The oval (pill) - thick 3D raised button */
 .dept-oval {
     padding: 12px 28px;
     border-radius: var(--radius-full);
     background: linear-gradient(145deg, #2563eb, #1d4ed8);
-    border: 1px solid rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
     display: flex;
     align-items: center;
     gap: 10px;
     position: relative;
     overflow: hidden;
-    transition: transform 0.08s cubic-bezier(0.2, 0.9, 0.4, 1.2), box-shadow 0.08s cubic-bezier(0.2, 0.9, 0.4, 1.2);
+    transition: transform 0.06s cubic-bezier(0.2, 0.9, 0.4, 1.2), box-shadow 0.06s cubic-bezier(0.2, 0.9, 0.4, 1.2);
     transform: translateY(0);
-    box-shadow: 0 6px 0 rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.2);
+    /* Strong 3D shadow - thick bottom edge */
+    box-shadow: 0 8px 0 rgba(0, 0, 0, 0.4), 0 6px 12px rgba(0, 0, 0, 0.3);
     will-change: transform;
     background-size: 100% 100%;
 }
 
-/* Press effect on the oval only */
+/* Press effect - sinks down with reduced shadow */
 .dept-card:active .dept-oval {
-    transform: translateY(4px) !important;
-    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3), 0 2px 6px rgba(0, 0, 0, 0.15) !important;
+    transform: translateY(5px) !important;
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.4), 0 3px 8px rgba(0, 0, 0, 0.2) !important;
     transition: transform 0.04s, box-shadow 0.04s;
 }
 
-/* Hover effect (optional, raises oval slightly) - but we disable hover on mobile? Keep it. */
+/* Hover effect - lifts slightly */
 .dept-card:hover .dept-oval {
     transform: translateY(-2px);
-    box-shadow: 0 8px 0 rgba(0, 0, 0, 0.3), 0 6px 16px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 10px 0 rgba(0, 0, 0, 0.4), 0 8px 16px rgba(0, 0, 0, 0.35);
 }
 
-/* Inner shine */
+/* Inner shine for extra depth */
 .dept-oval::before {
     content: '';
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
-    height: 40%;
-    background: linear-gradient(to bottom, rgba(255,255,255,0.25), transparent);
+    height: 45%;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.35), transparent);
     border-radius: 60px 60px 20px 20px;
     pointer-events: none;
 }
 
-.dept-oval span { font-size: 0.85rem; font-weight: 700; color: white; }
+.dept-oval span { font-size: 0.9rem; font-weight: 800; color: white; text-shadow: 0 1px 1px rgba(0,0,0,0.2); }
 .dept-arrow { color: var(--text-muted); font-size: 0.8rem; margin-left: auto; }
 .dept-info {
     font-size: 0.75rem;
