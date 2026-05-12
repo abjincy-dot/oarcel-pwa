@@ -10,7 +10,6 @@ let isSearchMode = false;
 let currentActiveTab = 'pdfs';
 let editingNoteId = null;
 
-// ==================== HELPER FUNCTIONS ====================
 function showToast(msg, isErr = false) {
     const toast = document.getElementById('toast');
     toast.querySelector('span').textContent = msg;
@@ -197,6 +196,8 @@ function openNote(note){
     };
     modal.classList.add('show');
 }
+
+// ========== CARD CREATION WITH ICON-ONLY BUTTONS ==========
 function createPdfCard(file, folderPath){
     const div = document.createElement('div');
     div.className = 'card pdf-card';
@@ -204,8 +205,8 @@ function createPdfCard(file, folderPath){
         <div class="card-icon"><i class="fas fa-file-pdf"></i></div>
         <div class="card-filename" title="${escapeHtml(file.name)}">${escapeHtml(file.name)}</div>
         <div class="card-buttons">
-            <button class="rename-file-btn"><i class="fas fa-edit"></i> Rename</button>
-            <button class="delete-file-btn"><i class="fas fa-trash"></i> Delete</button>
+            <button class="rename-file-btn" title="Rename PDF"><i class="fas fa-edit"></i></button>
+            <button class="delete-file-btn" title="Delete PDF"><i class="fas fa-trash"></i></button>
         </div>
     `;
     div.addEventListener('click', (e)=>{
@@ -223,6 +224,7 @@ function createPdfCard(file, folderPath){
     });
     return div;
 }
+
 function createNoteCard(note, folderPath){
     const div = document.createElement('div');
     div.className = 'card note-card';
@@ -230,8 +232,8 @@ function createNoteCard(note, folderPath){
         <div class="card-icon"><i class="fas fa-sticky-note"></i></div>
         <div class="card-filename" title="${escapeHtml(note.title)}">${escapeHtml(note.title)}</div>
         <div class="card-buttons">
-            <button class="rename-note-btn"><i class="fas fa-edit"></i> Rename</button>
-            <button class="delete-note-btn"><i class="fas fa-trash"></i> Delete</button>
+            <button class="rename-note-btn" title="Rename Note"><i class="fas fa-edit"></i></button>
+            <button class="delete-note-btn" title="Delete Note"><i class="fas fa-trash"></i></button>
         </div>
     `;
     div.addEventListener('click', (e)=>{
@@ -249,6 +251,7 @@ function createNoteCard(note, folderPath){
     });
     return div;
 }
+
 function createCard(title, onClick, isFolder=false){
     const div = document.createElement('div');
     div.className = isFolder ? 'card glow-folder' : 'card';
@@ -256,6 +259,7 @@ function createCard(title, onClick, isFolder=false){
     div.onclick = onClick;
     return div;
 }
+
 function render(){
     const query = document.getElementById('searchInput').value.trim().toLowerCase();
     if(query){
@@ -303,9 +307,7 @@ function render(){
         document.getElementById('departmentsSection').innerHTML = html;
         document.getElementById('uploadBtn').classList.add('hidden');
         document.getElementById('newNoteBtn').classList.add('hidden');
-        
-        // Attach manual 3D press handlers to department ovals (fix for inconsistent :active)
-        attachDepartmentPressEffects();
+        attachDepartmentPressEffects(); // Ensure touch works
     } else document.getElementById('departmentsSection').innerHTML = '';
     
     const hasSubfolders = Object.keys(folder).length>0;
@@ -344,40 +346,11 @@ function render(){
     attachPressEffects();
 }
 
-// ========== MANUAL 3D PRESS FOR DEPARTMENT OVALS (FIXES "WORKS ONCE" ISSUE) ==========
 function attachDepartmentPressEffects() {
-    const ovals = document.querySelectorAll('.dept-oval');
-    ovals.forEach(oval => {
-        // Remove any existing listeners to avoid duplicates
-        oval.removeEventListener('mousedown', addPressClass);
-        oval.removeEventListener('touchstart', addPressClass);
-        oval.removeEventListener('mouseup', removePressClass);
-        oval.removeEventListener('touchend', removePressClass);
-        oval.removeEventListener('mouseleave', removePressClass);
-        oval.removeEventListener('touchcancel', removePressClass);
-        
-        oval.addEventListener('mousedown', addPressClass);
-        oval.addEventListener('touchstart', addPressClass, { passive: true });
-        oval.addEventListener('mouseup', removePressClass);
-        oval.addEventListener('touchend', removePressClass);
-        oval.addEventListener('mouseleave', removePressClass);
-        oval.addEventListener('touchcancel', removePressClass);
+    document.querySelectorAll('.dept-oval').forEach(oval => {
+        oval.addEventListener('touchstart', () => {}, { passive: false });
     });
 }
-
-function addPressClass(e) {
-    // Prevent adding class if already pressed (avoid double triggers)
-    if (this.classList.contains('press-3d-oval')) return;
-    this.classList.add('press-3d-oval');
-    // Optional: haptic feedback
-    if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(10);
-}
-
-function removePressClass(e) {
-    this.classList.remove('press-3d-oval');
-}
-
-// ========== END DEPARTMENT PRESS FIX ==========
 
 function selectDepartment(d){ currentPath=[d]; render(); }
 function goBack(){ if(currentPath.length && !isSearchMode){ currentPath.pop(); render(); } else if(isSearchMode) clearSearch(); }
@@ -525,7 +498,6 @@ function pressHandler(e){
     addDepthEffect(this,e);
 }
 function attachPressEffects(){
-    // Exclude .dept-card and .dept-oval from global press (handled separately)
     const selectors = ['#backBtn','.type-btn','.theme-toggle','#uploadBtn','#newNoteBtn','.action-btn','.rename-file-btn','.delete-file-btn','.rename-note-btn','.delete-note-btn','.clear-search','.modal-close','.modal-footer button','.breadcrumb-item','.card'];
     document.querySelectorAll(selectors.join(',')).forEach(el=>{
         el.removeEventListener('click', pressHandler);
