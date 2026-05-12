@@ -919,3 +919,56 @@ body.light-mode .note-card:hover {
         font-size: 0.65rem !important;
     }
 }
+/* ========== ENSURE RENAME/DELETE BUTTONS ARE VISIBLE ========== */
+.card-buttons {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+    margin-left: 8px;
+}
+
+.card-buttons button {
+    padding: 4px 10px !important;
+    font-size: 0.7rem !important;
+    border-radius: 40px !important;
+    white-space: nowrap;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.rename-file-btn, .rename-note-btn {
+    background: rgba(59,130,246,0.2) !important;
+    border: 1px solid #3b82f6 !important;
+    color: #93c5fd !important;
+}
+
+.delete-file-btn, .delete-note-btn {
+    background: rgba(244,63,94,0.2) !important;
+    border: 1px solid #f43f5e !important;
+    color: #fda4af !important;
+}
+
+/* On small screens, wrap buttons under filename */
+@media (max-width: 640px) {
+    .card {
+        flex-wrap: wrap !important;
+        height: auto !important;
+        padding: 8px 12px !important;
+    }
+    .card-filename {
+        white-space: normal !important;
+        word-break: break-word;
+        margin-right: 8px;
+    }
+    .card-buttons {
+        width: 100%;
+        justify-content: flex-start;
+        margin-top: 6px;
+        margin-left: 0;
+    }
+    .card-buttons button {
+        padding: 4px 8px !important;
+        font-size: 0.65rem !important;
+    }
+}
