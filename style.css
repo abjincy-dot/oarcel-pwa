@@ -839,3 +839,30 @@ body.light-mode .card.glow-folder {
 .card.glow-folder:hover {
     border-color: rgba(255, 255, 255, 0.45) !important;
 }
+/* ========== THIN LIGHT BORDER FOR ALL CARDS (PDF, NOTES, FOLDERS) ========== */
+/* PDF cards & Note cards & Folder cards all get a subtle border */
+.card,
+.card.glow-folder,
+.note-card {
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+}
+
+/* Light mode */
+body.light-mode .card,
+body.light-mode .card.glow-folder,
+body.light-mode .note-card {
+    border: 1px solid rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Optional: Slightly brighter border on hover */
+.card:hover,
+.card.glow-folder:hover,
+.note-card:hover {
+    border-color: rgba(255, 255, 255, 0.45) !important;
+}
+
+body.light-mode .card:hover,
+body.light-mode .card.glow-folder:hover,
+body.light-mode .note-card:hover {
+    border-color: rgba(0, 0, 0, 0.3) !important;
+}
