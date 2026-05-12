@@ -822,3 +822,20 @@ button,
     .card-buttons { flex-direction: column; gap: 4px; }
     .dept-info { display: none; }
 }
+/* ========== LIGHT BORDER FOR FURNACE & DATA LOGS FOLDERS ========== */
+/* Applies to all folder cards (glow-folder) - gives a subtle light border */
+.card.glow-folder {
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.15), 0 4px 0 rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Light mode version */
+body.light-mode .card.glow-folder {
+    border: 1px solid rgba(0, 0, 0, 0.2) !important;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.05), 0 4px 0 rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Optional: Slightly thicker border for active/hover for better visibility */
+.card.glow-folder:hover {
+    border-color: rgba(255, 255, 255, 0.45) !important;
+}
