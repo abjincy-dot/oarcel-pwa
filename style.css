@@ -872,3 +872,42 @@ button, .dept-card, .card, .action-btn, .breadcrumb-item, .type-btn, .theme-togg
     .card-buttons { flex-direction: column; gap: 4px; }
     .dept-info { display: none; }
 }
+/* ========== THIN GLOWING OUTER LINES ON ALL CARDS ========== */
+.card,
+.card.glow-folder,
+.note-card,
+.pdf-card {
+    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.4),
+                0 0 0 2px rgba(59, 130, 246, 0.2),
+                0 4px 8px rgba(0, 0, 0, 0.2) !important;
+    transition: box-shadow 0.2s ease, transform 0.08s ease;
+}
+
+/* Stronger glow on hover */
+.card:hover,
+.card.glow-folder:hover,
+.note-card:hover,
+.pdf-card:hover {
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.7),
+                0 0 8px 2px rgba(59, 130, 246, 0.5),
+                0 6px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Light mode version */
+body.light-mode .card,
+body.light-mode .card.glow-folder,
+body.light-mode .note-card,
+body.light-mode .pdf-card {
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15),
+                0 0 0 2px rgba(59, 130, 246, 0.2),
+                0 2px 6px rgba(0, 0, 0, 0.1) !important;
+}
+
+body.light-mode .card:hover,
+body.light-mode .card.glow-folder:hover,
+body.light-mode .note-card:hover,
+body.light-mode .pdf-card:hover {
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5),
+                0 0 6px 1px rgba(59, 130, 246, 0.4),
+                0 4px 10px rgba(0, 0, 0, 0.15) !important;
+}
