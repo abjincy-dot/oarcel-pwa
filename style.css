@@ -1,6 +1,6 @@
 /* ============================================
-   OARCEL Document Manager - STRONG 3D OVAL PRESS ONLY
-   (Whole card static, oval moves with thick shadow)
+   OARCEL Document Manager - FIXED 3D OVAL PRESS
+   (Manual class toggled by JS, works every time)
    ============================================ */
 
 * {
@@ -436,7 +436,7 @@ body.light-mode .theme-toggle i { color: #f59e0b !important; }
 
 .breadcrumb-item:first-child { color: #3b82f6; }
 
-/* ========== DEPARTMENTS - STRONG 3D OVAL PRESS ========== */
+/* ========== DEPARTMENTS - STRONG 3D OVAL PRESS (MANUAL CLASS) ========== */
 .section-title {
     font-size: 0.85rem;
     font-weight: 700;
@@ -452,7 +452,7 @@ body.light-mode .theme-toggle i { color: #f59e0b !important; }
 
 .departments-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
 
-/* Card container - absolutely no transform or shadow */
+/* Card container */
 .dept-card {
     display: flex;
     align-items: center;
@@ -461,10 +461,9 @@ body.light-mode .theme-toggle i { color: #f59e0b !important; }
     padding: 6px;
     border-radius: var(--radius-lg);
     position: relative;
-    /* No transition, no transform, no press effect here */
 }
 
-/* The oval - thick raised button */
+/* The oval - raised 3D button */
 .dept-oval {
     padding: 12px 28px;
     border-radius: var(--radius-full);
@@ -477,20 +476,19 @@ body.light-mode .theme-toggle i { color: #f59e0b !important; }
     overflow: hidden;
     transition: transform 0.06s cubic-bezier(0.2, 0.9, 0.4, 1.2), box-shadow 0.06s cubic-bezier(0.2, 0.9, 0.4, 1.2);
     transform: translateY(0);
-    /* Massive 3D bottom shadow */
     box-shadow: 0 10px 0 rgba(0, 0, 0, 0.4), 0 6px 12px rgba(0, 0, 0, 0.3);
     will-change: transform;
     background-size: 100% 100%;
 }
 
-/* Press effect - sink down dramatically */
-.dept-card:active .dept-oval {
+/* Manual press class added by JavaScript */
+.dept-oval.press-3d-oval {
     transform: translateY(6px) !important;
     box-shadow: 0 2px 0 rgba(0, 0, 0, 0.4), 0 3px 8px rgba(0, 0, 0, 0.2) !important;
     transition: transform 0.04s, box-shadow 0.04s;
 }
 
-/* Hover effect - lift slightly */
+/* Hover effect (desktop) */
 .dept-card:hover .dept-oval {
     transform: translateY(-2px);
     box-shadow: 0 12px 0 rgba(0, 0, 0, 0.4), 0 8px 16px rgba(0, 0, 0, 0.35);
@@ -793,7 +791,7 @@ body.light-mode .action-btn {
 
 .hidden { display: none !important; }
 
-/* ========== 3D DEPTH TOUCH EFFECTS (excluding dept-card) ========== */
+/* ========== 3D DEPTH TOUCH EFFECTS (other elements) ========== */
 button, .card, .action-btn, .breadcrumb-item, .type-btn, .theme-toggle, #backBtn, #uploadBtn, #newNoteBtn, .clear-search, .modal-footer button, .modal-close, .rename-file-btn, .delete-file-btn, .rename-note-btn, .delete-note-btn {
     position: relative;
     overflow: hidden;
