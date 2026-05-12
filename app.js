@@ -69,6 +69,25 @@ async function updateNote(folderPath, noteId, title, content) {
     return false;
 }
 
+async function renameNote(folderPath, noteId, newTitle) {
+    if (!newTitle || !newTitle.trim()) {
+        showToast("Title cannot be empty", true);
+        return false;
+    }
+    if (allNotes[folderPath]) {
+        const index = allNotes[folderPath].findIndex(n => n.id === noteId);
+        if (index !== -1) {
+            allNotes[folderPath][index].title = newTitle.trim();
+            allNotes[folderPath][index].updatedAt = new Date().toISOString();
+            await saveAllNotesToDB();
+            render();
+            showToast(`✅ Note renamed to "${newTitle.trim()}"`);
+            return true;
+        }
+    }
+    return false;
+}
+
 async function deleteNoteFromFolder(folderPath, noteId) {
     if (allNotes[folderPath]) {
         const note = allNotes[folderPath].find(n => n.id === noteId);
@@ -222,16 +241,22 @@ async function addFileToCurrentFolder(file) {
 }
 
 function deleteFileFromFolder(folderPath, fileName) {
-    if (allFiles[folderPath]) {
-        allFiles[folderPath] = allFiles[folderPath].filter(f => f.name !== fileName);
-        if (allFiles[folderPath].length === 0) delete allFiles[folderPath];
-        saveAllFilesToDB();
-        render();
-        showToast(`✅ Deleted "${fileName}"`);
+    if (confirm(`Delete PDF "${fileName}"?`)) {
+        if (allFiles[folderPath]) {
+            allFiles[folderPath] = allFiles[folderPath].filter(f => f.name !== fileName);
+            if (allFiles[folderPath].length === 0) delete allFiles[folderPath];
+            saveAllFilesToDB();
+            render();
+            showToast(`✅ Deleted "${fileName}"`);
+        }
     }
 }
 
 function renameFileInFolder(folderPath, oldName, newName) {
+    if (!newName || !newName.trim()) {
+        showToast("Name cannot be empty", true);
+        return;
+    }
     if (allFiles[folderPath]) {
         const idx = allFiles[folderPath].findIndex(f => f.name === oldName);
         if (idx !== -1) {
@@ -301,110 +326,76 @@ function openNote(note) {
     modal.classList.add('show');
 }
 
-function createNoteCard(note, folderPath) {
+// ========== IMPROVED CARD CREATION WITH VISIBLE RENAME/DELETE ==========
+function createPdfCard(file, folderPath) {
     const div = document.createElement('div');
-    div.className = 'card note-card';
-    const preview = note.content.length > 50 ? note.content.substring(0, 50) + '...' : note.content;
+    div.className = 'card pdf-card';
     div.innerHTML = `
-        <div class="card-icon"><i class="fas fa-sticky-note"></i></div>
-        <div class="card-filename">${escapeHtml(note.title)}</div>
-        <div class="note-preview">${escapeHtml(preview)}</div>
+        <div class="card-icon"><i class="fas fa-file-pdf"></i></div>
+        <div class="card-filename" title="${escapeHtml(file.name)}">${escapeHtml(file.name)}</div>
         <div class="card-buttons">
-            <button class="edit-note-btn" onclick="event.stopPropagation(); editNote('${folderPath}','${note.id}')"><i class="fas fa-edit"></i> Edit</button>
-            <button class="delete-note-btn" onclick="event.stopPropagation(); deleteNote('${folderPath}','${note.id}')"><i class="fas fa-trash"></i> Delete</button>
+            <button class="rename-file-btn" data-folder="${folderPath}" data-oldname="${escapeHtml(file.name)}"><i class="fas fa-edit"></i> Rename</button>
+            <button class="delete-file-btn" data-folder="${folderPath}" data-filename="${escapeHtml(file.name)}"><i class="fas fa-trash"></i> Delete</button>
         </div>
     `;
-    div.onclick = () => openNote({ ...note, folder: folderPath });
+    // Open PDF when clicking card (but not buttons)
+    div.addEventListener('click', (e) => {
+        if (e.target.closest('.rename-file-btn') || e.target.closest('.delete-file-btn')) return;
+        openPDF(file.dataUrl, file.name);
+    });
+    // Rename
+    div.querySelector('.rename-file-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        const newName = prompt("New PDF name:", file.name.replace('.pdf', ''));
+        if (newName && newName.trim()) renameFileInFolder(folderPath, file.name, newName.trim());
+    });
+    // Delete
+    div.querySelector('.delete-file-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteFileFromFolder(folderPath, file.name);
+    });
     return div;
 }
 
-function createPdfCard(file, folderPath) {
-    return createCard(file.name, () => openPDF(file.dataUrl, file.name), false, true, folderPath, file.name, true);
+function createNoteCard(note, folderPath) {
+    const div = document.createElement('div');
+    div.className = 'card note-card';
+    const preview = note.content.length > 40 ? note.content.substring(0, 40) + '...' : note.content;
+    div.innerHTML = `
+        <div class="card-icon"><i class="fas fa-sticky-note"></i></div>
+        <div class="card-filename" title="${escapeHtml(note.title)}">${escapeHtml(note.title)}</div>
+        <div class="note-preview">${escapeHtml(preview)}</div>
+        <div class="card-buttons">
+            <button class="rename-note-btn" data-folder="${folderPath}" data-id="${note.id}" data-title="${escapeHtml(note.title)}"><i class="fas fa-edit"></i> Rename</button>
+            <button class="delete-note-btn" data-folder="${folderPath}" data-id="${note.id}" data-title="${escapeHtml(note.title)}"><i class="fas fa-trash"></i> Delete</button>
+        </div>
+    `;
+    // Open note full editor
+    div.addEventListener('click', (e) => {
+        if (e.target.closest('.rename-note-btn') || e.target.closest('.delete-note-btn')) return;
+        openNote({ ...note, folder: folderPath });
+    });
+    // Rename (direct prompt)
+    div.querySelector('.rename-note-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        const newTitle = prompt("New note title:", note.title);
+        if (newTitle && newTitle.trim()) renameNote(folderPath, note.id, newTitle.trim());
+    });
+    // Delete
+    div.querySelector('.delete-note-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (confirm(`Delete note "${note.title}"?`)) deleteNoteFromFolder(folderPath, note.id);
+    });
+    return div;
 }
 
-function openNewNoteModal() {
-    editingNoteId = null;
-    document.getElementById('noteModalTitle').textContent = 'New Note';
-    document.getElementById('noteTitle').value = '';
-    document.getElementById('noteContent').value = '';
-    const saveBtn = document.getElementById('saveNoteBtn');
-    saveBtn.onclick = () => {
-        const title = document.getElementById('noteTitle').value;
-        const content = document.getElementById('noteContent').value;
-        if (title.trim()) {
-            addNoteToCurrentFolder(title, content);
-            closeNoteModal();
-        } else {
-            showToast("Title cannot be empty", true);
-        }
-    };
-    document.getElementById('noteModal').classList.add('show');
-}
-
-function closeNoteModal() {
-    document.getElementById('noteModal').classList.remove('show');
-    editingNoteId = null;
-}
-
-function editNote(folderPath, noteId) {
-    const note = allNotes[folderPath]?.find(n => n.id === noteId);
-    if (note) {
-        document.getElementById('noteModalTitle').textContent = `✏️ Edit Note`;
-        document.getElementById('noteTitle').value = note.title;
-        document.getElementById('noteContent').value = note.content;
-        editingNoteId = noteId;
-        const saveBtn = document.getElementById('saveNoteBtn');
-        saveBtn.onclick = () => {
-            const newTitle = document.getElementById('noteTitle').value;
-            const newContent = document.getElementById('noteContent').value;
-            if (newTitle.trim()) {
-                updateNote(folderPath, noteId, newTitle, newContent);
-                closeNoteModal();
-            } else {
-                showToast("Title cannot be empty", true);
-            }
-        };
-        document.getElementById('noteModal').classList.add('show');
-    }
-}
-
-function deleteNote(folderPath, noteId) {
-    if (confirm('Delete this note?')) {
-        deleteNoteFromFolder(folderPath, noteId);
-    }
-}
-
-function setActiveTab(tab) {
-    currentActiveTab = tab;
-    const pdfTabBtn = document.getElementById('pdfTabBtn');
-    const notesTabBtn = document.getElementById('notesTabBtn');
-    const uploadBtn = document.getElementById('uploadBtn');
-    const newNoteBtn = document.getElementById('newNoteBtn');
-    
-    if (tab === 'pdfs') {
-        pdfTabBtn.classList.add('active');
-        notesTabBtn.classList.remove('active');
-        uploadBtn.classList.remove('hidden');
-        newNoteBtn.classList.add('hidden');
-    } else {
-        pdfTabBtn.classList.remove('active');
-        notesTabBtn.classList.add('active');
-        uploadBtn.classList.add('hidden');
-        newNoteBtn.classList.remove('hidden');
-    }
-    render();
-}
-
-function createCard(title, onClick, isFolder = false, showDel = false, delPath = null, delName = null, showRename = false) {
+function createCard(title, onClick, isFolder = false) {
     const div = document.createElement('div');
     div.className = isFolder ? 'card glow-folder' : 'card';
     div.innerHTML = `
-        <div class="card-icon"><i class="fas ${isFolder ? 'fa-folder' : 'fa-file-pdf'}"></i></div>
+        <div class="card-icon"><i class="fas ${isFolder ? 'fa-folder' : 'fa-folder-open'}"></i></div>
         <div class="card-filename">${escapeHtml(title)}</div>
-        <div class="card-buttons">
-            ${showRename ? `<button class="rename-file-btn" onclick="event.stopPropagation(); window.renameFile('${delPath}','${escapeHtml(delName)}')"><i class="fas fa-edit"></i> Rename</button>` : ''}
-            ${showDel ? `<button class="delete-btn" onclick="event.stopPropagation(); window.deleteFile('${delPath}','${escapeHtml(delName)}')"><i class="fas fa-trash"></i> Delete</button>` : ''}
-        </div>
+        <div class="card-buttons"></div>
     `;
     div.onclick = onClick;
     return div;
@@ -654,9 +645,7 @@ function addDepthEffect(element, event) {
     
     element.classList.add('press-depth-3d');
     
-    if (window.navigator && window.navigator.vibrate) {
-        window.navigator.vibrate(12);
-    }
+    if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(12);
     
     const ripple = document.createElement('span');
     ripple.classList.add('touch-ripple');
@@ -666,7 +655,6 @@ function addDepthEffect(element, event) {
     ripple.style.pointerEvents = 'none';
     ripple.style.transform = 'scale(0)';
     ripple.style.transition = 'transform 0.4s ease-out, opacity 0.3s ease-out';
-    ripple.style.willChange = 'transform, opacity';
     
     let clientX, clientY;
     if (event.touches) {
@@ -698,29 +686,25 @@ function addDepthEffect(element, event) {
     
     setTimeout(() => {
         element.classList.remove('press-depth-3d');
-        if (ripple && ripple.parentNode) {
-            ripple.parentNode.removeChild(ripple);
-        }
+        if (ripple && ripple.parentNode) ripple.parentNode.removeChild(ripple);
         element.removeAttribute('data-press-animating');
     }, 150);
 }
 
 function pressHandler(e) {
     if (this.hasAttribute('data-press-animating') || (e.button === 2)) return;
-    
     if (e.type === 'touchstart' && this.hasAttribute('data-touch-processing')) return;
     if (e.type === 'touchstart') {
         this.setAttribute('data-touch-processing', 'true');
         setTimeout(() => this.removeAttribute('data-touch-processing'), 200);
     }
-    
     addDepthEffect(this, e);
 }
 
 function attachPressEffects() {
     const selectors = [
         '#backBtn', '.type-btn', '.theme-toggle', '#uploadBtn', '#newNoteBtn',
-        '.action-btn', '.rename-file-btn', '.edit-note-btn', '.delete-btn', '.delete-note-btn',
+        '.action-btn', '.rename-file-btn', '.delete-file-btn', '.rename-note-btn', '.delete-note-btn',
         '.clear-search', '.modal-close', '.modal-footer button', '.breadcrumb-item', '.dept-card', '.card'
     ];
     
@@ -728,17 +712,12 @@ function attachPressEffects() {
         el.removeEventListener('click', pressHandler);
         el.removeEventListener('touchstart', pressHandler);
         el.removeEventListener('mousedown', pressHandler);
-        
         el.addEventListener('mousedown', pressHandler);
         el.addEventListener('touchstart', pressHandler, { passive: false });
-        
-        if (window.getComputedStyle(el).cursor === 'auto') {
-            el.style.cursor = 'pointer';
-        }
+        if (window.getComputedStyle(el).cursor === 'auto') el.style.cursor = 'pointer';
     });
 }
 
-// ========== FORCE ACTION BAR STYLING (JavaScript) ==========
 function styleActionBar() {
     const actionBar = document.querySelector('.action-bar');
     if (actionBar) {
@@ -748,8 +727,6 @@ function styleActionBar() {
         actionBar.style.setProperty('border-radius', '60px', 'important');
         actionBar.style.setProperty('padding', '10px 16px', 'important');
         actionBar.style.setProperty('margin', '16px 0 20px 0', 'important');
-        actionBar.style.setProperty('box-shadow', '0 8px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)', 'important');
-        
         const btns = actionBar.querySelectorAll('.action-btn');
         btns.forEach(btn => {
             btn.style.setProperty('background', '#1e293b', 'important');
@@ -757,12 +734,10 @@ function styleActionBar() {
             btn.style.setProperty('border-radius', '40px', 'important');
             btn.style.setProperty('padding', '8px 18px', 'important');
             btn.style.setProperty('color', '#f1f5f9', 'important');
-            btn.style.setProperty('box-shadow', '0 3px 8px rgba(0,0,0,0.2)', 'important');
         });
     }
 }
 
-// Override render to reattach after dynamic content AND apply action bar style
 const originalRender = render;
 render = function() {
     originalRender();
@@ -788,8 +763,8 @@ window.openNote = openNote;
 window.editNote = editNote;
 window.deleteNote = deleteNote;
 window.closeNoteModal = closeNoteModal;
-window.renameFile = (p, old) => { const nu = prompt("New name:", old.replace('.pdf', '')); if (nu && nu.trim()) renameFileInFolder(p, old, nu.trim()); };
-window.deleteFile = (p, n) => { if (confirm(`Delete "${n}"?`)) deleteFileFromFolder(p, n); };
+window.renameNote = renameNote;
+window.deleteNoteFromFolder = deleteNoteFromFolder;
 
 document.addEventListener('DOMContentLoaded', async () => {
     const themeBtn = document.getElementById('themeToggle');
@@ -805,7 +780,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         fileInput.addEventListener('change', async (e) => {
             const files = Array.from(e.target.files);
             for (let f of files) {
-                if (f.type === 'application/pdf') { await addFileToCurrentFolder(f); }
+                if (f.type === 'application/pdf') await addFileToCurrentFolder(f);
             }
             showToast(`${files.length} PDF(s) saved!`);
             render();
@@ -817,16 +792,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (newNoteBtn) newNoteBtn.onclick = triggerNewNote;
     
     const searchInput = document.getElementById('searchInput');
-    if (searchInput) { searchInput.addEventListener('input', () => render()); }
+    if (searchInput) searchInput.addEventListener('input', () => render());
     
     const clearSearchBtn = document.getElementById('clearSearchBtn');
-    if (clearSearchBtn) { clearSearchBtn.addEventListener('click', clearSearch); }
+    if (clearSearchBtn) clearSearchBtn.addEventListener('click', clearSearch);
     
     const backBtn = document.getElementById('backBtn');
-    if (backBtn) { backBtn.addEventListener('click', goBack); }
+    if (backBtn) backBtn.addEventListener('click', goBack);
     
     const uploadBtn = document.getElementById('uploadBtn');
-    if (uploadBtn) { uploadBtn.addEventListener('click', triggerUpload); }
+    if (uploadBtn) uploadBtn.addEventListener('click', triggerUpload);
     
     try {
         await initDB();
@@ -838,3 +813,74 @@ document.addEventListener('DOMContentLoaded', async () => {
         styleActionBar();
     }, 200);
 });
+
+function setActiveTab(tab) {
+    currentActiveTab = tab;
+    const pdfTabBtn = document.getElementById('pdfTabBtn');
+    const notesTabBtn = document.getElementById('notesTabBtn');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const newNoteBtn = document.getElementById('newNoteBtn');
+    
+    if (tab === 'pdfs') {
+        pdfTabBtn.classList.add('active');
+        notesTabBtn.classList.remove('active');
+        uploadBtn.classList.remove('hidden');
+        newNoteBtn.classList.add('hidden');
+    } else {
+        pdfTabBtn.classList.remove('active');
+        notesTabBtn.classList.add('active');
+        uploadBtn.classList.add('hidden');
+        newNoteBtn.classList.remove('hidden');
+    }
+    render();
+}
+
+function openNewNoteModal() {
+    editingNoteId = null;
+    document.getElementById('noteModalTitle').textContent = 'New Note';
+    document.getElementById('noteTitle').value = '';
+    document.getElementById('noteContent').value = '';
+    const saveBtn = document.getElementById('saveNoteBtn');
+    saveBtn.onclick = () => {
+        const title = document.getElementById('noteTitle').value;
+        const content = document.getElementById('noteContent').value;
+        if (title.trim()) {
+            addNoteToCurrentFolder(title, content);
+            closeNoteModal();
+        } else {
+            showToast("Title cannot be empty", true);
+        }
+    };
+    document.getElementById('noteModal').classList.add('show');
+}
+
+function closeNoteModal() {
+    document.getElementById('noteModal').classList.remove('show');
+    editingNoteId = null;
+}
+
+function editNote(folderPath, noteId) {
+    const note = allNotes[folderPath]?.find(n => n.id === noteId);
+    if (note) {
+        document.getElementById('noteModalTitle').textContent = `✏️ Edit Note`;
+        document.getElementById('noteTitle').value = note.title;
+        document.getElementById('noteContent').value = note.content;
+        editingNoteId = noteId;
+        const saveBtn = document.getElementById('saveNoteBtn');
+        saveBtn.onclick = () => {
+            const newTitle = document.getElementById('noteTitle').value;
+            const newContent = document.getElementById('noteContent').value;
+            if (newTitle.trim()) {
+                updateNote(folderPath, noteId, newTitle, newContent);
+                closeNoteModal();
+            } else {
+                showToast("Title cannot be empty", true);
+            }
+        };
+        document.getElementById('noteModal').classList.add('show');
+    }
+}
+
+function deleteNote(folderPath, noteId) {
+    if (confirm('Delete this note?')) deleteNoteFromFolder(folderPath, noteId);
+}
