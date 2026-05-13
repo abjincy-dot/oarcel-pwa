@@ -122,7 +122,7 @@ function deleteFileFromFolder(folderPath, fileName) {
             if(!allFiles[folderPath].length) delete allFiles[folderPath];
             saveAllFilesToDB();
             render();
-            showToast(`✅ Deleted "${fileName}"`);
+            showToast(`â Deleted "${fileName}"`);
         }
     }
 }
@@ -135,7 +135,7 @@ function renameFileInFolder(folderPath, oldName, newName){
             allFiles[folderPath][idx].name = newName;
             saveAllFilesToDB();
             render();
-            showToast(`✅ Renamed to "${newName}"`);
+            showToast(`â Renamed to "${newName}"`);
         }
     }
 }
@@ -146,7 +146,7 @@ async function addNoteToCurrentFolder(title, content){
     allNotes[folderPath].push(note);
     await saveAllNotesToDB();
     render();
-    showToast(`✅ Note "${title}" created`);
+    showToast(`â Note "${title}" created`);
 }
 async function updateNote(folderPath, noteId, title, content){
     const idx = allNotes[folderPath]?.findIndex(n=>n.id===noteId);
@@ -156,7 +156,7 @@ async function updateNote(folderPath, noteId, title, content){
         allNotes[folderPath][idx].updatedAt = new Date().toISOString();
         await saveAllNotesToDB();
         render();
-        showToast(`✅ Note updated`);
+        showToast(`â Note updated`);
         return true;
     }
     return false;
@@ -169,7 +169,7 @@ async function renameNote(folderPath, noteId, newTitle){
         allNotes[folderPath][idx].updatedAt = new Date().toISOString();
         await saveAllNotesToDB();
         render();
-        showToast(`✅ Note renamed to "${newTitle.trim()}"`);
+        showToast(`â Note renamed to "${newTitle.trim()}"`);
     }
 }
 async function deleteNoteFromFolder(folderPath, noteId){
@@ -179,12 +179,12 @@ async function deleteNoteFromFolder(folderPath, noteId){
         if(!allNotes[folderPath].length) delete allNotes[folderPath];
         await saveAllNotesToDB();
         render();
-        showToast(`🗑️ Note "${note?.title}" deleted`);
+        showToast(`ðï¸ Note "${note?.title}" deleted`);
     }
 }
 function openNote(note){
     const modal = document.getElementById('noteModal');
-    document.getElementById('noteModalTitle').textContent = `📝 ${note.title}`;
+    document.getElementById('noteModalTitle').textContent = `ð ${note.title}`;
     document.getElementById('noteTitle').value = note.title;
     document.getElementById('noteContent').value = note.content;
     editingNoteId = note.id;
@@ -228,6 +228,9 @@ function createPdfCard(file, folderPath){
 function createNoteCard(note, folderPath){
     const div = document.createElement('div');
     div.className = 'card note-card';
+    // === NEW: Add data-preview attribute for hover preview ===
+    const preview = note.content ? note.content.substring(0, 40).replace(/\s+/g, ' ').trim() + (note.content.length > 40 ? '...' : '') : '';
+    div.setAttribute('data-preview', preview);
     div.innerHTML = `
         <div class="card-icon"><i class="fas fa-sticky-note"></i></div>
         <div class="card-filename" title="${escapeHtml(note.title)}">${escapeHtml(note.title)}</div>
@@ -307,9 +310,9 @@ function render(){
         document.getElementById('departmentsSection').innerHTML = html;
         document.getElementById('uploadBtn').classList.add('hidden');
         document.getElementById('newNoteBtn').classList.add('hidden');
-        attachDepartmentPressEffects(); // Ensure touch works
+        attachDepartmentPressEffects();
     } else document.getElementById('departmentsSection').innerHTML = '';
-    
+
     const hasSubfolders = Object.keys(folder).length>0;
     const isLeafFolder = !isRoot && !hasSubfolders;
     const typeSelector = document.querySelector('.type-selector');
@@ -383,7 +386,7 @@ function renameCurrentFolder(){
         currentPath[currentPath.length-1]=newName;
         saveFolderStructure(); saveAllFilesToDB(); saveAllNotesToDB();
         render();
-        showToast(`✅ Renamed to "${newName}"`);
+        showToast(`â Renamed to "${newName}"`);
     }
 }
 function deleteCurrentFolder(){
@@ -398,32 +401,56 @@ function deleteCurrentFolder(){
         currentPath.pop();
         saveFolderStructure(); saveAllFilesToDB(); saveAllNotesToDB();
         render();
-        showToast(`🗑️ Folder "${name}" deleted`);
+        showToast(`ðï¸ Folder "${name}" deleted`);
     }
 }
 function addNewFolder(){
     const name = prompt("Folder name:");
     if(name && name.trim()){
         const cur = getCurrentFolderObject();
-        if(cur && !cur[name]){ cur[name]={}; saveFolderStructure(); render(); showToast(`✅ Folder "${name}" created`); }
+        if(cur && !cur[name]){ cur[name]={}; saveFolderStructure(); render(); showToast(`â Folder "${name}" created`); }
         else showToast("Exists",true);
     }
 }
 function addNewDepartment(){
     const name = prompt("Department name:");
-    if(name && name.trim() && !fileSystem[name]){ fileSystem[name]={}; saveFolderStructure(); render(); showToast(`✅ Department "${name}" created`); }
+    if(name && name.trim() && !fileSystem[name]){ fileSystem[name]={}; saveFolderStructure(); render(); showToast(`â Department "${name}" created`); }
     else if(fileSystem[name]) showToast("Department exists",true);
 }
+
+// === NEW: Stats counter animation ===
+function animateCounter(element, target, duration = 800) {
+    const start = parseInt(element.textContent) || 0;
+    const range = target - start;
+    if (range === 0) return;
+    const startTime = performance.now();
+
+    function update(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const easeOut = 1 - Math.pow(1 - progress, 3);
+        element.textContent = Math.round(start + range * easeOut);
+        if (progress < 1) requestAnimationFrame(update);
+    }
+    requestAnimationFrame(update);
+}
+
 function updateStats(){
     let folderCount=0, fileCount=0, notesCount=0;
     function countFolders(obj){ for(let k in obj) if(typeof obj[k]==='object'){ folderCount++; countFolders(obj[k]); } }
     countFolders(fileSystem);
     for(let k in allFiles) if(allFiles[k]) fileCount += allFiles[k].length;
     for(let k in allNotes) if(allNotes[k]) notesCount += allNotes[k].length;
-    document.getElementById('folderCount').textContent = folderCount;
-    document.getElementById('fileCount').textContent = fileCount;
-    document.getElementById('notesCount').textContent = notesCount;
+
+    const folderEl = document.getElementById('folderCount');
+    const fileEl = document.getElementById('fileCount');
+    const notesEl = document.getElementById('notesCount');
+
+    animateCounter(folderEl, folderCount);
+    animateCounter(fileEl, fileCount);
+    animateCounter(notesEl, notesCount);
 }
+
 function setActiveTab(tab){
     currentActiveTab = tab;
     const pdfBtn = document.getElementById('pdfTabBtn');
@@ -524,6 +551,23 @@ window.closeNoteModal = closeNoteModal;
 window.renameNote = renameNote;
 window.deleteNoteFromFolder = deleteNoteFromFolder;
 
+// === NEW: Show upload progress indicator ===
+function showUploadProgress(show) {
+    const uploadBtn = document.getElementById('uploadBtn');
+    if (show) {
+        uploadBtn.classList.add('uploading');
+        if (!uploadBtn.querySelector('.upload-progress-ring')) {
+            const ring = document.createElement('div');
+            ring.className = 'upload-progress-ring';
+            uploadBtn.appendChild(ring);
+        }
+    } else {
+        uploadBtn.classList.remove('uploading');
+        const ring = uploadBtn.querySelector('.upload-progress-ring');
+        if (ring) ring.remove();
+    }
+}
+
 document.addEventListener('DOMContentLoaded', async ()=>{
     const themeBtn = document.getElementById('themeToggle');
     if(themeBtn) themeBtn.onclick = toggleTheme;
@@ -533,7 +577,9 @@ document.addEventListener('DOMContentLoaded', async ()=>{
     document.getElementById('notesTabBtn').onclick = ()=>setActiveTab('notes');
     document.getElementById('fileInput').addEventListener('change', async (e)=>{
         const files = Array.from(e.target.files);
+        if (files.length > 0) showUploadProgress(true);
         for(let f of files) if(f.type==='application/pdf') await addFileToCurrentFolder(f);
+        showUploadProgress(false);
         showToast(`${files.length} PDF(s) saved!`);
         render();
         e.target.value = '';
