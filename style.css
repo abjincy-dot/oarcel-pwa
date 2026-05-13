@@ -1,6 +1,6 @@
 /* ============================================
-   OARCEL Document Manager - FINAL CSS
-   (Buttons on same row - no wrapping)
+   OARCEL Document Manager - SOFT GRAY LIGHT MODE
+   (Easy on the eyes)
    ============================================ */
 
 * {
@@ -40,19 +40,20 @@
     --transition-base: 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* ========== SOFT GRAY LIGHT MODE (Not too bright) ========== */
 body.light-mode {
-    --bg-deep: #f1f5f9;
-    --bg-gradient: linear-gradient(165deg, #e2e8f0 0%, #cbd5e1 45%, #b8c5d6 100%);
-    --glass-bg: rgba(255, 255, 255, 0.72);
-    --glass-bg-hover: rgba(255, 255, 255, 0.85);
-    --glass-border: rgba(0, 0, 0, 0.08);
-    --glass-border-hover: rgba(0, 0, 0, 0.15);
-    --text-primary: #0f172a;
-    --text-secondary: #475569;
-    --text-muted: #94a3b8;
-    --card-bg: rgba(255, 255, 255, 0.75);
-    --card-bg-hover: rgba(255, 255, 255, 0.9);
-    --input-bg: rgba(255, 255, 255, 0.85);
+    --bg-deep: #e8edf5;
+    --bg-gradient: linear-gradient(165deg, #dce3ec 0%, #cdd6e2 45%, #c2cbd8 100%);
+    --glass-bg: rgba(220, 230, 240, 0.85);
+    --glass-bg-hover: rgba(200, 212, 224, 0.92);
+    --glass-border: rgba(0, 0, 0, 0.12);
+    --glass-border-hover: rgba(0, 0, 0, 0.2);
+    --text-primary: #1a2a3a;
+    --text-secondary: #2c3e50;
+    --text-muted: #5a6e7c;
+    --card-bg: rgba(235, 242, 250, 0.9);
+    --card-bg-hover: rgba(245, 250, 255, 0.95);
+    --input-bg: rgba(255, 255, 255, 0.9);
 }
 
 body {
@@ -71,6 +72,10 @@ body::before {
     background: var(--bg-gradient);
     background-size: cover;
     z-index: -3;
+}
+
+body.light-mode::before {
+    opacity: 1;
 }
 
 .ambient-glow {
@@ -196,7 +201,7 @@ body::before {
     -webkit-text-fill-color: transparent;
 }
 
-body.light-mode .header-title h1 { background: linear-gradient(135deg, #0f172a, #1e40af, #7c3aed); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+body.light-mode .header-title h1 { background: linear-gradient(135deg, #1a2a3a, #2c3e50, #3b5a7c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
 .doc-tag {
     font-size: 0.7rem;
@@ -525,6 +530,7 @@ body.light-mode .theme-toggle i { color: #f59e0b !important; }
 /* ========== CONTENT & CARDS ========== */
 .content { display: flex; flex-direction: column; gap: 8px; }
 
+/* Base card style */
 .card {
     background: rgba(12,28,48,0.92);
     backdrop-filter: blur(14px);
@@ -540,12 +546,9 @@ body.light-mode .theme-toggle i { color: #f59e0b !important; }
     min-height: 36px !important;
     height: auto !important;
     line-height: 1;
-    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.4),
-                0 0 0 2px rgba(59, 130, 246, 0.2),
-                0 4px 8px rgba(0, 0, 0, 0.2) !important;
 }
 
-body.light-mode .card { background: rgba(255,255,255,0.96); }
+body.light-mode .card { background: rgba(235, 242, 250, 0.92); }
 
 .card::before {
     content: '';
@@ -559,24 +562,6 @@ body.light-mode .card { background: rgba(255,255,255,0.96); }
 }
 
 .card:hover::before { opacity: 1; }
-
-.card:hover {
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.7),
-                0 0 8px 2px rgba(59, 130, 246, 0.5),
-                0 6px 12px rgba(0, 0, 0, 0.3) !important;
-}
-
-body.light-mode .card {
-    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15),
-                0 0 0 2px rgba(59, 130, 246, 0.2),
-                0 2px 6px rgba(0, 0, 0, 0.1) !important;
-}
-
-body.light-mode .card:hover {
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5),
-                0 0 6px 1px rgba(59, 130, 246, 0.4),
-                0 4px 10px rgba(0, 0, 0, 0.15) !important;
-}
 
 .card-icon {
     width: 22px !important;
@@ -605,7 +590,7 @@ body.light-mode .card:hover {
     line-height: 1.2;
 }
 
-/* ========== ICON-ONLY BUTTONS (compact) ========== */
+/* ========== ICON-ONLY BUTTONS ========== */
 .card-buttons {
     display: flex !important;
     gap: 4px !important;
@@ -645,15 +630,16 @@ body.light-mode .card:hover {
     color: #fda4af !important;
 }
 
-/* Folder cards styling */
 .card.glow-folder, .note-card {
     border-radius: 60px !important;
 }
 
-/* ========== WHITE GLOW FOR FURNACE, DATA LOGS, PDF & NOTE CARDS ========== */
+/* ========== WHITE GLOW FOR ALL CARDS ========== */
 .card.glow-folder,
 .pdf-card,
-.note-card {
+.note-card,
+.card.pdf-card,
+.card.note-card {
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4),
                 0 0 8px 2px rgba(255, 255, 255, 0.3),
                 0 4px 8px rgba(0, 0, 0, 0.2) !important;
@@ -661,7 +647,9 @@ body.light-mode .card:hover {
 
 .card.glow-folder:hover,
 .pdf-card:hover,
-.note-card:hover {
+.note-card:hover,
+.card.pdf-card:hover,
+.card.note-card:hover {
     box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.6),
                 0 0 15px 4px rgba(255, 255, 255, 0.4),
                 0 6px 12px rgba(0, 0, 0, 0.3) !important;
@@ -669,18 +657,22 @@ body.light-mode .card:hover {
 
 body.light-mode .card.glow-folder,
 body.light-mode .pdf-card,
-body.light-mode .note-card {
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8),
-                0 0 8px 2px rgba(255, 255, 255, 0.5),
+body.light-mode .note-card,
+body.light-mode .card.pdf-card,
+body.light-mode .card.note-card {
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.7),
+                0 0 8px 2px rgba(255, 255, 255, 0.4),
                 0 2px 6px rgba(0, 0, 0, 0.1) !important;
 }
 
 body.light-mode .card.glow-folder:hover,
 body.light-mode .pdf-card:hover,
-body.light-mode .note-card:hover {
-    box-shadow: 0 0 0 3px white,
-                0 0 15px 4px rgba(255, 255, 255, 0.7),
-                0 4px 10px rgba(0, 0, 0, 0.15) !important;
+body.light-mode .note-card:hover,
+body.light-mode .card.pdf-card:hover,
+body.light-mode .card.note-card:hover {
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.9),
+                0 0 15px 4px rgba(255, 255, 255, 0.6),
+                0 4px 10px rgba(0, 0, 0, 0.12) !important;
 }
 
 /* ========== ACTION BAR ========== */
@@ -716,14 +708,14 @@ body.light-mode .note-card:hover {
 }
 
 body.light-mode .action-bar {
-    background: #e2e8f0 !important;
-    border-color: #cbd5e1 !important;
+    background: #d0d8e4 !important;
+    border-color: #b8c4d4 !important;
 }
 
 body.light-mode .action-btn {
-    background: #ffffff !important;
-    color: #0f172a !important;
-    border-color: #94a3b8 !important;
+    background: #e8edf5 !important;
+    color: #1a2a3a !important;
+    border-color: #9aabb8 !important;
 }
 
 /* ========== MODAL ========== */
@@ -896,11 +888,10 @@ button, .card, .action-btn, .breadcrumb-item, .type-btn, .theme-toggle, #backBtn
     100% { transform: scale(2.5); opacity: 0; }
 }
 
-/* ========== RESPONSIVE - BUTTONS ON SAME ROW (NO WRAPPING) ========== */
+/* ========== RESPONSIVE - BUTTONS ON SAME ROW ========== */
 @media (max-width: 640px) {
     .app { padding: 16px 14px 32px; }
     
-    /* Keep buttons on the same row as filename */
     .card {
         display: flex !important;
         flex-direction: row !important;
