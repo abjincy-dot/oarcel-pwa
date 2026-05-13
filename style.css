@@ -1,10 +1,10 @@
 
-# Let's update the CSS to add a distinct white outer glow border around PDF and Note cards
-# so they don't merge with the background
+# Let's update the CSS to apply the white outer glow border to ALL cards (not just PDF/Note cards)
+# This includes folder cards (glow-folder), department cards, and all other card types
 
 updated_css = '''/* ============================================
-   OARCEL Document Manager - ENHANCED CSS v9.1
-   (White outer glow border for PDF/Note cards - no merge with background)
+   OARCEL Document Manager - ENHANCED CSS v9.2
+   (White outer glow border for ALL cards - folders, PDFs, notes, everything)
    ============================================ */
 
 * {
@@ -600,6 +600,7 @@ body.light-mode .theme-toggle i { color: #f59e0b !important; }
 /* ========== CONTENT & CARDS ========== */
 .content { display: flex; flex-direction: column; gap: 8px; }
 
+/* ========== BASE CARD STYLES ========== */
 .card {
     background: rgba(12,28,48,0.92);
     backdrop-filter: blur(14px);
@@ -615,9 +616,6 @@ body.light-mode .theme-toggle i { color: #f59e0b !important; }
     min-height: 36px !important;
     height: auto !important;
     line-height: 1;
-    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.4),
-                0 0 0 2px rgba(59, 130, 246, 0.2),
-                0 4px 8px rgba(0, 0, 0, 0.2) !important;
 }
 
 body.light-mode .card { background: rgba(255,255,255,0.96); }
@@ -638,21 +636,6 @@ body.light-mode .card { background: rgba(255,255,255,0.96); }
 
 .card:hover {
     transform: translateY(-2px) !important;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.7),
-                0 0 8px 2px rgba(59, 130, 246, 0.5),
-                0 6px 12px rgba(0, 0, 0, 0.3) !important;
-}
-
-body.light-mode .card {
-    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15),
-                0 0 0 2px rgba(59, 130, 246, 0.2),
-                0 2px 6px rgba(0, 0, 0, 0.1) !important;
-}
-
-body.light-mode .card:hover {
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5),
-                0 0 6px 1px rgba(59, 130, 246, 0.4),
-                0 4px 10px rgba(0, 0, 0, 0.15) !important;
 }
 
 .card-icon {
@@ -722,57 +705,96 @@ body.light-mode .card:hover {
     color: #fda4af !important;
 }
 
-/* Folder cards styling */
-.card.glow-folder, .note-card {
-    border-radius: 60px !important;
-}
+/* ========== WHITE OUTER GLOW BORDER FOR ALL CARDS ========== */
+/* This applies to ALL card types: folders, PDFs, notes, subfolders, data logs, etc. */
 
-/* ========== WHITE OUTER GLOW BORDER FOR PDF & NOTE CARDS ========== */
-/* This creates a distinct white glow that separates cards from background */
-.pdf-card,
-.note-card {
-    /* Outer white glow border - clearly visible against dark background */
+/* Base glow for all cards */
+.card {
+    /* White outer glow border - clearly separates from dark background */
     box-shadow: 
-        0 0 0 1px rgba(255, 255, 255, 0.25),
-        0 0 0 3px rgba(255, 255, 255, 0.15),
-        0 0 12px 2px rgba(255, 255, 255, 0.2),
+        0 0 0 1px rgba(255, 255, 255, 0.2),      /* Inner sharp border */
+        0 0 0 3px rgba(255, 255, 255, 0.1),      /* Middle soft glow */
+        0 0 10px 1px rgba(255, 255, 255, 0.15),  /* Outer spread glow */
         0 4px 8px rgba(0, 0, 0, 0.3) !important;
-    /* Slightly lighter background to pop against dark */
-    background: rgba(18, 35, 60, 0.95) !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
-.pdf-card:hover,
-.note-card:hover {
+/* Hover glow for all cards */
+.card:hover {
     box-shadow: 
-        0 0 0 1px rgba(255, 255, 255, 0.4),
-        0 0 0 4px rgba(255, 255, 255, 0.2),
-        0 0 20px 4px rgba(255, 255, 255, 0.35),
+        0 0 0 1px rgba(255, 255, 255, 0.35),
+        0 0 0 4px rgba(255, 255, 255, 0.15),
+        0 0 18px 3px rgba(255, 255, 255, 0.25),
         0 6px 12px rgba(0, 0, 0, 0.3) !important;
-    background: rgba(22, 42, 70, 0.98) !important;
     transform: translateY(-2px) !important;
 }
 
-/* Light mode adjustments */
-body.light-mode .pdf-card,
-body.light-mode .note-card {
+/* Active/pressed state for all cards */
+.card:active {
     box-shadow: 
-        0 0 0 1px rgba(0, 0, 0, 0.15),
-        0 0 0 3px rgba(0, 0, 0, 0.08),
-        0 0 12px 2px rgba(0, 0, 0, 0.1),
-        0 2px 6px rgba(0, 0, 0, 0.1) !important;
-    background: rgba(255, 255, 255, 0.95) !important;
-    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+        0 0 0 1px rgba(255, 255, 255, 0.15),
+        0 0 0 2px rgba(255, 255, 255, 0.08),
+        0 0 6px 1px rgba(255, 255, 255, 0.1),
+        0 2px 4px rgba(0, 0, 0, 0.2) !important;
+    transform: translateY(1px) !important;
 }
 
-body.light-mode .pdf-card:hover,
-body.light-mode .note-card:hover {
+/* Specific styling for folder cards (glow-folder) */
+.card.glow-folder {
+    border-radius: 60px !important;
+    background: rgba(15, 32, 55, 0.95) !important;
+}
+
+.card.glow-folder:hover {
+    background: rgba(20, 40, 70, 0.98) !important;
+}
+
+/* Specific styling for PDF cards */
+.pdf-card {
+    border-radius: var(--radius-md) !important;
+    background: rgba(18, 35, 60, 0.95) !important;
+}
+
+.pdf-card:hover {
+    background: rgba(22, 42, 70, 0.98) !important;
+}
+
+/* Specific styling for Note cards */
+.note-card {
+    border-radius: 60px !important;
+    background: rgba(18, 35, 60, 0.95) !important;
+}
+
+.note-card:hover {
+    background: rgba(22, 42, 70, 0.98) !important;
+}
+
+/* Light mode adjustments for all cards */
+body.light-mode .card {
     box-shadow: 
-        0 0 0 1px rgba(0, 0, 0, 0.25),
-        0 0 0 4px rgba(0, 0, 0, 0.12),
-        0 0 20px 4px rgba(0, 0, 0, 0.15),
+        0 0 0 1px rgba(0, 0, 0, 0.12),
+        0 0 0 3px rgba(0, 0, 0, 0.06),
+        0 0 10px 1px rgba(0, 0, 0, 0.08),
+        0 2px 6px rgba(0, 0, 0, 0.1) !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+}
+
+body.light-mode .card:hover {
+    box-shadow: 
+        0 0 0 1px rgba(0, 0, 0, 0.2),
+        0 0 0 4px rgba(0, 0, 0, 0.1),
+        0 0 18px 3px rgba(0, 0, 0, 0.12),
         0 4px 10px rgba(0, 0, 0, 0.15) !important;
     background: rgba(255, 255, 255, 1) !important;
+}
+
+body.light-mode .card:active {
+    box-shadow: 
+        0 0 0 1px rgba(0, 0, 0, 0.1),
+        0 0 0 2px rgba(0, 0, 0, 0.05),
+        0 0 6px 1px rgba(0, 0, 0, 0.06),
+        0 2px 4px rgba(0, 0, 0, 0.1) !important;
 }
 
 /* ========== NOTE PREVIEW ON HOVER ========== */
@@ -973,14 +995,13 @@ button, .card, .action-btn, .breadcrumb-item, .type-btn, .theme-toggle, #backBtn
     transition: all 0.04s cubic-bezier(0.2, 0.9, 0.4, 1.2) !important;
 }
 
+/* Card 3D press effect */
 .card {
     transform: translateY(0px);
-    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.25), 0 3px 10px rgba(0, 0, 0, 0.15) !important;
 }
 
 .card:active {
-    transform: translateY(3px) !important;
-    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.25), 0 1px 4px rgba(0, 0, 0, 0.1) !important;
+    transform: translateY(2px) !important;
 }
 
 #uploadBtn, #newNoteBtn {
@@ -1092,5 +1113,5 @@ button, .card, .action-btn, .breadcrumb-item, .type-btn, .theme-toggle, #backBtn
 with open('/mnt/agents/output/style.css', 'w') as f:
     f.write(updated_css)
 
-print("Updated CSS with white outer glow border saved!")
+print("Updated CSS with white outer glow for ALL cards saved!")
 print(f"File size: {len(updated_css)} characters")
