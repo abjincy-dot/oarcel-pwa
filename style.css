@@ -1,6 +1,6 @@
 /* ============================================
    OARCEL Document Manager - SOFT GREY LIGHT MODE
-   Only Oval is Clickable
+   Multi-format file support
    ============================================ */
 
 * {
@@ -591,6 +591,17 @@ body.light-mode .card {
 .note-card .card-icon { background: linear-gradient(135deg, rgba(251,191,36,0.15), rgba(245,158,11,0.1)); border-color: rgba(251,191,36,0.2); }
 .note-card .card-icon i { color: #fbbf24; }
 
+/* ========== FILE TYPE ICON COLORS ========== */
+.file-card .card-icon i.fa-file-pdf { color: #ef4444; }
+.file-card .card-icon i.fa-file-image { color: #10b981; }
+.file-card .card-icon i.fa-file-excel { color: #22c55e; }
+.file-card .card-icon i.fa-file-word { color: #3b82f6; }
+.file-card .card-icon i.fa-file-alt { color: #6b7280; }
+.file-card .card-icon i.fa-file-powerpoint { color: #f97316; }
+.file-card .card-icon i.fa-file-archive { color: #8b5cf6; }
+.file-card .card-icon i.fa-file-video { color: #ec4899; }
+.file-card .card-icon i.fa-file-audio { color: #f43f5e; }
+
 .card-filename {
     flex: 1;
     font-size: 0.75rem !important;
@@ -641,46 +652,38 @@ body.light-mode .card {
     color: #fda4af !important;
 }
 
-.card.glow-folder, .note-card {
+.card.glow-folder, .note-card, .file-card {
     border-radius: 60px !important;
 }
 
 /* ========== WHITE GLOW FOR ALL CARDS ========== */
 .card.glow-folder,
-.pdf-card,
-.note-card,
-.card.pdf-card,
-.card.note-card {
+.file-card,
+.note-card {
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4),
                 0 0 8px 2px rgba(255, 255, 255, 0.3),
                 0 4px 8px rgba(0, 0, 0, 0.2) !important;
 }
 
 .card.glow-folder:hover,
-.pdf-card:hover,
-.note-card:hover,
-.card.pdf-card:hover,
-.card.note-card:hover {
+.file-card:hover,
+.note-card:hover {
     box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.6),
                 0 0 15px 4px rgba(255, 255, 255, 0.4),
                 0 6px 12px rgba(0, 0, 0, 0.3) !important;
 }
 
 body.light-mode .card.glow-folder,
-body.light-mode .pdf-card,
-body.light-mode .note-card,
-body.light-mode .card.pdf-card,
-body.light-mode .card.note-card {
+body.light-mode .file-card,
+body.light-mode .note-card {
     box-shadow: 0 0 0 2px rgba(100, 116, 139, 0.3),
                 0 0 6px 1px rgba(100, 116, 139, 0.2),
                 0 2px 6px rgba(0, 0, 0, 0.08) !important;
 }
 
 body.light-mode .card.glow-folder:hover,
-body.light-mode .pdf-card:hover,
-body.light-mode .note-card:hover,
-body.light-mode .card.pdf-card:hover,
-body.light-mode .card.note-card:hover {
+body.light-mode .file-card:hover,
+body.light-mode .note-card:hover {
     box-shadow: 0 0 0 3px rgba(100, 116, 139, 0.4),
                 0 0 12px 2px rgba(100, 116, 139, 0.3),
                 0 4px 8px rgba(0, 0, 0, 0.1) !important;
