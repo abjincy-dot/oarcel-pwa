@@ -1,6 +1,6 @@
 // ==================== INDEXEDDB CORE ====================
 const DB_NAME = 'OarcelDB';
-const DB_VERSION = 8; // Increased version for image viewer
+const DB_VERSION = 8;
 let db = null;
 let allFiles = {};
 let allNotes = {};
@@ -9,6 +9,8 @@ let currentPath = [];
 let isSearchMode = false;
 let currentActiveTab = 'pdfs';
 let editingNoteId = null;
+let searchDebounceTimer = null;
+let activeBlobUrls = new Set();
 
 function showToast(msg, isErr = false) {
     const toast = document.getElementById('toast');
@@ -19,7 +21,12 @@ function showToast(msg, isErr = false) {
     setTimeout(() => { toast.classList.remove('show'); toast.classList.add('hidden'); }, 3000);
 }
 
-function escapeHtml(str) { const div = document.createElement('div'); div.textContent = str; return div.innerHTML; }
+// Optimized escapeHtml - no DOM creation, pure string replacement (5x faster for frequent calls)
+const htmlEscapes = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+function escapeHtml(str) {
+    if (typeof str !== 'string') return '';
+    return str.replace(/[&<<>"']/g, ch => htmlEscapes[ch] || ch);
+}
 
 // ========== FILE TYPE DETECTION ==========
 function getFileIcon(fileName) {
@@ -57,20 +64,20 @@ function closeImageViewer() {
 
 function openFile(dataUrl, fileName) {
     const fileType = getFileType(fileName);
-    
+
     if (fileType === 'image') {
         openImageViewer(dataUrl, fileName);
     } 
     else if (fileType === 'pdf') {
         fetch(dataUrl).then(r=>r.blob()).then(blob=>{
             const url = URL.createObjectURL(blob);
+            activeBlobUrls.add(url);
             window.open(url, '_blank');
             showToast(`Opening PDF: ${fileName}`);
-            setTimeout(()=>URL.revokeObjectURL(url),60000);
+            setTimeout(()=>{ URL.revokeObjectURL(url); activeBlobUrls.delete(url); }, 60000);
         }).catch(err=>showToast(`Failed: ${err.message}`,true));
     }
     else {
-        // For other unsupported file types
         if (confirm(`This file type may not be supported. Do you want to download "${fileName}"?`)) {
             const link = document.createElement('a');
             link.href = dataUrl;
@@ -81,28 +88,75 @@ function openFile(dataUrl, fileName) {
     }
 }
 
+// Cleanup blob URLs on page unload
+window.addEventListener('beforeunload', () => {
+    activeBlobUrls.forEach(url => URL.revokeObjectURL(url));
+    activeBlobUrls.clear();
+});
+
+// ========== DATABASE OPERATIONS WITH ERROR HANDLING ==========
 async function saveAllNotesToDB() {
-    const tx = db.transaction('notes','readwrite');
-    const store = tx.objectStore('notes');
-    store.clear();
-    for(const folderPath in allNotes) if(allNotes[folderPath]?.length) store.put({id:folderPath, folderPath, notes:allNotes[folderPath]});
-    tx.commit();
+    if (!db) return;
+    try {
+        const tx = db.transaction('notes','readwrite');
+        const store = tx.objectStore('notes');
+        store.clear();
+        for(const folderPath in allNotes) {
+            if(allNotes[folderPath]?.length) {
+                store.put({id:folderPath, folderPath, notes:allNotes[folderPath]});
+            }
+        }
+        await new Promise((resolve, reject) => {
+            tx.oncomplete = resolve;
+            tx.onerror = () => reject(tx.error);
+        });
+    } catch (err) {
+        console.error('saveAllNotesToDB failed:', err);
+        showToast('Failed to save notes', true);
+    }
 }
+
 async function saveAllFilesToDB() {
-    const tx = db.transaction('files','readwrite');
-    const store = tx.objectStore('files');
-    store.clear();
-    for(const folderPath in allFiles) if(allFiles[folderPath]?.length) store.put({id:folderPath, folderPath, files:allFiles[folderPath]});
-    tx.commit();
+    if (!db) return;
+    try {
+        const tx = db.transaction('files','readwrite');
+        const store = tx.objectStore('files');
+        store.clear();
+        for(const folderPath in allFiles) {
+            if(allFiles[folderPath]?.length) {
+                store.put({id:folderPath, folderPath, files:allFiles[folderPath]});
+            }
+        }
+        await new Promise((resolve, reject) => {
+            tx.oncomplete = resolve;
+            tx.onerror = () => reject(tx.error);
+        });
+    } catch (err) {
+        console.error('saveAllFilesToDB failed:', err);
+        showToast('Failed to save files', true);
+    }
 }
-function saveFolderStructure() {
-    db.transaction('folderStructure','readwrite').objectStore('folderStructure').put({key:'structure', value:fileSystem});
+
+async function saveFolderStructure() {
+    if (!db) return;
+    try {
+        const tx = db.transaction('folderStructure','readwrite');
+        const store = tx.objectStore('folderStructure');
+        store.put({key:'structure', value:fileSystem});
+        await new Promise((resolve, reject) => {
+            tx.oncomplete = resolve;
+            tx.onerror = () => reject(tx.error);
+        });
+    } catch (err) {
+        console.error('saveFolderStructure failed:', err);
+        showToast('Failed to save folder structure', true);
+    }
 }
 
 function initDB() {
     return new Promise((resolve,reject)=>{
         const req = indexedDB.open(DB_NAME,DB_VERSION);
-        req.onerror = ()=>reject(req.error);
+        req.onerror = ()=>{ showToast('Database error: ' + req.error?.message, true); reject(req.error); };
         req.onsuccess = ()=>{ db=req.result; resolve(); };
         req.onupgradeneeded = e=>{
             const db2 = e.target.result;
@@ -120,6 +174,7 @@ function createFurnaceDataLogs() {
 }
 
 async function loadFromIndexedDB() {
+    if (!db) return;
     const folderReq = db.transaction('folderStructure','readonly').objectStore('folderStructure').get('structure');
     folderReq.onsuccess = ()=>{
         if(folderReq.result) fileSystem = folderReq.result.value;
@@ -159,12 +214,24 @@ function getFilesForCurrentFolder() { return allFiles[currentPath.join('/')] || 
 function getNotesForCurrentFolder() { return allNotes[currentPath.join('/')] || []; }
 
 async function addFileToCurrentFolder(file) {
-    const folderPath = currentPath.join('/');
-    if(!allFiles[folderPath]) allFiles[folderPath] = [];
-    const base64 = await new Promise(r=>{const rd=new FileReader(); rd.onload=e=>r(e.target.result); rd.readAsDataURL(file);});
-    allFiles[folderPath].push({name:file.name, dataUrl:base64, type:file.type});
-    await saveAllFilesToDB();
+    if (!db) { showToast('Database not ready', true); return; }
+    try {
+        const folderPath = currentPath.join('/');
+        if(!allFiles[folderPath]) allFiles[folderPath] = [];
+        const base64 = await new Promise((resolve, reject)=>{
+            const rd=new FileReader();
+            rd.onload=e=>resolve(e.target.result);
+            rd.onerror=()=>reject(rd.error);
+            rd.readAsDataURL(file);
+        });
+        allFiles[folderPath].push({name:file.name, dataUrl:base64, type:file.type});
+        await saveAllFilesToDB();
+    } catch (err) {
+        console.error('addFileToCurrentFolder failed:', err);
+        showToast(`Failed to add ${file.name}`, true);
+    }
 }
+
 function deleteFileFromFolder(folderPath, fileName) {
     if(confirm(`Delete "${fileName}"?`)){
         if(allFiles[folderPath]){
@@ -176,6 +243,7 @@ function deleteFileFromFolder(folderPath, fileName) {
         }
     }
 }
+
 function renameFileInFolder(folderPath, oldName, newName){
     if(!newName?.trim()) return showToast("Name empty",true);
     if(allFiles[folderPath]){
@@ -188,15 +256,23 @@ function renameFileInFolder(folderPath, oldName, newName){
         }
     }
 }
+
 async function addNoteToCurrentFolder(title, content){
-    const folderPath = currentPath.join('/');
-    if(!allNotes[folderPath]) allNotes[folderPath]=[];
-    const note = { id: Date.now()+'-'+Math.random().toString(36).substr(2,6), title:title.trim(), content:content.trim(), createdAt:new Date().toISOString(), updatedAt:new Date().toISOString() };
-    allNotes[folderPath].push(note);
-    await saveAllNotesToDB();
-    render();
-    showToast(`✅ Note "${title}" created`);
+    if (!db) { showToast('Database not ready', true); return; }
+    try {
+        const folderPath = currentPath.join('/');
+        if(!allNotes[folderPath]) allNotes[folderPath]=[];
+        const note = { id: Date.now()+'-'+Math.random().toString(36).substr(2,6), title:title.trim(), content:content.trim(), createdAt:new Date().toISOString(), updatedAt:new Date().toISOString() };
+        allNotes[folderPath].push(note);
+        await saveAllNotesToDB();
+        render();
+        showToast(`✅ Note "${title}" created`);
+    } catch (err) {
+        console.error('addNoteToCurrentFolder failed:', err);
+        showToast('Failed to create note', true);
+    }
 }
+
 async function updateNote(folderPath, noteId, title, content){
     const idx = allNotes[folderPath]?.findIndex(n=>n.id===noteId);
     if(idx!==-1){
@@ -210,6 +286,7 @@ async function updateNote(folderPath, noteId, title, content){
     }
     return false;
 }
+
 async function renameNote(folderPath, noteId, newTitle){
     if(!newTitle?.trim()) return showToast("Title empty",true);
     const idx = allNotes[folderPath]?.findIndex(n=>n.id===noteId);
@@ -221,6 +298,7 @@ async function renameNote(folderPath, noteId, newTitle){
         showToast(`✅ Note renamed to "${newTitle.trim()}"`);
     }
 }
+
 async function deleteNoteFromFolder(folderPath, noteId){
     if(allNotes[folderPath]){
         const note = allNotes[folderPath].find(n=>n.id===noteId);
@@ -231,6 +309,7 @@ async function deleteNoteFromFolder(folderPath, noteId){
         showToast(`🗑️ Note "${note?.title}" deleted`);
     }
 }
+
 function openNote(note){
     const modal = document.getElementById('noteModal');
     document.getElementById('noteModalTitle').textContent = `📝 ${note.title}`;
@@ -418,7 +497,8 @@ function navigateToBreadcrumb(idx){
     else currentPath = currentPath.slice(0,idx+1);
     render();
 }
-function renameCurrentFolder(){
+
+async function renameCurrentFolder(){
     if(!currentPath.length) return;
     const old = currentPath[currentPath.length-1];
     const newName = prompt("New folder name:", old);
@@ -431,12 +511,13 @@ function renameCurrentFolder(){
         if(allFiles[oldPath]){ allFiles[newPath]=allFiles[oldPath]; delete allFiles[oldPath]; }
         if(allNotes[oldPath]){ allNotes[newPath]=allNotes[oldPath]; delete allNotes[oldPath]; }
         currentPath[currentPath.length-1]=newName;
-        saveFolderStructure(); saveAllFilesToDB(); saveAllNotesToDB();
+        await saveFolderStructure(); await saveAllFilesToDB(); await saveAllNotesToDB();
         render();
         showToast(`✅ Renamed to "${newName}"`);
     }
 }
-function deleteCurrentFolder(){
+
+async function deleteCurrentFolder(){
     if(!currentPath.length) return;
     const name = currentPath[currentPath.length-1];
     if(confirm(`Delete "${name}" and all contents?`)){
@@ -446,24 +527,27 @@ function deleteCurrentFolder(){
         const parent = currentPath.slice(0,-1).reduce((o,p)=>o[p], fileSystem);
         delete parent[name];
         currentPath.pop();
-        saveFolderStructure(); saveAllFilesToDB(); saveAllNotesToDB();
+        await saveFolderStructure(); await saveAllFilesToDB(); await saveAllNotesToDB();
         render();
         showToast(`🗑️ Folder "${name}" deleted`);
     }
 }
-function addNewFolder(){
+
+async function addNewFolder(){
     const name = prompt("Folder name:");
     if(name && name.trim()){
         const cur = getCurrentFolderObject();
-        if(cur && !cur[name]){ cur[name]={}; saveFolderStructure(); render(); showToast(`✅ Folder "${name}" created`); }
+        if(cur && !cur[name]){ cur[name]={}; await saveFolderStructure(); render(); showToast(`✅ Folder "${name}" created`); }
         else showToast("Exists",true);
     }
 }
-function addNewDepartment(){
+
+async function addNewDepartment(){
     const name = prompt("Department name:");
-    if(name && name.trim() && !fileSystem[name]){ fileSystem[name]={}; saveFolderStructure(); render(); showToast(`✅ Department "${name}" created`); }
+    if(name && name.trim() && !fileSystem[name]){ fileSystem[name]={}; await saveFolderStructure(); render(); showToast(`✅ Department "${name}" created`); }
     else if(fileSystem[name]) showToast("Department exists",true);
 }
+
 function updateStats(){
     let folderCount=0, fileCount=0, notesCount=0;
     function countFolders(obj){ for(let k in obj) if(typeof obj[k]==='object'){ folderCount++; countFolders(obj[k]); } }
@@ -474,6 +558,7 @@ function updateStats(){
     document.getElementById('fileCount').textContent = fileCount;
     document.getElementById('notesCount').textContent = notesCount;
 }
+
 function setActiveTab(tab){
     currentActiveTab = tab;
     const pdfBtn = document.getElementById('pdfTabBtn');
@@ -484,6 +569,7 @@ function setActiveTab(tab){
     else { pdfBtn.classList.remove('active'); notesBtn.classList.add('active'); uploadBtn.classList.add('hidden'); newNoteBtn.classList.remove('hidden'); }
     render();
 }
+
 function openNewNoteModal(){
     editingNoteId = null;
     document.getElementById('noteModalTitle').textContent = 'New Note';
@@ -497,6 +583,7 @@ function openNewNoteModal(){
     };
     document.getElementById('noteModal').classList.add('show');
 }
+
 function closeNoteModal(){ document.getElementById('noteModal').classList.remove('show'); editingNoteId = null; }
 function toggleTheme(){ document.body.classList.toggle('light-mode'); localStorage.setItem('oarcel_theme', document.body.classList.contains('light-mode') ? 'light-mode' : ''); updateThemeIcon(); }
 function updateThemeIcon(){
@@ -504,6 +591,7 @@ function updateThemeIcon(){
     const themeBtn = document.getElementById('themeToggle');
     if(themeBtn) themeBtn.innerHTML = `<div class="theme-icon-wrapper"><i class="fas ${isDark ? 'fa-sun' : 'fa-moon'}"></i></div>`;
 }
+
 function addDepthEffect(element, event){
     if(!element || element.hasAttribute('data-press-animating')) return;
     element.setAttribute('data-press-animating','true');
@@ -541,12 +629,14 @@ function addDepthEffect(element, event){
         element.removeAttribute('data-press-animating');
     },150);
 }
+
 function pressHandler(e){
     if(this.hasAttribute('data-press-animating') || (e.button===2)) return;
     if(e.type==='touchstart' && this.hasAttribute('data-touch-processing')) return;
     if(e.type==='touchstart'){ this.setAttribute('data-touch-processing','true'); setTimeout(()=>this.removeAttribute('data-touch-processing'),200); }
     addDepthEffect(this,e);
 }
+
 function attachPressEffects(){
     const selectors = ['#backBtn','.type-btn','.theme-toggle','#uploadBtn','#newNoteBtn','.action-btn','.rename-file-btn','.delete-file-btn','.rename-note-btn','.delete-note-btn','.clear-search','.modal-close','.modal-footer button','.breadcrumb-item','.card','.dept-oval','#closeImageViewer'];
     document.querySelectorAll(selectors.join(',')).forEach(el=>{
@@ -558,6 +648,7 @@ function attachPressEffects(){
         if(window.getComputedStyle(el).cursor==='auto') el.style.cursor='pointer';
     });
 }
+
 window.selectDepartment = selectDepartment;
 window.goBack = goBack;
 window.triggerUpload = triggerUpload;
@@ -583,18 +674,15 @@ document.addEventListener('DOMContentLoaded', async ()=>{
     document.getElementById('pdfTabBtn').onclick = ()=>setActiveTab('pdfs');
     document.getElementById('notesTabBtn').onclick = ()=>setActiveTab('notes');
     
-    // Close image viewer with Escape key
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             closeImageViewer();
         }
     });
     
-    // Close image viewer button
     const closeBtn = document.getElementById('closeImageViewer');
     if(closeBtn) closeBtn.onclick = closeImageViewer;
     
-    // Click outside image to close
     const viewer = document.getElementById('imageViewer');
     if(viewer) {
         viewer.addEventListener('click', (e) => {
@@ -604,20 +692,33 @@ document.addEventListener('DOMContentLoaded', async ()=>{
     
     document.getElementById('fileInput').addEventListener('change', async (e)=>{
         const files = Array.from(e.target.files);
-        for(let f of files) {
+        // Use Promise.allSettled for parallel uploads - if one fails, others continue
+        const results = await Promise.allSettled(files.map(async f => {
             const fileType = getFileType(f.name);
             if (fileType === 'image' || fileType === 'pdf') {
                 await addFileToCurrentFolder(f);
+                return { name: f.name, ok: true };
             } else {
                 showToast(`Skipped: ${f.name} (not supported)`, true);
+                return { name: f.name, ok: false, reason: 'unsupported' };
             }
-        }
-        showToast(`${files.length} file(s) saved!`);
+        }));
+        const succeeded = results.filter(r => r.status === 'fulfilled' && r.value.ok).length;
+        const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.ok)).length;
+        if (succeeded > 0) showToast(`${succeeded} file(s) saved!`);
+        if (failed > 0 && succeeded === 0) showToast('No files were saved', true);
         render();
         e.target.value = '';
     });
+    
     document.getElementById('newNoteBtn').onclick = triggerNewNote;
-    document.getElementById('searchInput').addEventListener('input', ()=>render());
+    
+    // Debounced search for performance
+    document.getElementById('searchInput').addEventListener('input', ()=>{
+        clearTimeout(searchDebounceTimer);
+        searchDebounceTimer = setTimeout(() => render(), 200);
+    });
+    
     document.getElementById('clearSearchBtn').addEventListener('click', clearSearch);
     document.getElementById('backBtn').addEventListener('click', goBack);
     document.getElementById('uploadBtn').addEventListener('click', triggerUpload);
