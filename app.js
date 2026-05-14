@@ -358,371 +358,129 @@ function createNoteCard(note, folderPath){
     const div = document.createElement('div');
     div.className = 'card note-card';
     div.innerHTML = `
-        <div class="card-icon"><i class="fas fa-sticky-note"></i></div>
-        <div class="card-filename" title="${escapeHtml(note.title)}">${escapeHtml(note.title)}</div>
-        <div class="card-buttons">
-            <button class="rename-note-btn" title="Rename Note"><i class="fas fa-edit"></i></button>
-            <button class="delete-note-btn" title="Delete Note"><i class="fas fa-trash"></i></button>
-        </div>
-    `;
-    div.addEventListener('click', (e)=>{
-        if(e.target.closest('.rename-note-btn') || e.target.closest('.delete-note-btn')) return;
-        openNote({...note, folder:folderPath});
-    });
-    div.querySelector('.rename-note-btn').addEventListener('click', (e)=>{
-        e.stopPropagation();
-        const newTitle = prompt("New note title:", note.title);
-        if(newTitle?.trim()) renameNote(folderPath, note.id, newTitle.trim());
-    });
-    div.querySelector('.delete-note-btn').addEventListener('click', (e)=>{
-        e.stopPropagation();
-        if(confirm(`Delete note "${note.title}"?`)) deleteNoteFromFolder(folderPath, note.id);
-    });
-    return div;
-}
+        <div class="card-icon"><i class="fas fa-st Here are all 5 complete files ready to copy and use:
 
-function createCard(title, onClick, isFolder=false){
-    const div = document.createElement('div');
-    div.className = isFolder ? 'card glow-folder' : 'card';
-    div.innerHTML = `<div class="card-icon"><i class="fas ${isFolder ? 'fa-folder' : 'fa-folder-open'}"></i></div><div class="card-filename">${escapeHtml(title)}</div><div class="card-buttons"></div>`;
-    div.onclick = onClick;
-    return div;
-}
+---
 
-function render(){
-    const query = document.getElementById('searchInput').value.trim().toLowerCase();
-    if(query){
-        isSearchMode=true;
-        document.getElementById('clearSearchBtn').classList.remove('hidden');
-        const results=[];
-        for(const path in allFiles) if(allFiles[path]) allFiles[path].forEach(f=>{ if(f.name.toLowerCase().includes(query)) results.push({...f, folder:path, type:'file'});});
-        for(const path in allNotes) if(allNotes[path]) allNotes[path].forEach(n=>{ if(n.title.toLowerCase().includes(query) || n.content.toLowerCase().includes(query)) results.push({...n, folder:path, type:'note'});});
-        document.getElementById('searchInfo').classList.remove('hidden');
-        document.getElementById('searchInfo').innerHTML = `<i class="fas fa-search"></i> Found ${results.length} result(s) for "${escapeHtml(query)}" <button onclick="clearSearch()">Clear</button>`;
-        const contentDiv = document.getElementById('content');
-        contentDiv.innerHTML = '';
-        document.getElementById('backBtn').classList.remove('hidden');
-        document.getElementById('uploadBtn').classList.add('hidden');
-        document.getElementById('newNoteBtn').classList.add('hidden');
-        document.getElementById('departmentsSection').innerHTML = '';
-        document.getElementById('breadcrumb').innerHTML = '';
-        document.querySelector('.type-selector').style.display = 'none';
-        if(!results.length) contentDiv.innerHTML = '<div class="empty-state"><i class="fas fa-search"></i><p>No results found.</p></div>';
-        else results.forEach(item => { if(item.type==='file') contentDiv.appendChild(createFileCard(item, item.folder)); else contentDiv.appendChild(createNoteCard(item, item.folder)); });
-        updateStats();
-        attachPressEffects();
-        return;
-    }
-    isSearchMode=false;
-    document.getElementById('clearSearchBtn').classList.add('hidden');
-    document.getElementById('searchInfo').classList.add('hidden');
-    document.getElementById('content').innerHTML = '';
-    const folder = getCurrentFolderObject();
-    if(!folder){ currentPath=[]; render(); return; }
-    document.getElementById('backBtn').classList.toggle('hidden', currentPath.length===0);
-    const bcDiv = document.getElementById('breadcrumb');
-    bcDiv.innerHTML = `<div class="breadcrumb-item" onclick="navigateToBreadcrumb(-1)"><i class="fas fa-home"></i> Home</div>`;
-    currentPath.forEach((f,i)=>{ bcDiv.innerHTML += `<span class="breadcrumb-separator">/</span><div class="breadcrumb-item" onclick="navigateToBreadcrumb(${i})">${escapeHtml(f)}</div>`; });
-    const isRoot = currentPath.length===0;
-    if(isRoot){
-        let html = '<div class="section-title"><i class="fas fa-building"></i> Departments</div><div class="departments-grid">';
-        for(let dept in fileSystem){
-            const sub = Object.keys(fileSystem[dept]).length;
-            const fcount = allFiles[dept]?.length||0;
-            const ncount = allNotes[dept]?.length||0;
-            html += `<div class="dept-card" data-dept="${dept}"><div class="dept-oval" onclick="selectDepartment('${dept}')"><span>${dept}</span></div><div class="dept-arrow"><i class="fas fa-chevron-right"></i></div><div class="dept-info">${sub+fcount+ncount} items</div></div>`;
-        }
-        html += '</div>';
-        document.getElementById('departmentsSection').innerHTML = html;
-        document.getElementById('uploadBtn').classList.add('hidden');
-        document.getElementById('newNoteBtn').classList.add('hidden');
-        attachDepartmentPressEffects();
-    } else document.getElementById('departmentsSection').innerHTML = '';
-    
-    const hasSubfolders = Object.keys(folder).length>0;
-    const isLeafFolder = !isRoot && !hasSubfolders;
-    const typeSelector = document.querySelector('.type-selector');
-    if(typeSelector) typeSelector.style.display = isLeafFolder ? 'flex' : 'none';
-    if(isLeafFolder){
-        if(currentActiveTab==='pdfs'){ document.getElementById('uploadBtn').classList.remove('hidden'); document.getElementById('newNoteBtn').classList.add('hidden'); }
-        else { document.getElementById('uploadBtn').classList.add('hidden'); document.getElementById('newNoteBtn').classList.remove('hidden'); }
-    } else { document.getElementById('uploadBtn').classList.add('hidden'); document.getElementById('newNoteBtn').classList.add('hidden'); }
-    const actionDiv = document.createElement('div');
-    actionDiv.className = 'action-bar';
-    if(!isRoot){
-        actionDiv.innerHTML = `<button class="action-btn" onclick="renameCurrentFolder()"><i class="fas fa-edit"></i> Rename Folder</button>
-                               <button class="action-btn" onclick="deleteCurrentFolder()"><i class="fas fa-trash-alt"></i> Delete Folder</button>
-                               <button class="action-btn" onclick="addNewFolder()"><i class="fas fa-plus"></i> Add Subfolder</button>`;
-    } else actionDiv.innerHTML = `<button class="action-btn" onclick="addNewDepartment()"><i class="fas fa-building"></i> Add Department</button>`;
-    document.getElementById('content').appendChild(actionDiv);
-    if(!isRoot && hasSubfolders){
-        for(let key in folder) document.getElementById('content').appendChild(createCard(key, ()=>{ currentPath.push(key); render(); }, true));
-    }
-    if(isLeafFolder){
-        if(currentActiveTab==='pdfs'){
-            const files = getFilesForCurrentFolder();
-            const path = currentPath.join('/');
-            if(files.length) files.forEach(f=>document.getElementById('content').appendChild(createFileCard(f,path)));
-            else document.getElementById('content').innerHTML += '<div class="empty-state"><i class="fas fa-cloud-upload-alt"></i><p>No files yet. Click Upload to add PDFs or Images.</p></div>';
-        } else {
-            const notes = getNotesForCurrentFolder();
-            const path = currentPath.join('/');
-            if(notes.length) notes.forEach(n=>document.getElementById('content').appendChild(createNoteCard(n,path)));
-            else document.getElementById('content').innerHTML += '<div class="empty-state empty-state-note"><i class="fas fa-sticky-note"></i><p>No notes yet. Click + New Note to add.</p></div>';
-        }
-    }
-    updateStats();
-    attachPressEffects();
-}
+## 📄 1. INDEX.HTML
 
-function attachDepartmentPressEffects() {
-    document.querySelectorAll('.dept-oval').forEach(oval => {
-        oval.addEventListener('touchstart', () => {}, { passive: false });
-    });
-}
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
+<meta name="description" content="OARCEL Document Manager - Professional document management system for organizing PDFs, images, and notes with offline access.">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>OARCEL | Document Manager</title>
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="OARCEL">
+<meta name="theme-color" content="#0a1128">
+<link rel="apple-touch-icon" href="https://img.icons8.com/fluency/192/folder-invoices.png">
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=12">
+<style>
+    .modal-body input, .modal-body textarea { font-size: 16px; }
+    .card-buttons button { touch-action: manipulation; }
+    .noscript-msg { position:fixed; inset:0; background:#0a1128; color:#f8fafc; display:flex; align-items:center; justify-content:center; font-family:Inter,sans-serif; font-size:1.2rem; z-index:99999; text-align:center; padding:20px; }
+    .noscript-msg i { font-size:3rem; margin-bottom:16px; color:#ef4444; display:block; }
+</style>
+</head>
+<body>
+<noscript>
+  <div class="noscript-msg">
+    <div>
+      <i class="fas fa-exclamation-triangle"></i>
+      <p>OARCEL Document Manager requires JavaScript to function.<br>Please enable JavaScript in your browser settings.</p>
+    </div>
+  </div>
+</noscript>
+<div class="particles-container">
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div>
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div>
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div>
+</div>
+<div class="ambient-glow glow-1"></div>
+<div class="ambient-glow glow-2"></div>
 
-function selectDepartment(d){ currentPath=[d]; render(); }
-function goBack(){ if(currentPath.length && !isSearchMode){ currentPath.pop(); render(); } else if(isSearchMode) clearSearch(); }
-function triggerUpload(){ document.getElementById('fileInput').click(); }
-function triggerNewNote(){ openNewNoteModal(); }
-function clearSearch(){
-    document.getElementById('searchInput').value='';
-    isSearchMode=false;
-    document.getElementById('searchInfo').classList.add('hidden');
-    document.getElementById('clearSearchBtn').classList.add('hidden');
-    render();
-}
-function navigateToBreadcrumb(idx){
-    if(idx===-1) currentPath=[];
-    else currentPath = currentPath.slice(0,idx+1);
-    render();
-}
+<div class="app">
+  <header class="header">
+    <div class="logo"><div class="logo-inner"><i class="fas fa-folder-open"></i></div><div class="logo-ring"></div></div>
+    <div class="header-title">
+      <div class="main-line"><h1>OARCEL</h1><span class="doc-tag"><i class="fas fa-shield-alt"></i> Document Manager</span></div>
+      <div class="owner-name"><span class="owner-dot"></span><span>Abish Rajan</span></div>
+    </div>
+  </header>
 
-async function renameCurrentFolder(){
-    if(!currentPath.length) return;
-    const old = currentPath[currentPath.length-1];
-    const newName = prompt("New folder name:", old);
-    if(newName && newName!==old && newName.trim()){
-        const parent = currentPath.slice(0,-1).reduce((o,p)=>o[p], fileSystem);
-        parent[newName] = parent[old];
-        delete parent[old];
-        const oldPath = currentPath.join('/');
-        const newPath = [...currentPath.slice(0,-1), newName].join('/');
-        if(allFiles[oldPath]){ allFiles[newPath]=allFiles[oldPath]; delete allFiles[oldPath]; }
-        if(allNotes[oldPath]){ allNotes[newPath]=allNotes[oldPath]; delete allNotes[oldPath]; }
-        currentPath[currentPath.length-1]=newName;
-        await saveFolderStructure(); await saveAllFilesToDB(); await saveAllNotesToDB();
-        render();
-        showToast(`✅ Renamed to "${newName}"`);
-    }
-}
+  <div class="top-bar">
+    <button id="backBtn" class="btn-back hidden"><i class="fas fa-arrow-left"></i><span>Back</span></button>
+    <div class="type-selector">
+      <button id="pdfTabBtn" class="type-btn active"><i class="fas fa-file-pdf"></i> Files</button>
+      <button id="notesTabBtn" class="type-btn"><i class="fas fa-sticky-note"></i> Notes</button>
+    </div>
+    <div class="search-container">
+      <i class="fas fa-search"></i>
+      <input type="text" id="searchInput" placeholder="Search documents...">
+      <button id="clearSearchBtn" class="clear-search hidden"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="top-bar-actions">
+      <button id="themeToggle" class="theme-toggle"><div class="theme-icon-wrapper"><i class="fas fa-moon"></i></div></button>
+      <button id="uploadBtn" class="btn-upload"><i class="fas fa-cloud-upload-alt"></i><span>Upload</span></button>
+      <button id="newNoteBtn" class="btn-upload hidden"><i class="fas fa-plus"></i><span>New Note</span></button>
+    </div>
+    <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.svg" multiple>
+  </div>
 
-async function deleteCurrentFolder(){
-    if(!currentPath.length) return;
-    const name = currentPath[currentPath.length-1];
-    if(confirm(`Delete "${name}" and all contents?`)){
-        const path = currentPath.join('/');
-        delete allFiles[path];
-        delete allNotes[path];
-        const parent = currentPath.slice(0,-1).reduce((o,p)=>o[p], fileSystem);
-        delete parent[name];
-        currentPath.pop();
-        await saveFolderStructure(); await saveAllFilesToDB(); await saveAllNotesToDB();
-        render();
-        showToast(`🗑️ Folder "${name}" deleted`);
-    }
-}
+  <div class="stats-bar">
+    <div class="stat-item"><div class="stat-icon-bg"><i class="fas fa-folder"></i></div><div class="stat-data"><span id="folderCount" class="stat-number">0</span><label>Folders</label></div></div>
+    <div class="stat-divider"></div>
+    <div class="stat-item"><div class="stat-icon-bg stat-icon-files"><i class="fas fa-file"></i></div><div class="stat-data"><span id="fileCount" class="stat-number">0</span><label>Files</label></div></div>
+    <div class="stat-divider"></div>
+    <div class="stat-item"><div class="stat-icon-bg stat-icon-notes"><i class="fas fa-sticky-note"></i></div><div class="stat-data"><span id="notesCount" class="stat-number">0</span><label>Notes</label></div></div>
+  </div>
 
-async function addNewFolder(){
-    const name = prompt("Folder name:");
-    if(name && name.trim()){
-        const cur = getCurrentFolderObject();
-        if(cur && !cur[name]){ cur[name]={}; await saveFolderStructure(); render(); showToast(`✅ Folder "${name}" created`); }
-        else showToast("Exists",true);
-    }
-}
+  <nav id="breadcrumb" class="breadcrumb"></nav>
+  <div id="departmentsSection"></div>
+  <div id="searchInfo" class="search-result-info hidden"></div>
+  <div id="content" class="content"></div>
+</div>
 
-async function addNewDepartment(){
-    const name = prompt("Department name:");
-    if(name && name.trim() && !fileSystem[name]){ fileSystem[name]={}; await saveFolderStructure(); render(); showToast(`✅ Department "${name}" created`); }
-    else if(fileSystem[name]) showToast("Department exists",true);
-}
+<div id="imageViewer" class="image-viewer hidden">
+  <div class="image-viewer-header">
+    <button id="closeImageViewer" class="close-viewer-btn"><i class="fas fa-times-circle"></i> Close</button>
+  </div>
+  <div class="image-viewer-body">
+    <img id="viewerImage" src="" alt="">
+  </div>
+</div>
 
-function updateStats(){
-    let folderCount=0, fileCount=0, notesCount=0;
-    function countFolders(obj){ for(let k in obj) if(typeof obj[k]==='object'){ folderCount++; countFolders(obj[k]); } }
-    countFolders(fileSystem);
-    for(let k in allFiles) if(allFiles[k]) fileCount += allFiles[k].length;
-    for(let k in allNotes) if(allNotes[k]) notesCount += allNotes[k].length;
-    document.getElementById('folderCount').textContent = folderCount;
-    document.getElementById('fileCount').textContent = fileCount;
-    document.getElementById('notesCount').textContent = notesCount;
-}
+<div id="noteModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header"><h3 id="noteModalTitle">New Note</h3><button class="modal-close" onclick="closeNoteModal()">&times;</button></div>
+    <div class="modal-body">
+      <input type="text" id="noteTitle" placeholder="Note title..." style="margin-bottom: 16px;">
+      <textarea id="noteContent" placeholder="Write your note here..."></textarea>
+    </div>
+    <div class="modal-footer"><button onclick="closeNoteModal()">Cancel</button><button id="saveNoteBtn">Save Note</button></div>
+  </div>
+</div>
 
-function setActiveTab(tab){
-    currentActiveTab = tab;
-    const pdfBtn = document.getElementById('pdfTabBtn');
-    const notesBtn = document.getElementById('notesTabBtn');
-    const uploadBtn = document.getElementById('uploadBtn');
-    const newNoteBtn = document.getElementById('newNoteBtn');
-    if(tab==='pdfs'){ pdfBtn.classList.add('active'); notesBtn.classList.remove('active'); uploadBtn.classList.remove('hidden'); newNoteBtn.classList.add('hidden'); }
-    else { pdfBtn.classList.remove('active'); notesBtn.classList.add('active'); uploadBtn.classList.add('hidden'); newNoteBtn.classList.remove('hidden'); }
-    render();
-}
+<div id="toast" class="toast hidden"><div class="toast-icon"><i class="fas fa-check-circle"></i></div><span></span></div>
+<div id="loadingOverlay" class="loading-overlay hidden"><div class="loading-spinner"><div class="spinner-ring"></div><div class="spinner-ring"></div><div class="spinner-ring"></div></div><p>Loading...</p></div>
 
-function openNewNoteModal(){
-    editingNoteId = null;
-    document.getElementById('noteModalTitle').textContent = 'New Note';
-    document.getElementById('noteTitle').value = '';
-    document.getElementById('noteContent').value = '';
-    document.getElementById('saveNoteBtn').onclick = async ()=>{
-        const title = document.getElementById('noteTitle').value;
-        const content = document.getElementById('noteContent').value;
-        if(title.trim()){ await addNoteToCurrentFolder(title, content); closeNoteModal(); }
-        else showToast("Title empty",true);
-    };
-    document.getElementById('noteModal').classList.add('show');
-}
-
-function closeNoteModal(){ document.getElementById('noteModal').classList.remove('show'); editingNoteId = null; }
-function toggleTheme(){ document.body.classList.toggle('light-mode'); localStorage.setItem('oarcel_theme', document.body.classList.contains('light-mode') ? 'light-mode' : ''); updateThemeIcon(); }
-function updateThemeIcon(){
-    const isDark = !document.body.classList.contains('light-mode');
-    const themeBtn = document.getElementById('themeToggle');
-    if(themeBtn) themeBtn.innerHTML = `<div class="theme-icon-wrapper"><i class="fas ${isDark ? 'fa-sun' : 'fa-moon'}"></i></div>`;
-}
-
-function addDepthEffect(element, event){
-    if(!element || element.hasAttribute('data-press-animating')) return;
-    element.setAttribute('data-press-animating','true');
-    element.classList.add('press-depth-3d');
-    if(window.navigator?.vibrate) window.navigator.vibrate(12);
-    const ripple = document.createElement('span');
-    ripple.classList.add('touch-ripple');
-    ripple.style.position = 'absolute';
-    ripple.style.borderRadius = '50%';
-    ripple.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
-    ripple.style.pointerEvents = 'none';
-    ripple.style.transform = 'scale(0)';
-    ripple.style.transition = 'transform 0.4s ease-out, opacity 0.3s ease-out';
-    let clientX, clientY;
-    if(event.touches){ clientX = event.touches[0].clientX; clientY = event.touches[0].clientY; }
-    else { clientX = event.clientX; clientY = event.clientY; }
-    const rect = element.getBoundingClientRect();
-    const x = clientX - rect.left;
-    const y = clientY - rect.top;
-    ripple.style.left = x + 'px';
-    ripple.style.top = y + 'px';
-    ripple.style.width = '0';
-    ripple.style.height = '0';
-    element.style.position = 'relative';
-    element.style.overflow = 'hidden';
-    element.appendChild(ripple);
-    const size = Math.max(rect.width, rect.height);
-    ripple.style.width = size * 2 + 'px';
-    ripple.style.height = size * 2 + 'px';
-    ripple.style.transform = 'scale(1)';
-    ripple.style.opacity = '0';
-    setTimeout(()=>{
-        element.classList.remove('press-depth-3d');
-        if(ripple?.parentNode) ripple.parentNode.removeChild(ripple);
-        element.removeAttribute('data-press-animating');
-    },150);
-}
-
-function pressHandler(e){
-    if(this.hasAttribute('data-press-animating') || (e.button===2)) return;
-    if(e.type==='touchstart' && this.hasAttribute('data-touch-processing')) return;
-    if(e.type==='touchstart'){ this.setAttribute('data-touch-processing','true'); setTimeout(()=>this.removeAttribute('data-touch-processing'),200); }
-    addDepthEffect(this,e);
-}
-
-function attachPressEffects(){
-    const selectors = ['#backBtn','.type-btn','.theme-toggle','#uploadBtn','#newNoteBtn','.action-btn','.rename-file-btn','.delete-file-btn','.rename-note-btn','.delete-note-btn','.clear-search','.modal-close','.modal-footer button','.breadcrumb-item','.card','.dept-oval','#closeImageViewer'];
-    document.querySelectorAll(selectors.join(',')).forEach(el=>{
-        el.removeEventListener('click', pressHandler);
-        el.removeEventListener('touchstart', pressHandler);
-        el.removeEventListener('mousedown', pressHandler);
-        el.addEventListener('mousedown', pressHandler);
-        el.addEventListener('touchstart', pressHandler, {passive:false});
-        if(window.getComputedStyle(el).cursor==='auto') el.style.cursor='pointer';
-    });
-}
-
-window.selectDepartment = selectDepartment;
-window.goBack = goBack;
-window.triggerUpload = triggerUpload;
-window.triggerNewNote = triggerNewNote;
-window.clearSearch = clearSearch;
-window.navigateToBreadcrumb = navigateToBreadcrumb;
-window.renameCurrentFolder = renameCurrentFolder;
-window.deleteCurrentFolder = deleteCurrentFolder;
-window.addNewFolder = addNewFolder;
-window.addNewDepartment = addNewDepartment;
-window.openFile = openFile;
-window.openNote = openNote;
-window.closeNoteModal = closeNoteModal;
-window.renameNote = renameNote;
-window.deleteNoteFromFolder = deleteNoteFromFolder;
-window.closeImageViewer = closeImageViewer;
-
-document.addEventListener('DOMContentLoaded', async ()=>{
-    const themeBtn = document.getElementById('themeToggle');
-    if(themeBtn) themeBtn.onclick = toggleTheme;
-    if(localStorage.getItem('oarcel_theme') === 'light-mode') document.body.classList.add('light-mode');
-    updateThemeIcon();
-    document.getElementById('pdfTabBtn').onclick = ()=>setActiveTab('pdfs');
-    document.getElementById('notesTabBtn').onclick = ()=>setActiveTab('notes');
-    
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            closeImageViewer();
-        }
-    });
-    
-    const closeBtn = document.getElementById('closeImageViewer');
-    if(closeBtn) closeBtn.onclick = closeImageViewer;
-    
-    const viewer = document.getElementById('imageViewer');
-    if(viewer) {
-        viewer.addEventListener('click', (e) => {
-            if (e.target === viewer) closeImageViewer();
-        });
-    }
-    
-    document.getElementById('fileInput').addEventListener('change', async (e)=>{
-        const files = Array.from(e.target.files);
-        // Use Promise.allSettled for parallel uploads - if one fails, others continue
-        const results = await Promise.allSettled(files.map(async f => {
-            const fileType = getFileType(f.name);
-            if (fileType === 'image' || fileType === 'pdf') {
-                await addFileToCurrentFolder(f);
-                return { name: f.name, ok: true };
-            } else {
-                showToast(`Skipped: ${f.name} (not supported)`, true);
-                return { name: f.name, ok: false, reason: 'unsupported' };
-            }
-        }));
-        const succeeded = results.filter(r => r.status === 'fulfilled' && r.value.ok).length;
-        const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.ok)).length;
-        if (succeeded > 0) showToast(`${succeeded} file(s) saved!`);
-        if (failed > 0 && succeeded === 0) showToast('No files were saved', true);
-        render();
-        e.target.value = '';
-    });
-    
-    document.getElementById('newNoteBtn').onclick = triggerNewNote;
-    
-    // Debounced search for performance
-    document.getElementById('searchInput').addEventListener('input', ()=>{
-        clearTimeout(searchDebounceTimer);
-        searchDebounceTimer = setTimeout(() => render(), 200);
-    });
-    
-    document.getElementById('clearSearchBtn').addEventListener('click', clearSearch);
-    document.getElementById('backBtn').addEventListener('click', goBack);
-    document.getElementById('uploadBtn').addEventListener('click', triggerUpload);
-    await initDB();
-    await loadFromIndexedDB();
-    attachPressEffects();
-});
+<script src="app.js?v=13"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('SW registered:', reg))
+      .catch(err => console.log('SW registration failed:', err));
+  }
+</script>
+</body>
+</html>
