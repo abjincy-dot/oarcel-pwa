@@ -1,6 +1,6 @@
 // ==================== INDEXEDDB CORE ====================
 const DB_NAME = 'OarcelDB';
-const DB_VERSION = 6;
+const DB_VERSION = 7; // Increased version for new file types
 let db = null;
 let allFiles = {};
 let allNotes = {};
@@ -21,14 +21,61 @@ function showToast(msg, isErr = false) {
 
 function escapeHtml(str) { const div = document.createElement('div'); div.textContent = str; return div.innerHTML; }
 
-function openPDF(dataUrl, fileName) {
-    showToast(`Opening ${fileName}...`);
-    fetch(dataUrl).then(r=>r.blob()).then(blob=>{
-        const url = URL.createObjectURL(blob);
-        window.open(url, '_blank');
-        showToast(`PDF opened.`);
-        setTimeout(()=>URL.revokeObjectURL(url),60000);
-    }).catch(err=>showToast(`Failed: ${err.message}`,true));
+// ========== FILE TYPE DETECTION & HANDLING ==========
+function getFileIcon(fileName) {
+    const ext = fileName.split('.').pop().toLowerCase();
+    const iconMap = {
+        'pdf': 'fa-file-pdf',
+        'jpg': 'fa-file-image', 'jpeg': 'fa-file-image', 'png': 'fa-file-image', 'gif': 'fa-file-image', 'webp': 'fa-file-image', 'svg': 'fa-file-image',
+        'xls': 'fa-file-excel', 'xlsx': 'fa-file-excel', 'csv': 'fa-file-excel',
+        'doc': 'fa-file-word', 'docx': 'fa-file-word',
+        'txt': 'fa-file-alt', 'md': 'fa-file-alt',
+        'ppt': 'fa-file-powerpoint', 'pptx': 'fa-file-powerpoint',
+        'zip': 'fa-file-archive', 'rar': 'fa-file-archive', '7z': 'fa-file-archive',
+        'mp4': 'fa-file-video', 'mp3': 'fa-file-audio', 'wav': 'fa-file-audio'
+    };
+    return iconMap[ext] || 'fa-file';
+}
+
+function getFileType(fileName) {
+    const ext = fileName.split('.').pop().toLowerCase();
+    if (['jpg','jpeg','png','gif','webp','svg'].includes(ext)) return 'image';
+    if (['pdf'].includes(ext)) return 'pdf';
+    if (['xls','xlsx','csv'].includes(ext)) return 'excel';
+    if (['doc','docx'].includes(ext)) return 'word';
+    return 'other';
+}
+
+function openFile(dataUrl, fileName) {
+    const fileType = getFileType(fileName);
+    
+    if (fileType === 'image') {
+        // Open image in modal or new tab
+        const imgWindow = window.open();
+        imgWindow.document.write(`<html><head><title>${escapeHtml(fileName)}</title><style>body{margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#1a1a2e;}img{max-width:100%;max-height:100vh;object-fit:contain;}</style></head><body><img src="${dataUrl}" alt="${escapeHtml(fileName)}"></body></html>`);
+        showToast(`Opening image: ${fileName}`);
+    } 
+    else if (fileType === 'pdf') {
+        fetch(dataUrl).then(r=>r.blob()).then(blob=>{
+            const url = URL.createObjectURL(blob);
+            window.open(url, '_blank');
+            showToast(`Opening PDF: ${fileName}`);
+            setTimeout(()=>URL.revokeObjectURL(url),60000);
+        }).catch(err=>showToast(`Failed: ${err.message}`,true));
+    }
+    else {
+        // For Excel, Word, and other files - offer download
+        if (confirm(`Open "${fileName}" in new tab? (If not supported, it will download)`)) {
+            window.open(dataUrl, '_blank');
+        } else {
+            // Download as fallback
+            const link = document.createElement('a');
+            link.href = dataUrl;
+            link.download = fileName;
+            link.click();
+        }
+        showToast(`Opening ${fileName}`);
+    }
 }
 
 async function saveAllNotesToDB() {
@@ -112,11 +159,11 @@ async function addFileToCurrentFolder(file) {
     const folderPath = currentPath.join('/');
     if(!allFiles[folderPath]) allFiles[folderPath] = [];
     const base64 = await new Promise(r=>{const rd=new FileReader(); rd.onload=e=>r(e.target.result); rd.readAsDataURL(file);});
-    allFiles[folderPath].push({name:file.name, dataUrl:base64});
+    allFiles[folderPath].push({name:file.name, dataUrl:base64, type:file.type});
     await saveAllFilesToDB();
 }
 function deleteFileFromFolder(folderPath, fileName) {
-    if(confirm(`Delete PDF "${fileName}"?`)){
+    if(confirm(`Delete "${fileName}"?`)){
         if(allFiles[folderPath]){
             allFiles[folderPath] = allFiles[folderPath].filter(f=>f.name!==fileName);
             if(!allFiles[folderPath].length) delete allFiles[folderPath];
@@ -131,7 +178,6 @@ function renameFileInFolder(folderPath, oldName, newName){
     if(allFiles[folderPath]){
         const idx = allFiles[folderPath].findIndex(f=>f.name===oldName);
         if(idx!==-1){
-            if(!newName.toLowerCase().endsWith('.pdf')) newName += '.pdf';
             allFiles[folderPath][idx].name = newName;
             saveAllFilesToDB();
             render();
@@ -197,25 +243,27 @@ function openNote(note){
     modal.classList.add('show');
 }
 
-// ========== CARD CREATION WITH ICON-ONLY BUTTONS ==========
-function createPdfCard(file, folderPath){
+// ========== CARD CREATION WITH MULTI-FORMAT SUPPORT ==========
+function createFileCard(file, folderPath){
+    const fileType = getFileType(file.name);
+    const iconClass = getFileIcon(file.name);
     const div = document.createElement('div');
-    div.className = 'card pdf-card';
+    div.className = 'card file-card';
     div.innerHTML = `
-        <div class="card-icon"><i class="fas fa-file-pdf"></i></div>
+        <div class="card-icon"><i class="fas ${iconClass}"></i></div>
         <div class="card-filename" title="${escapeHtml(file.name)}">${escapeHtml(file.name)}</div>
         <div class="card-buttons">
-            <button class="rename-file-btn" title="Rename PDF"><i class="fas fa-edit"></i></button>
-            <button class="delete-file-btn" title="Delete PDF"><i class="fas fa-trash"></i></button>
+            <button class="rename-file-btn" title="Rename"><i class="fas fa-edit"></i></button>
+            <button class="delete-file-btn" title="Delete"><i class="fas fa-trash"></i></button>
         </div>
     `;
     div.addEventListener('click', (e)=>{
         if(e.target.closest('.rename-file-btn') || e.target.closest('.delete-file-btn')) return;
-        openPDF(file.dataUrl, file.name);
+        openFile(file.dataUrl, file.name);
     });
     div.querySelector('.rename-file-btn').addEventListener('click', (e)=>{
         e.stopPropagation();
-        const newName = prompt("New PDF name:", file.name.replace(/\.pdf$/i,''));
+        const newName = prompt("New file name:", file.name);
         if(newName?.trim()) renameFileInFolder(folderPath, file.name, newName.trim());
     });
     div.querySelector('.delete-file-btn').addEventListener('click', (e)=>{
@@ -266,7 +314,7 @@ function render(){
         isSearchMode=true;
         document.getElementById('clearSearchBtn').classList.remove('hidden');
         const results=[];
-        for(const path in allFiles) if(allFiles[path]) allFiles[path].forEach(f=>{ if(f.name.toLowerCase().includes(query)) results.push({...f, folder:path, type:'pdf'});});
+        for(const path in allFiles) if(allFiles[path]) allFiles[path].forEach(f=>{ if(f.name.toLowerCase().includes(query)) results.push({...f, folder:path, type:'file'});});
         for(const path in allNotes) if(allNotes[path]) allNotes[path].forEach(n=>{ if(n.title.toLowerCase().includes(query) || n.content.toLowerCase().includes(query)) results.push({...n, folder:path, type:'note'});});
         document.getElementById('searchInfo').classList.remove('hidden');
         document.getElementById('searchInfo').innerHTML = `<i class="fas fa-search"></i> Found ${results.length} result(s) for "${escapeHtml(query)}" <button onclick="clearSearch()">Clear</button>`;
@@ -279,7 +327,7 @@ function render(){
         document.getElementById('breadcrumb').innerHTML = '';
         document.querySelector('.type-selector').style.display = 'none';
         if(!results.length) contentDiv.innerHTML = '<div class="empty-state"><i class="fas fa-search"></i><p>No results found.</p></div>';
-        else results.forEach(item => { if(item.type==='pdf') contentDiv.appendChild(createPdfCard(item, item.folder)); else contentDiv.appendChild(createNoteCard(item, item.folder)); });
+        else results.forEach(item => { if(item.type==='file') contentDiv.appendChild(createFileCard(item, item.folder)); else contentDiv.appendChild(createNoteCard(item, item.folder)); });
         updateStats();
         attachPressEffects();
         return;
@@ -301,14 +349,13 @@ function render(){
             const sub = Object.keys(fileSystem[dept]).length;
             const fcount = allFiles[dept]?.length||0;
             const ncount = allNotes[dept]?.length||0;
-            // IMPORTANT: onclick is on the .dept-oval only, not the whole card
             html += `<div class="dept-card" data-dept="${dept}"><div class="dept-oval" onclick="selectDepartment('${dept}')"><span>${dept}</span></div><div class="dept-arrow"><i class="fas fa-chevron-right"></i></div><div class="dept-info">${sub+fcount+ncount} items</div></div>`;
         }
         html += '</div>';
         document.getElementById('departmentsSection').innerHTML = html;
         document.getElementById('uploadBtn').classList.add('hidden');
         document.getElementById('newNoteBtn').classList.add('hidden');
-        attachDepartmentPressEffects(); // Enable touch for ovals
+        attachDepartmentPressEffects();
     } else document.getElementById('departmentsSection').innerHTML = '';
     
     const hasSubfolders = Object.keys(folder).length>0;
@@ -334,8 +381,8 @@ function render(){
         if(currentActiveTab==='pdfs'){
             const files = getFilesForCurrentFolder();
             const path = currentPath.join('/');
-            if(files.length) files.forEach(f=>document.getElementById('content').appendChild(createPdfCard(f,path)));
-            else document.getElementById('content').innerHTML += '<div class="empty-state"><i class="fas fa-cloud-upload-alt"></i><p>No PDFs yet. Click Upload to add files.</p></div>';
+            if(files.length) files.forEach(f=>document.getElementById('content').appendChild(createFileCard(f,path)));
+            else document.getElementById('content').innerHTML += '<div class="empty-state"><i class="fas fa-cloud-upload-alt"></i><p>No files yet. Click Upload to add files (PDF, Images, Excel, Word).</p></div>';
         } else {
             const notes = getNotesForCurrentFolder();
             const path = currentPath.join('/');
@@ -519,7 +566,7 @@ window.renameCurrentFolder = renameCurrentFolder;
 window.deleteCurrentFolder = deleteCurrentFolder;
 window.addNewFolder = addNewFolder;
 window.addNewDepartment = addNewDepartment;
-window.openPDF = openPDF;
+window.openFile = openFile;
 window.openNote = openNote;
 window.closeNoteModal = closeNoteModal;
 window.renameNote = renameNote;
@@ -534,8 +581,8 @@ document.addEventListener('DOMContentLoaded', async ()=>{
     document.getElementById('notesTabBtn').onclick = ()=>setActiveTab('notes');
     document.getElementById('fileInput').addEventListener('change', async (e)=>{
         const files = Array.from(e.target.files);
-        for(let f of files) if(f.type==='application/pdf') await addFileToCurrentFolder(f);
-        showToast(`${files.length} PDF(s) saved!`);
+        for(let f of files) await addFileToCurrentFolder(f);
+        showToast(`${files.length} file(s) saved!`);
         render();
         e.target.value = '';
     });
