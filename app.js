@@ -907,3 +907,84 @@ styleSheet.textContent = `
     }
 `;
 document.head.appendChild(styleSheet);
+// ========== 3D PAGE TRANSITION EFFECTS ==========
+let isTransitioning = false;
+
+function createTransitionOverlay() {
+    let overlay = document.getElementById('transitionOverlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'transitionOverlay';
+        overlay.className = 'transition-overlay';
+        overlay.innerHTML = '<div class="loader"></div>';
+        document.body.appendChild(overlay);
+    }
+    return overlay;
+}
+
+async function navigateWithTransition(navigationFn, direction = 'right') {
+    if (isTransitioning) return;
+    isTransitioning = true;
+    
+    const content = document.getElementById('content');
+    const overlay = createTransitionOverlay();
+    
+    overlay.classList.add('active');
+    
+    if (content) {
+        content.style.animation = 'pageFlip3D 0.2s ease forwards';
+    }
+    
+    setTimeout(async () => {
+        await navigationFn();
+        
+        if (content) {
+            content.style.animation = 'none';
+            content.offsetHeight;
+            const animClass = direction === 'right' ? 'page-slide-in' : 'page-slide-in-left';
+            content.classList.add(animClass);
+            setTimeout(() => content.classList.remove(animClass), 300);
+        }
+        
+        overlay.classList.remove('active');
+        isTransitioning = false;
+    }, 200);
+}
+
+// Save original functions
+const originalSelectDepartment = window.selectDepartment;
+const originalGoBack = window.goBack;
+const originalNavigateToBreadcrumb = window.navigateToBreadcrumb;
+
+// Override with transition
+window.selectDepartment = function(d) {
+    navigateWithTransition(() => originalSelectDepartment(d), 'right');
+};
+
+window.goBack = function() {
+    navigateWithTransition(() => originalGoBack(), 'left');
+};
+
+window.navigateToBreadcrumb = function(idx) {
+    const direction = (idx === -1 || idx < currentPath.length - 1) ? 'left' : 'right';
+    navigateWithTransition(() => originalNavigateToBreadcrumb(idx), direction);
+};
+
+// Add 3D click effect to all clickable elements
+function add3DClickEffect() {
+    document.querySelectorAll('.card, .dept-oval, .action-btn, #backBtn, .type-btn').forEach(el => {
+        el.addEventListener('click', function(e) {
+            this.style.transform = 'scale(0.97) translateY(2px)';
+            setTimeout(() => {
+                this.style.transform = '';
+            }, 100);
+        });
+    });
+}
+
+// Call this after render
+const originalRender = window.render;
+window.render = function() {
+    originalRender();
+    setTimeout(add3DClickEffect, 50);
+};
