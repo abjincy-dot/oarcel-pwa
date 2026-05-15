@@ -1,6 +1,6 @@
 // ==================== INDEXEDDB CORE ====================
 const DB_NAME = 'OarcelDB';
-const DB_VERSION = 7; // Increased version for new file types
+const DB_VERSION = 8; // Increased version for image viewer
 let db = null;
 let allFiles = {};
 let allNotes = {};
@@ -21,18 +21,12 @@ function showToast(msg, isErr = false) {
 
 function escapeHtml(str) { const div = document.createElement('div'); div.textContent = str; return div.innerHTML; }
 
-// ========== FILE TYPE DETECTION & HANDLING ==========
+// ========== FILE TYPE DETECTION ==========
 function getFileIcon(fileName) {
     const ext = fileName.split('.').pop().toLowerCase();
     const iconMap = {
         'pdf': 'fa-file-pdf',
-        'jpg': 'fa-file-image', 'jpeg': 'fa-file-image', 'png': 'fa-file-image', 'gif': 'fa-file-image', 'webp': 'fa-file-image', 'svg': 'fa-file-image',
-        'xls': 'fa-file-excel', 'xlsx': 'fa-file-excel', 'csv': 'fa-file-excel',
-        'doc': 'fa-file-word', 'docx': 'fa-file-word',
-        'txt': 'fa-file-alt', 'md': 'fa-file-alt',
-        'ppt': 'fa-file-powerpoint', 'pptx': 'fa-file-powerpoint',
-        'zip': 'fa-file-archive', 'rar': 'fa-file-archive', '7z': 'fa-file-archive',
-        'mp4': 'fa-file-video', 'mp3': 'fa-file-audio', 'wav': 'fa-file-audio'
+        'jpg': 'fa-file-image', 'jpeg': 'fa-file-image', 'png': 'fa-file-image', 'gif': 'fa-file-image', 'webp': 'fa-file-image', 'svg': 'fa-file-image'
     };
     return iconMap[ext] || 'fa-file';
 }
@@ -41,19 +35,31 @@ function getFileType(fileName) {
     const ext = fileName.split('.').pop().toLowerCase();
     if (['jpg','jpeg','png','gif','webp','svg'].includes(ext)) return 'image';
     if (['pdf'].includes(ext)) return 'pdf';
-    if (['xls','xlsx','csv'].includes(ext)) return 'excel';
-    if (['doc','docx'].includes(ext)) return 'word';
     return 'other';
+}
+
+// ========== IMAGE VIEWER ==========
+function openImageViewer(imageUrl, fileName) {
+    const viewer = document.getElementById('imageViewer');
+    const viewerImage = document.getElementById('viewerImage');
+    viewerImage.src = imageUrl;
+    viewerImage.alt = fileName;
+    viewer.classList.remove('hidden');
+    showToast(`Viewing: ${fileName}`);
+}
+
+function closeImageViewer() {
+    const viewer = document.getElementById('imageViewer');
+    const viewerImage = document.getElementById('viewerImage');
+    viewer.classList.add('hidden');
+    viewerImage.src = '';
 }
 
 function openFile(dataUrl, fileName) {
     const fileType = getFileType(fileName);
     
     if (fileType === 'image') {
-        // Open image in modal or new tab
-        const imgWindow = window.open();
-        imgWindow.document.write(`<html><head><title>${escapeHtml(fileName)}</title><style>body{margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#1a1a2e;}img{max-width:100%;max-height:100vh;object-fit:contain;}</style></head><body><img src="${dataUrl}" alt="${escapeHtml(fileName)}"></body></html>`);
-        showToast(`Opening image: ${fileName}`);
+        openImageViewer(dataUrl, fileName);
     } 
     else if (fileType === 'pdf') {
         fetch(dataUrl).then(r=>r.blob()).then(blob=>{
@@ -64,17 +70,14 @@ function openFile(dataUrl, fileName) {
         }).catch(err=>showToast(`Failed: ${err.message}`,true));
     }
     else {
-        // For Excel, Word, and other files - offer download
-        if (confirm(`Open "${fileName}" in new tab? (If not supported, it will download)`)) {
-            window.open(dataUrl, '_blank');
-        } else {
-            // Download as fallback
+        // For other unsupported file types
+        if (confirm(`This file type may not be supported. Do you want to download "${fileName}"?`)) {
             const link = document.createElement('a');
             link.href = dataUrl;
             link.download = fileName;
             link.click();
+            showToast(`Downloading: ${fileName}`);
         }
-        showToast(`Opening ${fileName}`);
     }
 }
 
@@ -243,9 +246,8 @@ function openNote(note){
     modal.classList.add('show');
 }
 
-// ========== CARD CREATION WITH MULTI-FORMAT SUPPORT ==========
+// ========== CARD CREATION ==========
 function createFileCard(file, folderPath){
-    const fileType = getFileType(file.name);
     const iconClass = getFileIcon(file.name);
     const div = document.createElement('div');
     div.className = 'card file-card';
@@ -382,7 +384,7 @@ function render(){
             const files = getFilesForCurrentFolder();
             const path = currentPath.join('/');
             if(files.length) files.forEach(f=>document.getElementById('content').appendChild(createFileCard(f,path)));
-            else document.getElementById('content').innerHTML += '<div class="empty-state"><i class="fas fa-cloud-upload-alt"></i><p>No files yet. Click Upload to add files (PDF, Images, Excel, Word).</p></div>';
+            else document.getElementById('content').innerHTML += '<div class="empty-state"><i class="fas fa-cloud-upload-alt"></i><p>No files yet. Click Upload to add PDFs or Images.</p></div>';
         } else {
             const notes = getNotesForCurrentFolder();
             const path = currentPath.join('/');
@@ -546,7 +548,7 @@ function pressHandler(e){
     addDepthEffect(this,e);
 }
 function attachPressEffects(){
-    const selectors = ['#backBtn','.type-btn','.theme-toggle','#uploadBtn','#newNoteBtn','.action-btn','.rename-file-btn','.delete-file-btn','.rename-note-btn','.delete-note-btn','.clear-search','.modal-close','.modal-footer button','.breadcrumb-item','.card','.dept-oval'];
+    const selectors = ['#backBtn','.type-btn','.theme-toggle','#uploadBtn','#newNoteBtn','.action-btn','.rename-file-btn','.delete-file-btn','.rename-note-btn','.delete-note-btn','.clear-search','.modal-close','.modal-footer button','.breadcrumb-item','.card','.dept-oval','#closeImageViewer'];
     document.querySelectorAll(selectors.join(',')).forEach(el=>{
         el.removeEventListener('click', pressHandler);
         el.removeEventListener('touchstart', pressHandler);
@@ -571,6 +573,7 @@ window.openNote = openNote;
 window.closeNoteModal = closeNoteModal;
 window.renameNote = renameNote;
 window.deleteNoteFromFolder = deleteNoteFromFolder;
+window.closeImageViewer = closeImageViewer;
 
 document.addEventListener('DOMContentLoaded', async ()=>{
     const themeBtn = document.getElementById('themeToggle');
@@ -579,9 +582,36 @@ document.addEventListener('DOMContentLoaded', async ()=>{
     updateThemeIcon();
     document.getElementById('pdfTabBtn').onclick = ()=>setActiveTab('pdfs');
     document.getElementById('notesTabBtn').onclick = ()=>setActiveTab('notes');
+    
+    // Close image viewer with Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeImageViewer();
+        }
+    });
+    
+    // Close image viewer button
+    const closeBtn = document.getElementById('closeImageViewer');
+    if(closeBtn) closeBtn.onclick = closeImageViewer;
+    
+    // Click outside image to close
+    const viewer = document.getElementById('imageViewer');
+    if(viewer) {
+        viewer.addEventListener('click', (e) => {
+            if (e.target === viewer) closeImageViewer();
+        });
+    }
+    
     document.getElementById('fileInput').addEventListener('change', async (e)=>{
         const files = Array.from(e.target.files);
-        for(let f of files) await addFileToCurrentFolder(f);
+        for(let f of files) {
+            const fileType = getFileType(f.name);
+            if (fileType === 'image' || fileType === 'pdf') {
+                await addFileToCurrentFolder(f);
+            } else {
+                showToast(`Skipped: ${f.name} (not supported)`, true);
+            }
+        }
         showToast(`${files.length} file(s) saved!`);
         render();
         e.target.value = '';
