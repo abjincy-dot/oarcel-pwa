@@ -1,6 +1,6 @@
 /* ============================================
    OARCEL Document Manager - COMPLETE CSS
-   Slow page flip animation (0.5s) + soft grey light mode
+   Modern Slide Transition (iOS style)
    ============================================ */
 
 * {
@@ -123,7 +123,6 @@ body::before {
     margin: 0 auto;
     padding: 24px 20px 40px;
     animation: fadeInUp 0.5s ease-out;
-    transition: transform 0.15s ease;
 }
 
 @keyframes fadeInUp {
@@ -131,52 +130,22 @@ body::before {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* ========== SLOW & SMOOTH PAGE FLIP ANIMATION (LIKE A BOOK) ========== */
-@keyframes pageFlipForward {
-    0% {
-        transform: perspective(1000px) rotateY(0deg);
-        transform-origin: left center;
-        opacity: 1;
-    }
-    50% {
-        transform: perspective(1000px) rotateY(-18deg);
-        transform-origin: left center;
-        opacity: 0.85;
-        filter: drop-shadow(5px 0 10px rgba(0,0,0,0.3));
-    }
-    100% {
-        transform: perspective(1000px) rotateY(0deg);
-        transform-origin: left center;
-        opacity: 1;
-    }
+/* ========== MODERN SLIDE TRANSITION (OPTION 1) ========== */
+@keyframes slideForward {
+    0% { transform: translateX(0); opacity: 1; }
+    30% { transform: translateX(-20px); opacity: 0.85; }
+    100% { transform: translateX(0); opacity: 1; }
 }
-
-@keyframes pageFlipBack {
-    0% {
-        transform: perspective(1000px) rotateY(0deg);
-        transform-origin: right center;
-        opacity: 1;
-    }
-    50% {
-        transform: perspective(1000px) rotateY(18deg);
-        transform-origin: right center;
-        opacity: 0.85;
-        filter: drop-shadow(-5px 0 10px rgba(0,0,0,0.3));
-    }
-    100% {
-        transform: perspective(1000px) rotateY(0deg);
-        transform-origin: right center;
-        opacity: 1;
-    }
+@keyframes slideBack {
+    0% { transform: translateX(0); opacity: 1; }
+    30% { transform: translateX(20px); opacity: 0.85; }
+    100% { transform: translateX(0); opacity: 1; }
 }
-
-/* Slower animation - 0.5 seconds */
 .page-flip-forward {
-    animation: pageFlipForward 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    animation: slideForward 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
 }
-
 .page-flip-back {
-    animation: pageFlipBack 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    animation: slideBack 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
 }
 
 /* ========== HEADER ========== */
