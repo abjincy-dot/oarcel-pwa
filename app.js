@@ -21,6 +21,26 @@ function showToast(msg, isErr = false) {
 
 function escapeHtml(str) { const div = document.createElement('div'); div.textContent = str; return div.innerHTML; }
 
+// ========== ANIMATION HELPER (CONTENT ONLY) ==========
+function animateContent(direction, callback) {
+    const contentDiv = document.getElementById('content');
+    const deptSection = document.getElementById('departmentsSection');
+    const elementsToAnimate = [contentDiv, deptSection];
+    
+    elementsToAnimate.forEach(el => {
+        if (el && !el.classList.contains('hidden')) {
+            el.classList.add(direction === 'forward' ? 'page-flip-forward' : 'page-flip-back');
+        }
+    });
+    
+    setTimeout(() => {
+        callback();
+        elementsToAnimate.forEach(el => {
+            if (el) el.classList.remove('page-flip-forward', 'page-flip-back');
+        });
+    }, 300);
+}
+
 // ========== FILE TYPE DETECTION ==========
 function getFileIcon(fileName) {
     const ext = fileName.split('.').pop().toLowerCase();
@@ -309,26 +329,20 @@ function createCard(title, onClick, isFolder=false){
     return div;
 }
 
-// ========== PAGE FLIP NAVIGATION (500ms delay) ==========
+// ========== NAVIGATION WITH MODERN ANIMATION ==========
 function selectDepartment(d){ 
-    const app = document.querySelector('.app');
-    app.classList.add('page-flip-forward');
-    setTimeout(() => {
+    animateContent('forward', () => {
         currentPath = [d]; 
         render();
-        app.classList.remove('page-flip-forward');
-    }, 500);
+    });
 }
 
 function goBack(){ 
     if(currentPath.length && !isSearchMode){ 
-        const app = document.querySelector('.app');
-        app.classList.add('page-flip-back');
-        setTimeout(() => {
+        animateContent('back', () => {
             currentPath.pop(); 
             render();
-            app.classList.remove('page-flip-back');
-        }, 500);
+        });
     } else if(isSearchMode) { 
         clearSearch(); 
     }
@@ -336,20 +350,11 @@ function goBack(){
 
 function navigateToBreadcrumb(idx){
     const isGoingBack = idx < currentPath.length - 1;
-    const app = document.querySelector('.app');
-    
-    if (isGoingBack) {
-        app.classList.add('page-flip-back');
-    } else {
-        app.classList.add('page-flip-forward');
-    }
-    
-    setTimeout(() => {
+    animateContent(isGoingBack ? 'back' : 'forward', () => {
         if(idx===-1) currentPath=[];
         else currentPath = currentPath.slice(0,idx+1);
         render();
-        app.classList.remove('page-flip-back', 'page-flip-forward');
-    }, 500);
+    });
 }
 
 function render(){
@@ -422,13 +427,10 @@ function render(){
     if(!isRoot && hasSubfolders){
         for(let key in folder) {
             const folderCard = createCard(key, () => { 
-                const app = document.querySelector('.app');
-                app.classList.add('page-flip-forward');
-                setTimeout(() => {
+                animateContent('forward', () => {
                     currentPath.push(key); 
                     render();
-                    app.classList.remove('page-flip-forward');
-                }, 500);
+                });
             }, true);
             document.getElementById('content').appendChild(folderCard);
         }
