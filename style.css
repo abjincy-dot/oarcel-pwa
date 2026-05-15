@@ -130,23 +130,219 @@ body::before {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* ========== MODERN SLIDE TRANSITION (OPTION 1) ========== */
-@keyframes slideForward {
-    0% { transform: translateX(0); opacity: 1; }
-    30% { transform: translateX(-20px); opacity: 0.85; }
-    100% { transform: translateX(0); opacity: 1; }
-}
-@keyframes slideBack {
-    0% { transform: translateX(0); opacity: 1; }
-    30% { transform: translateX(20px); opacity: 0.85; }
-    100% { transform: translateX(0); opacity: 1; }
-}
-.page-flip-forward {
-    animation: slideForward 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
-}
+/* ========== MODERN PAGE TRANSITIONS (iOS-Style Stack Navigation) ========== */
+
+/* Remove old animations */
+.page-flip-forward,
 .page-flip-back {
-    animation: slideBack 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+    animation: none !important;
 }
+
+/* ===== CORE TRANSITION SYSTEM ===== */
+.page-transition-view {
+    position: relative;
+    overflow: hidden;
+    min-height: 200px;
+}
+
+.page-transition-layer {
+    position: relative;
+    width: 100%;
+    will-change: transform, opacity, filter;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+
+/* ===== FORWARD NAVIGATION (Drill Down) ===== */
+/* New page enters from right */
+@keyframes pageEnterRight {
+    0% {
+        transform: translate3d(100%, 0, 0) scale(0.96);
+        opacity: 0;
+        filter: brightness(1.15) saturate(0.8);
+    }
+    60% {
+        transform: translate3d(0, 0, 0) scale(0.99);
+        opacity: 1;
+    }
+    100% {
+        transform: translate3d(0, 0, 0) scale(1);
+        opacity: 1;
+        filter: brightness(1) saturate(1);
+    }
+}
+
+/* Current page exits to left (stays visible underneath) */
+@keyframes pageExitLeft {
+    0% {
+        transform: translate3d(0, 0, 0) scale(1);
+        opacity: 1;
+        filter: brightness(1);
+    }
+    100% {
+        transform: translate3d(-35%, 0, 0) scale(0.92);
+        opacity: 0.25;
+        filter: brightness(0.6) saturate(0.7);
+    }
+}
+
+/* ===== BACK NAVIGATION (Pop Back) ===== */
+/* Previous page enters from left */
+@keyframes pageEnterLeft {
+    0% {
+        transform: translate3d(-35%, 0, 0) scale(0.92);
+        opacity: 0.25;
+        filter: brightness(0.6) saturate(0.7);
+    }
+    40% {
+        transform: translate3d(0, 0, 0) scale(0.98);
+        opacity: 1;
+    }
+    100% {
+        transform: translate3d(0, 0, 0) scale(1);
+        opacity: 1;
+        filter: brightness(1) saturate(1);
+    }
+}
+
+/* Current page exits to right */
+@keyframes pageExitRight {
+    0% {
+        transform: translate3d(0, 0, 0) scale(1);
+        opacity: 1;
+        filter: brightness(1);
+    }
+    100% {
+        transform: translate3d(100%, 0, 0) scale(0.96);
+        opacity: 0;
+        filter: brightness(1.15) saturate(0.8);
+    }
+}
+
+/* ===== ANIMATION CLASSES ===== */
+.anim-enter-right {
+    animation: pageEnterRight 0.45s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+.anim-exit-left {
+    animation: pageExitLeft 0.45s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.anim-enter-left {
+    animation: pageEnterLeft 0.45s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+.anim-exit-right {
+    animation: pageExitRight 0.45s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    pointer-events: none;
+    z-index: 2;
+}
+
+/* ===== DEPTH SHADOW OVERLAY ===== */
+.page-depth-shadow {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.15) 20%, transparent 50%);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 5;
+    transition: opacity 0.45s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.page-depth-shadow.active {
+    opacity: 1;
+}
+
+body.light-mode .page-depth-shadow {
+    background: linear-gradient(90deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.05) 20%, transparent 50%);
+}
+
+/* ===== BREADCRUMB ANIMATION ===== */
+@keyframes breadcrumbSlideIn {
+    0% {
+        opacity: 0;
+        transform: translateY(-6px) scale(0.98);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.breadcrumb-anim-in {
+    animation: breadcrumbSlideIn 0.35s cubic-bezier(0.32, 0.72, 0, 1) 0.15s both;
+}
+
+/* ===== STAGGERED CARD ENTRANCE ===== */
+@keyframes cardStaggerIn {
+    0% {
+        opacity: 0;
+        transform: translateY(20px) scale(0.96);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes deptStaggerIn {
+    0% {
+        opacity: 0;
+        transform: translateX(-16px) scale(0.97);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}
+
+.card-stagger {
+    animation: cardStaggerIn 0.4s cubic-bezier(0.32, 0.72, 0, 1) both;
+    opacity: 0;
+}
+
+.dept-stagger {
+    animation: deptStaggerIn 0.45s cubic-bezier(0.32, 0.72, 0, 1) both;
+    opacity: 0;
+}
+
+/* ===== REDUCED MOTION SUPPORT ===== */
+@media (prefers-reduced-motion: reduce) {
+    .anim-enter-right,
+    .anim-exit-left,
+    .anim-enter-left,
+    .anim-exit-right {
+        animation: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+        filter: none !important;
+    }
+
+    .card-stagger,
+    .dept-stagger {
+        animation: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+    }
+
+    .page-depth-shadow {
+        display: none !important;
+    }
+}
+
 
 /* ========== HEADER ========== */
 .header {
