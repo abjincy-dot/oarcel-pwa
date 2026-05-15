@@ -1,6 +1,6 @@
 /* ============================================
    OARCEL Document Manager - COMPLETE CSS
-   Page flip animation + soft grey light mode
+   Slow page flip animation (0.5s) + soft grey light mode
    ============================================ */
 
 * {
@@ -131,20 +131,21 @@ body::before {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* ========== PAGE FLIP ANIMATION (BOOK LIKE) ========== */
+/* ========== SLOW & SMOOTH PAGE FLIP ANIMATION (LIKE A BOOK) ========== */
 @keyframes pageFlipForward {
     0% {
-        transform: perspective(800px) rotateY(0deg);
+        transform: perspective(1000px) rotateY(0deg);
         transform-origin: left center;
         opacity: 1;
     }
-    40% {
-        transform: perspective(800px) rotateY(-20deg);
+    50% {
+        transform: perspective(1000px) rotateY(-18deg);
         transform-origin: left center;
-        opacity: 0.7;
+        opacity: 0.85;
+        filter: drop-shadow(5px 0 10px rgba(0,0,0,0.3));
     }
     100% {
-        transform: perspective(800px) rotateY(0deg);
+        transform: perspective(1000px) rotateY(0deg);
         transform-origin: left center;
         opacity: 1;
     }
@@ -152,28 +153,30 @@ body::before {
 
 @keyframes pageFlipBack {
     0% {
-        transform: perspective(800px) rotateY(0deg);
+        transform: perspective(1000px) rotateY(0deg);
         transform-origin: right center;
         opacity: 1;
     }
-    40% {
-        transform: perspective(800px) rotateY(20deg);
+    50% {
+        transform: perspective(1000px) rotateY(18deg);
         transform-origin: right center;
-        opacity: 0.7;
+        opacity: 0.85;
+        filter: drop-shadow(-5px 0 10px rgba(0,0,0,0.3));
     }
     100% {
-        transform: perspective(800px) rotateY(0deg);
+        transform: perspective(1000px) rotateY(0deg);
         transform-origin: right center;
         opacity: 1;
     }
 }
 
+/* Slower animation - 0.5 seconds */
 .page-flip-forward {
-    animation: pageFlipForward 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: pageFlipForward 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .page-flip-back {
-    animation: pageFlipBack 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: pageFlipBack 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 /* ========== HEADER ========== */
