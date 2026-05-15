@@ -1,6 +1,6 @@
 /* ============================================
    OARCEL Document Manager - COMPLETE CSS
-   Modern Slide Transition (iOS style)
+   Soft grey light mode | Image viewer with close button
    ============================================ */
 
 * {
@@ -129,220 +129,6 @@ body::before {
     from { opacity: 0; transform: translateY(15px); }
     to { opacity: 1; transform: translateY(0); }
 }
-
-/* ========== MODERN PAGE TRANSITIONS (iOS-Style Stack Navigation) ========== */
-
-/* Remove old animations */
-.page-flip-forward,
-.page-flip-back {
-    animation: none !important;
-}
-
-/* ===== CORE TRANSITION SYSTEM ===== */
-.page-transition-view {
-    position: relative;
-    overflow: hidden;
-    min-height: 200px;
-}
-
-.page-transition-layer {
-    position: relative;
-    width: 100%;
-    will-change: transform, opacity, filter;
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-}
-
-/* ===== FORWARD NAVIGATION (Drill Down) ===== */
-/* New page enters from right */
-@keyframes pageEnterRight {
-    0% {
-        transform: translate3d(100%, 0, 0) scale(0.96);
-        opacity: 0;
-        filter: brightness(1.15) saturate(0.8);
-    }
-    60% {
-        transform: translate3d(0, 0, 0) scale(0.99);
-        opacity: 1;
-    }
-    100% {
-        transform: translate3d(0, 0, 0) scale(1);
-        opacity: 1;
-        filter: brightness(1) saturate(1);
-    }
-}
-
-/* Current page exits to left (stays visible underneath) */
-@keyframes pageExitLeft {
-    0% {
-        transform: translate3d(0, 0, 0) scale(1);
-        opacity: 1;
-        filter: brightness(1);
-    }
-    100% {
-        transform: translate3d(-35%, 0, 0) scale(0.92);
-        opacity: 0.25;
-        filter: brightness(0.6) saturate(0.7);
-    }
-}
-
-/* ===== BACK NAVIGATION (Pop Back) ===== */
-/* Previous page enters from left */
-@keyframes pageEnterLeft {
-    0% {
-        transform: translate3d(-35%, 0, 0) scale(0.92);
-        opacity: 0.25;
-        filter: brightness(0.6) saturate(0.7);
-    }
-    40% {
-        transform: translate3d(0, 0, 0) scale(0.98);
-        opacity: 1;
-    }
-    100% {
-        transform: translate3d(0, 0, 0) scale(1);
-        opacity: 1;
-        filter: brightness(1) saturate(1);
-    }
-}
-
-/* Current page exits to right */
-@keyframes pageExitRight {
-    0% {
-        transform: translate3d(0, 0, 0) scale(1);
-        opacity: 1;
-        filter: brightness(1);
-    }
-    100% {
-        transform: translate3d(100%, 0, 0) scale(0.96);
-        opacity: 0;
-        filter: brightness(1.15) saturate(0.8);
-    }
-}
-
-/* ===== ANIMATION CLASSES ===== */
-.anim-enter-right {
-    animation: pageEnterRight 0.45s cubic-bezier(0.32, 0.72, 0, 1) forwards;
-}
-
-.anim-exit-left {
-    animation: pageExitLeft 0.45s cubic-bezier(0.32, 0.72, 0, 1) forwards;
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    pointer-events: none;
-    z-index: 1;
-}
-
-.anim-enter-left {
-    animation: pageEnterLeft 0.45s cubic-bezier(0.32, 0.72, 0, 1) forwards;
-}
-
-.anim-exit-right {
-    animation: pageExitRight 0.45s cubic-bezier(0.32, 0.72, 0, 1) forwards;
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    pointer-events: none;
-    z-index: 2;
-}
-
-/* ===== DEPTH SHADOW OVERLAY ===== */
-.page-depth-shadow {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(90deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.15) 20%, transparent 50%);
-    opacity: 0;
-    pointer-events: none;
-    z-index: 5;
-    transition: opacity 0.45s cubic-bezier(0.32, 0.72, 0, 1);
-}
-
-.page-depth-shadow.active {
-    opacity: 1;
-}
-
-body.light-mode .page-depth-shadow {
-    background: linear-gradient(90deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.05) 20%, transparent 50%);
-}
-
-/* ===== BREADCRUMB ANIMATION ===== */
-@keyframes breadcrumbSlideIn {
-    0% {
-        opacity: 0;
-        transform: translateY(-6px) scale(0.98);
-    }
-    100% {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-}
-
-.breadcrumb-anim-in {
-    animation: breadcrumbSlideIn 0.35s cubic-bezier(0.32, 0.72, 0, 1) 0.15s both;
-}
-
-/* ===== STAGGERED CARD ENTRANCE ===== */
-@keyframes cardStaggerIn {
-    0% {
-        opacity: 0;
-        transform: translateY(20px) scale(0.96);
-    }
-    100% {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-}
-
-@keyframes deptStaggerIn {
-    0% {
-        opacity: 0;
-        transform: translateX(-16px) scale(0.97);
-    }
-    100% {
-        opacity: 1;
-        transform: translateX(0) scale(1);
-    }
-}
-
-.card-stagger {
-    animation: cardStaggerIn 0.4s cubic-bezier(0.32, 0.72, 0, 1) both;
-    opacity: 0;
-}
-
-.dept-stagger {
-    animation: deptStaggerIn 0.45s cubic-bezier(0.32, 0.72, 0, 1) both;
-    opacity: 0;
-}
-
-/* ===== REDUCED MOTION SUPPORT ===== */
-@media (prefers-reduced-motion: reduce) {
-    .anim-enter-right,
-    .anim-exit-left,
-    .anim-enter-left,
-    .anim-exit-right {
-        animation: none !important;
-        opacity: 1 !important;
-        transform: none !important;
-        filter: none !important;
-    }
-
-    .card-stagger,
-    .dept-stagger {
-        animation: none !important;
-        opacity: 1 !important;
-        transform: none !important;
-    }
-
-    .page-depth-shadow {
-        display: none !important;
-    }
-}
-
 
 /* ========== HEADER ========== */
 .header {
@@ -671,6 +457,7 @@ body.light-mode .theme-toggle i { color: #f59e0b !important; }
 
 .departments-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
 
+/* Card container - NOT clickable as a whole */
 .dept-card {
     display: flex;
     align-items: center;
@@ -681,6 +468,7 @@ body.light-mode .theme-toggle i { color: #f59e0b !important; }
     cursor: default;
 }
 
+/* Only the oval is clickable */
 .dept-oval {
     padding: 12px 28px;
     border-radius: var(--radius-full);
@@ -698,12 +486,14 @@ body.light-mode .theme-toggle i { color: #f59e0b !important; }
     cursor: pointer;
 }
 
+/* Press effect */
 .dept-oval:active {
     transform: translateY(6px) !important;
     box-shadow: 0 2px 0 rgba(0, 0, 0, 0.4), 0 3px 8px rgba(0, 0, 0, 0.2) !important;
     transition: transform 0.04s, box-shadow 0.04s;
 }
 
+/* Hover effect */
 .dept-oval:hover {
     transform: translateY(-2px);
     box-shadow: 0 12px 0 rgba(0, 0, 0, 0.4), 0 8px 16px rgba(0, 0, 0, 0.35);
@@ -737,6 +527,7 @@ body.light-mode .dept-info {
     background: rgba(100, 116, 139, 0.12);
 }
 
+/* Department colors */
 .dept-card[data-dept="REMELT"] .dept-oval { background: linear-gradient(145deg, #ea580c, #c2410c); }
 .dept-card[data-dept="CASTER"] .dept-oval { background: linear-gradient(145deg, #0d9488, #0f766e); }
 .dept-card[data-dept="HRM"] .dept-oval { background: linear-gradient(145deg, #7c3aed, #6d28d9); }
@@ -800,8 +591,16 @@ body.light-mode .card {
 .note-card .card-icon { background: linear-gradient(135deg, rgba(251,191,36,0.15), rgba(245,158,11,0.1)); border-color: rgba(251,191,36,0.2); }
 .note-card .card-icon i { color: #fbbf24; }
 
+/* ========== FILE TYPE ICON COLORS ========== */
 .file-card .card-icon i.fa-file-pdf { color: #ef4444; }
 .file-card .card-icon i.fa-file-image { color: #10b981; }
+.file-card .card-icon i.fa-file-excel { color: #22c55e; }
+.file-card .card-icon i.fa-file-word { color: #3b82f6; }
+.file-card .card-icon i.fa-file-alt { color: #6b7280; }
+.file-card .card-icon i.fa-file-powerpoint { color: #f97316; }
+.file-card .card-icon i.fa-file-archive { color: #8b5cf6; }
+.file-card .card-icon i.fa-file-video { color: #ec4899; }
+.file-card .card-icon i.fa-file-audio { color: #f43f5e; }
 
 .card-filename {
     flex: 1;
@@ -813,6 +612,7 @@ body.light-mode .card {
     line-height: 1.2;
 }
 
+/* ========== ICON-ONLY BUTTONS ========== */
 .card-buttons {
     display: flex !important;
     gap: 4px !important;
@@ -968,7 +768,7 @@ body.light-mode .action-btn {
 .modal-footer button:first-child { background: rgba(100,100,100,0.3); color: var(--text-primary); }
 .modal-footer button:last-child { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: white; }
 
-/* ========== IMAGE VIEWER ========== */
+/* ========== IMAGE VIEWER MODAL - WITH VISIBLE CLOSE BUTTON ========== */
 .image-viewer {
     position: fixed;
     top: 0;
@@ -1052,6 +852,7 @@ body.light-mode .action-btn {
     to { transform: scale(1); opacity: 1; }
 }
 
+/* Light mode image viewer */
 body.light-mode .image-viewer {
     background: rgba(240, 240, 245, 0.98);
 }
@@ -1255,6 +1056,7 @@ button, .card, .action-btn, .breadcrumb-item, .type-btn, .theme-toggle, #backBtn
     .stat-number { font-size: 1rem; }
     .stat-data label { font-size: 0.55rem; }
     
+    /* Image viewer close button on mobile */
     .close-viewer-btn {
         padding: 8px 16px;
         font-size: 0.85rem;
