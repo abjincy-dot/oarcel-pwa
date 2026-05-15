@@ -21,24 +21,156 @@ function showToast(msg, isErr = false) {
 
 function escapeHtml(str) { const div = document.createElement('div'); div.textContent = str; return div.innerHTML; }
 
-// ========== ANIMATION HELPER (CONTENT ONLY) ==========
+// ========== MODERN PAGE TRANSITION SYSTEM ==========
+let isTransitioning = false;
+
 function animateContent(direction, callback) {
+    // Skip animation if user prefers reduced motion
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        callback();
+        return;
+    }
+
+    if (isTransitioning) return;
+    isTransitioning = true;
+
     const contentDiv = document.getElementById('content');
     const deptSection = document.getElementById('departmentsSection');
-    const elementsToAnimate = [contentDiv, deptSection];
-    
-    elementsToAnimate.forEach(el => {
-        if (el && !el.classList.contains('hidden')) {
-            el.classList.add(direction === 'forward' ? 'page-flip-forward' : 'page-flip-back');
-        }
+    const breadcrumb = document.getElementById('breadcrumb');
+
+    // Collect all visible elements to animate
+    const visibleElements = [];
+    if (contentDiv && !contentDiv.classList.contains('hidden') && contentDiv.offsetParent !== null) {
+        visibleElements.push(contentDiv);
+    }
+    if (deptSection && !deptSection.classList.contains('hidden') && deptSection.offsetParent !== null) {
+        visibleElements.push(deptSection);
+    }
+
+    if (visibleElements.length === 0) {
+        callback();
+        isTransitioning = false;
+        return;
+    }
+
+    // Create transition container
+    const transitionContainer = document.createElement('div');
+    transitionContainer.className = 'page-transition-view';
+    transitionContainer.style.cssText = 'position:relative;overflow:hidden;min-height:200px;';
+
+    // Create depth shadow overlay
+    const shadowOverlay = document.createElement('div');
+    shadowOverlay.className = 'page-depth-shadow';
+
+    // Clone current content for exit animation
+    const exitWrapper = document.createElement('div');
+    exitWrapper.className = 'page-transition-layer anim-exit-' + (direction === 'forward' ? 'left' : 'right');
+
+    visibleElements.forEach(el => {
+        const clone = el.cloneNode(true);
+        clone.style.width = '100%';
+        clone.style.margin = '0';
+        exitWrapper.appendChild(clone);
     });
-    
+
+    // Temporarily hide original elements (but keep them in DOM for measurements)
+    visibleElements.forEach(el => {
+        el.style.visibility = 'hidden';
+        el.style.pointerEvents = 'none';
+    });
+
+    // Insert transition elements before the first animated element
+    const firstEl = visibleElements[0];
+    if (firstEl && firstEl.parentNode) {
+        firstEl.parentNode.insertBefore(transitionContainer, firstEl);
+        transitionContainer.appendChild(shadowOverlay);
+        transitionContainer.appendChild(exitWrapper);
+    }
+
+    // Activate shadow for forward navigation
+    if (direction === 'forward') {
+        requestAnimationFrame(() => {
+            shadowOverlay.classList.add('active');
+        });
+    }
+
+    // Execute the actual state change (navigation)
     setTimeout(() => {
         callback();
-        elementsToAnimate.forEach(el => {
-            if (el) el.classList.remove('page-flip-forward', 'page-flip-back');
+
+        // Animate new content entering
+        requestAnimationFrame(() => {
+            const newContentDiv = document.getElementById('content');
+            const newDeptSection = document.getElementById('departmentsSection');
+
+            if (newContentDiv && !newContentDiv.classList.contains('hidden')) {
+                newContentDiv.classList.add('anim-enter-' + (direction === 'forward' ? 'right' : 'left'));
+            }
+            if (newDeptSection && !newDeptSection.classList.contains('hidden')) {
+                newDeptSection.classList.add('anim-enter-' + (direction === 'forward' ? 'right' : 'left'));
+            }
+
+            // Animate breadcrumb
+            if (breadcrumb) {
+                breadcrumb.classList.remove('breadcrumb-anim-in');
+                void breadcrumb.offsetWidth; // Force reflow
+                breadcrumb.classList.add('breadcrumb-anim-in');
+            }
+
+            // Stagger card entrance animations
+            setTimeout(() => {
+                const cards = document.querySelectorAll('.card:not(.glow-folder), .note-card, .file-card');
+                cards.forEach((card, index) => {
+                    card.style.animationDelay = (index * 0.05) + 's';
+                    card.classList.add('card-stagger');
+                });
+
+                const deptCards = document.querySelectorAll('.dept-card');
+                deptCards.forEach((card, index) => {
+                    card.style.animationDelay = (index * 0.06) + 's';
+                    card.classList.add('dept-stagger');
+                });
+            }, 180);
         });
-    }, 300);
+
+    }, 80);
+
+    // Clean up after animation completes
+    setTimeout(() => {
+        // Remove transition container
+        if (transitionContainer && transitionContainer.parentNode) {
+            transitionContainer.parentNode.removeChild(transitionContainer);
+        }
+
+        // Restore original elements
+        visibleElements.forEach(el => {
+            el.style.visibility = '';
+            el.style.pointerEvents = '';
+        });
+
+        // Remove entrance animation classes
+        const newContentDiv = document.getElementById('content');
+        const newDeptSection = document.getElementById('departmentsSection');
+
+        if (newContentDiv) {
+            newContentDiv.classList.remove('anim-enter-right', 'anim-enter-left');
+        }
+        if (newDeptSection) {
+            newDeptSection.classList.remove('anim-enter-right', 'anim-enter-left');
+        }
+
+        // Remove stagger classes and delays
+        document.querySelectorAll('.card-stagger, .dept-stagger').forEach(card => {
+            card.classList.remove('card-stagger', 'dept-stagger');
+            card.style.animationDelay = '';
+        });
+
+        if (breadcrumb) {
+            breadcrumb.classList.remove('breadcrumb-anim-in');
+        }
+
+        isTransitioning = false;
+    }, 550);
 }
 
 // ========== FILE TYPE DETECTION ==========
@@ -191,7 +323,7 @@ function deleteFileFromFolder(folderPath, fileName) {
             if(!allFiles[folderPath].length) delete allFiles[folderPath];
             saveAllFilesToDB();
             render();
-            showToast(`✅ Deleted "${fileName}"`);
+            showToast(`â Deleted "${fileName}"`);
         }
     }
 }
@@ -203,7 +335,7 @@ function renameFileInFolder(folderPath, oldName, newName){
             allFiles[folderPath][idx].name = newName;
             saveAllFilesToDB();
             render();
-            showToast(`✅ Renamed to "${newName}"`);
+            showToast(`â Renamed to "${newName}"`);
         }
     }
 }
@@ -214,7 +346,7 @@ async function addNoteToCurrentFolder(title, content){
     allNotes[folderPath].push(note);
     await saveAllNotesToDB();
     render();
-    showToast(`✅ Note "${title}" created`);
+    showToast(`â Note "${title}" created`);
 }
 async function updateNote(folderPath, noteId, title, content){
     const idx = allNotes[folderPath]?.findIndex(n=>n.id===noteId);
@@ -224,7 +356,7 @@ async function updateNote(folderPath, noteId, title, content){
         allNotes[folderPath][idx].updatedAt = new Date().toISOString();
         await saveAllNotesToDB();
         render();
-        showToast(`✅ Note updated`);
+        showToast(`â Note updated`);
         return true;
     }
     return false;
@@ -237,7 +369,7 @@ async function renameNote(folderPath, noteId, newTitle){
         allNotes[folderPath][idx].updatedAt = new Date().toISOString();
         await saveAllNotesToDB();
         render();
-        showToast(`✅ Note renamed to "${newTitle.trim()}"`);
+        showToast(`â Note renamed to "${newTitle.trim()}"`);
     }
 }
 async function deleteNoteFromFolder(folderPath, noteId){
@@ -247,12 +379,12 @@ async function deleteNoteFromFolder(folderPath, noteId){
         if(!allNotes[folderPath].length) delete allNotes[folderPath];
         await saveAllNotesToDB();
         render();
-        showToast(`🗑️ Note "${note?.title}" deleted`);
+        showToast(`ðï¸ Note "${note?.title}" deleted`);
     }
 }
 function openNote(note){
     const modal = document.getElementById('noteModal');
-    document.getElementById('noteModalTitle').textContent = `📝 ${note.title}`;
+    document.getElementById('noteModalTitle').textContent = `ð ${note.title}`;
     document.getElementById('noteTitle').value = note.title;
     document.getElementById('noteContent').value = note.content;
     editingNoteId = note.id;
@@ -483,7 +615,7 @@ function renameCurrentFolder(){
         currentPath[currentPath.length-1]=newName;
         saveFolderStructure(); saveAllFilesToDB(); saveAllNotesToDB();
         render();
-        showToast(`✅ Renamed to "${newName}"`);
+        showToast(`â Renamed to "${newName}"`);
     }
 }
 function deleteCurrentFolder(){
@@ -498,20 +630,20 @@ function deleteCurrentFolder(){
         currentPath.pop();
         saveFolderStructure(); saveAllFilesToDB(); saveAllNotesToDB();
         render();
-        showToast(`🗑️ Folder "${name}" deleted`);
+        showToast(`ðï¸ Folder "${name}" deleted`);
     }
 }
 function addNewFolder(){
     const name = prompt("Folder name:");
     if(name && name.trim()){
         const cur = getCurrentFolderObject();
-        if(cur && !cur[name]){ cur[name]={}; saveFolderStructure(); render(); showToast(`✅ Folder "${name}" created`); }
+        if(cur && !cur[name]){ cur[name]={}; saveFolderStructure(); render(); showToast(`â Folder "${name}" created`); }
         else showToast("Exists",true);
     }
 }
 function addNewDepartment(){
     const name = prompt("Department name:");
-    if(name && name.trim() && !fileSystem[name]){ fileSystem[name]={}; saveFolderStructure(); render(); showToast(`✅ Department "${name}" created`); }
+    if(name && name.trim() && !fileSystem[name]){ fileSystem[name]={}; saveFolderStructure(); render(); showToast(`â Department "${name}" created`); }
     else if(fileSystem[name]) showToast("Department exists",true);
 }
 function updateStats(){
