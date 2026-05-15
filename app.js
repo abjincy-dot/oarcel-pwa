@@ -739,3 +739,171 @@ document.addEventListener('DOMContentLoaded', async ()=>{
     await loadFromIndexedDB();
     attachPressEffects();
 });
+// ========== 3D PAGE TRANSITION EFFECTS ==========
+let isTransitioning = false;
+
+function createTransitionOverlay() {
+    let overlay = document.getElementById('transitionOverlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'transitionOverlay';
+        overlay.className = 'transition-overlay';
+        overlay.innerHTML = '<div class="loader"></div>';
+        document.body.appendChild(overlay);
+    }
+    return overlay;
+}
+
+async function navigateWithTransition(navigationFn, direction = 'right') {
+    if (isTransitioning) return;
+    isTransitioning = true;
+    
+    const content = document.getElementById('content');
+    const overlay = createTransitionOverlay();
+    
+    // Add exit animation
+    overlay.classList.add('active');
+    
+    // Add flip effect to content
+    if (content) {
+        content.style.animation = 'none';
+        content.offsetHeight; // Force reflow
+        content.style.animation = 'pageFlip3D 0.25s ease forwards';
+    }
+    
+    setTimeout(async () => {
+        await navigationFn();
+        
+        // Add entry animation
+        if (content) {
+            content.style.animation = 'none';
+            content.offsetHeight;
+            const animationClass = direction === 'right' ? 'page-slide-in' : 'page-slide-in-left';
+            content.classList.add(animationClass);
+            
+            setTimeout(() => {
+                content.classList.remove(animationClass);
+            }, 350);
+        }
+        
+        overlay.classList.remove('active');
+        isTransitioning = false;
+    }, 250);
+}
+
+// Modified render function with transition
+const originalRender = render;
+window.render = function() {
+    if (isTransitioning) return;
+    originalRender();
+};
+
+// Wrap navigation functions
+const originalSelectDepartment = selectDepartment;
+window.selectDepartment = function(d) {
+    navigateWithTransition(() => {
+        originalSelectDepartment(d);
+        attachPressEffects();
+    }, 'right');
+};
+
+const originalGoBack = goBack;
+window.goBack = function() {
+    navigateWithTransition(() => {
+        originalGoBack();
+        attachPressEffects();
+    }, 'left');
+};
+
+const originalNavigateToBreadcrumb = navigateToBreadcrumb;
+window.navigateToBreadcrumb = function(idx) {
+    const direction = idx === -1 ? 'left' : (idx < currentPath.length - 1 ? 'left' : 'right');
+    navigateWithTransition(() => {
+        originalNavigateToBreadcrumb(idx);
+        attachPressEffects();
+    }, direction);
+};
+
+// Add 3D effect to cards on click
+function addCard3DEffect(element, event) {
+    if (!element || element.hasAttribute('data-3d-processing')) return;
+    element.setAttribute('data-3d-processing', 'true');
+    
+    const rect = element.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const rotateX = (y - centerY) / 20;
+    const rotateY = (centerX - x) / 20;
+    
+    element.style.transform = `perspective(500px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-5px)`;
+    element.style.transition = 'transform 0.1s ease';
+    
+    setTimeout(() => {
+        element.style.transform = '';
+        setTimeout(() => {
+            element.removeAttribute('data-3d-processing');
+        }, 100);
+    }, 150);
+}
+
+// Update attachPressEffects to include 3D effect
+const originalAttachPressEffects = attachPressEffects;
+function newAttachPressEffects() {
+    originalAttachPressEffects();
+    
+    // Add 3D hover effect to cards
+    document.querySelectorAll('.card, .dept-oval').forEach(el => {
+        el.addEventListener('mousemove', function(e) {
+            if (el.hasAttribute('data-3d-processing')) return;
+            const rect = el.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            const rotateX = (y - centerY) / 25;
+            const rotateY = (centerX - x) / 25;
+            el.style.transform = `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-3px)`;
+        });
+        
+        el.addEventListener('mouseleave', function() {
+            el.style.transform = '';
+        });
+        
+        // 3D click effect
+        el.addEventListener('click', function(e) {
+            addCard3DEffect(el, e);
+        });
+    });
+}
+
+// Override attachPressEffects
+attachPressEffects = newAttachPressEffects;
+
+// Add floating animation to folders
+function addFloatingEffect() {
+    const cards = document.querySelectorAll('.card');
+    cards.forEach((card, index) => {
+        card.style.animation = `floatCard ${2 + (index * 0.1)}s ease-in-out infinite`;
+    });
+}
+
+// Add to style.css
+const styleSheet = document.createElement('style');
+styleSheet.textContent = `
+    @keyframes floatCard {
+        0%, 100% { transform: translateY(0px) rotateX(0deg); }
+        50% { transform: translateY(-3px) rotateX(2deg); }
+    }
+    
+    .card {
+        animation: floatCard 3s ease-in-out infinite;
+        animation-play-state: running;
+    }
+    
+    .card:hover {
+        animation-play-state: paused;
+    }
+`;
+document.head.appendChild(styleSheet);
