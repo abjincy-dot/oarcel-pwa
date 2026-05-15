@@ -1,6 +1,6 @@
 // ==================== INDEXEDDB CORE ====================
 const DB_NAME = 'OarcelDB';
-const DB_VERSION = 9;
+const DB_VERSION = 8; // Increased version for image viewer
 let db = null;
 let allFiles = {};
 let allNotes = {};
@@ -20,158 +20,6 @@ function showToast(msg, isErr = false) {
 }
 
 function escapeHtml(str) { const div = document.createElement('div'); div.textContent = str; return div.innerHTML; }
-
-// ========== MODERN PAGE TRANSITION SYSTEM ==========
-let isTransitioning = false;
-
-function animateContent(direction, callback) {
-    // Skip animation if user prefers reduced motion
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        callback();
-        return;
-    }
-
-    if (isTransitioning) return;
-    isTransitioning = true;
-
-    const contentDiv = document.getElementById('content');
-    const deptSection = document.getElementById('departmentsSection');
-    const breadcrumb = document.getElementById('breadcrumb');
-
-    // Collect all visible elements to animate
-    const visibleElements = [];
-    if (contentDiv && !contentDiv.classList.contains('hidden') && contentDiv.offsetParent !== null) {
-        visibleElements.push(contentDiv);
-    }
-    if (deptSection && !deptSection.classList.contains('hidden') && deptSection.offsetParent !== null) {
-        visibleElements.push(deptSection);
-    }
-
-    if (visibleElements.length === 0) {
-        callback();
-        isTransitioning = false;
-        return;
-    }
-
-    // Create transition container
-    const transitionContainer = document.createElement('div');
-    transitionContainer.className = 'page-transition-view';
-    transitionContainer.style.cssText = 'position:relative;overflow:hidden;min-height:200px;';
-
-    // Create depth shadow overlay
-    const shadowOverlay = document.createElement('div');
-    shadowOverlay.className = 'page-depth-shadow';
-
-    // Clone current content for exit animation
-    const exitWrapper = document.createElement('div');
-    exitWrapper.className = 'page-transition-layer anim-exit-' + (direction === 'forward' ? 'left' : 'right');
-
-    visibleElements.forEach(el => {
-        const clone = el.cloneNode(true);
-        clone.style.width = '100%';
-        clone.style.margin = '0';
-        exitWrapper.appendChild(clone);
-    });
-
-    // Temporarily hide original elements (but keep them in DOM for measurements)
-    visibleElements.forEach(el => {
-        el.style.visibility = 'hidden';
-        el.style.pointerEvents = 'none';
-    });
-
-    // Insert transition elements before the first animated element
-    const firstEl = visibleElements[0];
-    if (firstEl && firstEl.parentNode) {
-        firstEl.parentNode.insertBefore(transitionContainer, firstEl);
-        transitionContainer.appendChild(shadowOverlay);
-        transitionContainer.appendChild(exitWrapper);
-    }
-
-    // Activate shadow for forward navigation
-    if (direction === 'forward') {
-        requestAnimationFrame(() => {
-            shadowOverlay.classList.add('active');
-        });
-    }
-
-    // Execute the actual state change (navigation)
-    setTimeout(() => {
-        callback();
-
-        // Animate new content entering
-        requestAnimationFrame(() => {
-            const newContentDiv = document.getElementById('content');
-            const newDeptSection = document.getElementById('departmentsSection');
-
-            if (newContentDiv && !newContentDiv.classList.contains('hidden')) {
-                newContentDiv.classList.add('anim-enter-' + (direction === 'forward' ? 'right' : 'left'));
-            }
-            if (newDeptSection && !newDeptSection.classList.contains('hidden')) {
-                newDeptSection.classList.add('anim-enter-' + (direction === 'forward' ? 'right' : 'left'));
-            }
-
-            // Animate breadcrumb
-            if (breadcrumb) {
-                breadcrumb.classList.remove('breadcrumb-anim-in');
-                void breadcrumb.offsetWidth; // Force reflow
-                breadcrumb.classList.add('breadcrumb-anim-in');
-            }
-
-            // Stagger card entrance animations
-            setTimeout(() => {
-                const cards = document.querySelectorAll('.card:not(.glow-folder), .note-card, .file-card');
-                cards.forEach((card, index) => {
-                    card.style.animationDelay = (index * 0.05) + 's';
-                    card.classList.add('card-stagger');
-                });
-
-                const deptCards = document.querySelectorAll('.dept-card');
-                deptCards.forEach((card, index) => {
-                    card.style.animationDelay = (index * 0.06) + 's';
-                    card.classList.add('dept-stagger');
-                });
-            }, 180);
-        });
-
-    }, 80);
-
-    // Clean up after animation completes
-    setTimeout(() => {
-        // Remove transition container
-        if (transitionContainer && transitionContainer.parentNode) {
-            transitionContainer.parentNode.removeChild(transitionContainer);
-        }
-
-        // Restore original elements
-        visibleElements.forEach(el => {
-            el.style.visibility = '';
-            el.style.pointerEvents = '';
-        });
-
-        // Remove entrance animation classes
-        const newContentDiv = document.getElementById('content');
-        const newDeptSection = document.getElementById('departmentsSection');
-
-        if (newContentDiv) {
-            newContentDiv.classList.remove('anim-enter-right', 'anim-enter-left');
-        }
-        if (newDeptSection) {
-            newDeptSection.classList.remove('anim-enter-right', 'anim-enter-left');
-        }
-
-        // Remove stagger classes and delays
-        document.querySelectorAll('.card-stagger, .dept-stagger').forEach(card => {
-            card.classList.remove('card-stagger', 'dept-stagger');
-            card.style.animationDelay = '';
-        });
-
-        if (breadcrumb) {
-            breadcrumb.classList.remove('breadcrumb-anim-in');
-        }
-
-        isTransitioning = false;
-    }, 550);
-}
 
 // ========== FILE TYPE DETECTION ==========
 function getFileIcon(fileName) {
@@ -222,6 +70,7 @@ function openFile(dataUrl, fileName) {
         }).catch(err=>showToast(`Failed: ${err.message}`,true));
     }
     else {
+        // For other unsupported file types
         if (confirm(`This file type may not be supported. Do you want to download "${fileName}"?`)) {
             const link = document.createElement('a');
             link.href = dataUrl;
@@ -323,7 +172,7 @@ function deleteFileFromFolder(folderPath, fileName) {
             if(!allFiles[folderPath].length) delete allFiles[folderPath];
             saveAllFilesToDB();
             render();
-            showToast(`â Deleted "${fileName}"`);
+            showToast(`✅ Deleted "${fileName}"`);
         }
     }
 }
@@ -335,7 +184,7 @@ function renameFileInFolder(folderPath, oldName, newName){
             allFiles[folderPath][idx].name = newName;
             saveAllFilesToDB();
             render();
-            showToast(`â Renamed to "${newName}"`);
+            showToast(`✅ Renamed to "${newName}"`);
         }
     }
 }
@@ -346,7 +195,7 @@ async function addNoteToCurrentFolder(title, content){
     allNotes[folderPath].push(note);
     await saveAllNotesToDB();
     render();
-    showToast(`â Note "${title}" created`);
+    showToast(`✅ Note "${title}" created`);
 }
 async function updateNote(folderPath, noteId, title, content){
     const idx = allNotes[folderPath]?.findIndex(n=>n.id===noteId);
@@ -356,7 +205,7 @@ async function updateNote(folderPath, noteId, title, content){
         allNotes[folderPath][idx].updatedAt = new Date().toISOString();
         await saveAllNotesToDB();
         render();
-        showToast(`â Note updated`);
+        showToast(`✅ Note updated`);
         return true;
     }
     return false;
@@ -369,7 +218,7 @@ async function renameNote(folderPath, noteId, newTitle){
         allNotes[folderPath][idx].updatedAt = new Date().toISOString();
         await saveAllNotesToDB();
         render();
-        showToast(`â Note renamed to "${newTitle.trim()}"`);
+        showToast(`✅ Note renamed to "${newTitle.trim()}"`);
     }
 }
 async function deleteNoteFromFolder(folderPath, noteId){
@@ -379,12 +228,12 @@ async function deleteNoteFromFolder(folderPath, noteId){
         if(!allNotes[folderPath].length) delete allNotes[folderPath];
         await saveAllNotesToDB();
         render();
-        showToast(`ðï¸ Note "${note?.title}" deleted`);
+        showToast(`🗑️ Note "${note?.title}" deleted`);
     }
 }
 function openNote(note){
     const modal = document.getElementById('noteModal');
-    document.getElementById('noteModalTitle').textContent = `ð ${note.title}`;
+    document.getElementById('noteModalTitle').textContent = `📝 ${note.title}`;
     document.getElementById('noteTitle').value = note.title;
     document.getElementById('noteContent').value = note.content;
     editingNoteId = note.id;
@@ -461,34 +310,6 @@ function createCard(title, onClick, isFolder=false){
     return div;
 }
 
-// ========== NAVIGATION WITH MODERN ANIMATION ==========
-function selectDepartment(d){ 
-    animateContent('forward', () => {
-        currentPath = [d]; 
-        render();
-    });
-}
-
-function goBack(){ 
-    if(currentPath.length && !isSearchMode){ 
-        animateContent('back', () => {
-            currentPath.pop(); 
-            render();
-        });
-    } else if(isSearchMode) { 
-        clearSearch(); 
-    }
-}
-
-function navigateToBreadcrumb(idx){
-    const isGoingBack = idx < currentPath.length - 1;
-    animateContent(isGoingBack ? 'back' : 'forward', () => {
-        if(idx===-1) currentPath=[];
-        else currentPath = currentPath.slice(0,idx+1);
-        render();
-    });
-}
-
 function render(){
     const query = document.getElementById('searchInput').value.trim().toLowerCase();
     if(query){
@@ -555,19 +376,9 @@ function render(){
                                <button class="action-btn" onclick="addNewFolder()"><i class="fas fa-plus"></i> Add Subfolder</button>`;
     } else actionDiv.innerHTML = `<button class="action-btn" onclick="addNewDepartment()"><i class="fas fa-building"></i> Add Department</button>`;
     document.getElementById('content').appendChild(actionDiv);
-    
     if(!isRoot && hasSubfolders){
-        for(let key in folder) {
-            const folderCard = createCard(key, () => { 
-                animateContent('forward', () => {
-                    currentPath.push(key); 
-                    render();
-                });
-            }, true);
-            document.getElementById('content').appendChild(folderCard);
-        }
+        for(let key in folder) document.getElementById('content').appendChild(createCard(key, ()=>{ currentPath.push(key); render(); }, true));
     }
-    
     if(isLeafFolder){
         if(currentActiveTab==='pdfs'){
             const files = getFilesForCurrentFolder();
@@ -591,6 +402,8 @@ function attachDepartmentPressEffects() {
     });
 }
 
+function selectDepartment(d){ currentPath=[d]; render(); }
+function goBack(){ if(currentPath.length && !isSearchMode){ currentPath.pop(); render(); } else if(isSearchMode) clearSearch(); }
 function triggerUpload(){ document.getElementById('fileInput').click(); }
 function triggerNewNote(){ openNewNoteModal(); }
 function clearSearch(){
@@ -598,6 +411,11 @@ function clearSearch(){
     isSearchMode=false;
     document.getElementById('searchInfo').classList.add('hidden');
     document.getElementById('clearSearchBtn').classList.add('hidden');
+    render();
+}
+function navigateToBreadcrumb(idx){
+    if(idx===-1) currentPath=[];
+    else currentPath = currentPath.slice(0,idx+1);
     render();
 }
 function renameCurrentFolder(){
@@ -615,7 +433,7 @@ function renameCurrentFolder(){
         currentPath[currentPath.length-1]=newName;
         saveFolderStructure(); saveAllFilesToDB(); saveAllNotesToDB();
         render();
-        showToast(`â Renamed to "${newName}"`);
+        showToast(`✅ Renamed to "${newName}"`);
     }
 }
 function deleteCurrentFolder(){
@@ -630,20 +448,20 @@ function deleteCurrentFolder(){
         currentPath.pop();
         saveFolderStructure(); saveAllFilesToDB(); saveAllNotesToDB();
         render();
-        showToast(`ðï¸ Folder "${name}" deleted`);
+        showToast(`🗑️ Folder "${name}" deleted`);
     }
 }
 function addNewFolder(){
     const name = prompt("Folder name:");
     if(name && name.trim()){
         const cur = getCurrentFolderObject();
-        if(cur && !cur[name]){ cur[name]={}; saveFolderStructure(); render(); showToast(`â Folder "${name}" created`); }
+        if(cur && !cur[name]){ cur[name]={}; saveFolderStructure(); render(); showToast(`✅ Folder "${name}" created`); }
         else showToast("Exists",true);
     }
 }
 function addNewDepartment(){
     const name = prompt("Department name:");
-    if(name && name.trim() && !fileSystem[name]){ fileSystem[name]={}; saveFolderStructure(); render(); showToast(`â Department "${name}" created`); }
+    if(name && name.trim() && !fileSystem[name]){ fileSystem[name]={}; saveFolderStructure(); render(); showToast(`✅ Department "${name}" created`); }
     else if(fileSystem[name]) showToast("Department exists",true);
 }
 function updateStats(){
@@ -740,7 +558,6 @@ function attachPressEffects(){
         if(window.getComputedStyle(el).cursor==='auto') el.style.cursor='pointer';
     });
 }
-
 window.selectDepartment = selectDepartment;
 window.goBack = goBack;
 window.triggerUpload = triggerUpload;
@@ -766,15 +583,18 @@ document.addEventListener('DOMContentLoaded', async ()=>{
     document.getElementById('pdfTabBtn').onclick = ()=>setActiveTab('pdfs');
     document.getElementById('notesTabBtn').onclick = ()=>setActiveTab('notes');
     
+    // Close image viewer with Escape key
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             closeImageViewer();
         }
     });
     
+    // Close image viewer button
     const closeBtn = document.getElementById('closeImageViewer');
     if(closeBtn) closeBtn.onclick = closeImageViewer;
     
+    // Click outside image to close
     const viewer = document.getElementById('imageViewer');
     if(viewer) {
         viewer.addEventListener('click', (e) => {
