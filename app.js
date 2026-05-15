@@ -122,7 +122,7 @@ function deleteFileFromFolder(folderPath, fileName) {
             if(!allFiles[folderPath].length) delete allFiles[folderPath];
             saveAllFilesToDB();
             render();
-            showToast(`â Deleted "${fileName}"`);
+            showToast(`Ã¢ÂÂ Deleted "${fileName}"`);
         }
     }
 }
@@ -135,7 +135,7 @@ function renameFileInFolder(folderPath, oldName, newName){
             allFiles[folderPath][idx].name = newName;
             saveAllFilesToDB();
             render();
-            showToast(`â Renamed to "${newName}"`);
+            showToast(`Ã¢ÂÂ Renamed to "${newName}"`);
         }
     }
 }
@@ -146,7 +146,7 @@ async function addNoteToCurrentFolder(title, content){
     allNotes[folderPath].push(note);
     await saveAllNotesToDB();
     render();
-    showToast(`â Note "${title}" created`);
+    showToast(`Ã¢ÂÂ Note "${title}" created`);
 }
 async function updateNote(folderPath, noteId, title, content){
     const idx = allNotes[folderPath]?.findIndex(n=>n.id===noteId);
@@ -156,7 +156,7 @@ async function updateNote(folderPath, noteId, title, content){
         allNotes[folderPath][idx].updatedAt = new Date().toISOString();
         await saveAllNotesToDB();
         render();
-        showToast(`â Note updated`);
+        showToast(`Ã¢ÂÂ Note updated`);
         return true;
     }
     return false;
@@ -169,7 +169,7 @@ async function renameNote(folderPath, noteId, newTitle){
         allNotes[folderPath][idx].updatedAt = new Date().toISOString();
         await saveAllNotesToDB();
         render();
-        showToast(`â Note renamed to "${newTitle.trim()}"`);
+        showToast(`Ã¢ÂÂ Note renamed to "${newTitle.trim()}"`);
     }
 }
 async function deleteNoteFromFolder(folderPath, noteId){
@@ -179,12 +179,12 @@ async function deleteNoteFromFolder(folderPath, noteId){
         if(!allNotes[folderPath].length) delete allNotes[folderPath];
         await saveAllNotesToDB();
         render();
-        showToast(`ðï¸ Note "${note?.title}" deleted`);
+        showToast(`Ã°ÂÂÂÃ¯Â¸Â Note "${note?.title}" deleted`);
     }
 }
 function openNote(note){
     const modal = document.getElementById('noteModal');
-    document.getElementById('noteModalTitle').textContent = `ð ${note.title}`;
+    document.getElementById('noteModalTitle').textContent = `Ã°ÂÂÂ ${note.title}`;
     document.getElementById('noteTitle').value = note.title;
     document.getElementById('noteContent').value = note.content;
     editingNoteId = note.id;
@@ -386,7 +386,7 @@ function renameCurrentFolder(){
         currentPath[currentPath.length-1]=newName;
         saveFolderStructure(); saveAllFilesToDB(); saveAllNotesToDB();
         render();
-        showToast(`â Renamed to "${newName}"`);
+        showToast(`Ã¢ÂÂ Renamed to "${newName}"`);
     }
 }
 function deleteCurrentFolder(){
@@ -401,20 +401,20 @@ function deleteCurrentFolder(){
         currentPath.pop();
         saveFolderStructure(); saveAllFilesToDB(); saveAllNotesToDB();
         render();
-        showToast(`ðï¸ Folder "${name}" deleted`);
+        showToast(`Ã°ÂÂÂÃ¯Â¸Â Folder "${name}" deleted`);
     }
 }
 function addNewFolder(){
     const name = prompt("Folder name:");
     if(name && name.trim()){
         const cur = getCurrentFolderObject();
-        if(cur && !cur[name]){ cur[name]={}; saveFolderStructure(); render(); showToast(`â Folder "${name}" created`); }
+        if(cur && !cur[name]){ cur[name]={}; saveFolderStructure(); render(); showToast(`Ã¢ÂÂ Folder "${name}" created`); }
         else showToast("Exists",true);
     }
 }
 function addNewDepartment(){
     const name = prompt("Department name:");
-    if(name && name.trim() && !fileSystem[name]){ fileSystem[name]={}; saveFolderStructure(); render(); showToast(`â Department "${name}" created`); }
+    if(name && name.trim() && !fileSystem[name]){ fileSystem[name]={}; saveFolderStructure(); render(); showToast(`Ã¢ÂÂ Department "${name}" created`); }
     else if(fileSystem[name]) showToast("Department exists",true);
 }
 
