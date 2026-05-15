@@ -117,7 +117,7 @@ function initDB() {
 function createFurnaceDataLogs() {
     const logs = {};
     const logNames = [
-        "Data Log A",
+        "SIPHON",
         "Data Log B", 
         "Data Log C",
         "Data Log D",
