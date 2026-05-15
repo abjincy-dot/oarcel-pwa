@@ -115,11 +115,11 @@ function initDB() {
 // ========== EACH FURNACE HAS ITS OWN UNIQUE FOLDERS (NO RENAME NEEDED) ==========
 function createFurnace1Logs() {
     return {
-        "Temperature Records F1": {},
-        "Pressure Data F1": {},
-        "Quality Check F1": {},
-        "Maintenance Log F1": {},
-        "Production Report F1": {},
+        "SIPHON": {},
+        "RFI": {},
+        "BURNER 2": {},
+        "BURNER 2": {},
+        "MAIN DOOR": {},
         "Safety Checklist F1": {},
         "Morning Shift F1": {},
         "Evening Shift F1": {},
