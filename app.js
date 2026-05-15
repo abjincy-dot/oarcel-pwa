@@ -309,7 +309,7 @@ function createCard(title, onClick, isFolder=false){
     return div;
 }
 
-// ========== PAGE FLIP NAVIGATION ==========
+// ========== PAGE FLIP NAVIGATION (500ms delay) ==========
 function selectDepartment(d){ 
     const app = document.querySelector('.app');
     app.classList.add('page-flip-forward');
@@ -317,7 +317,7 @@ function selectDepartment(d){
         currentPath = [d]; 
         render();
         app.classList.remove('page-flip-forward');
-    }, 150);
+    }, 500);
 }
 
 function goBack(){ 
@@ -328,7 +328,7 @@ function goBack(){
             currentPath.pop(); 
             render();
             app.classList.remove('page-flip-back');
-        }, 150);
+        }, 500);
     } else if(isSearchMode) { 
         clearSearch(); 
     }
@@ -349,7 +349,7 @@ function navigateToBreadcrumb(idx){
         else currentPath = currentPath.slice(0,idx+1);
         render();
         app.classList.remove('page-flip-back', 'page-flip-forward');
-    }, 150);
+    }, 500);
 }
 
 function render(){
@@ -428,7 +428,7 @@ function render(){
                     currentPath.push(key); 
                     render();
                     app.classList.remove('page-flip-forward');
-                }, 150);
+                }, 500);
             }, true);
             document.getElementById('content').appendChild(folderCard);
         }
