@@ -1,6 +1,6 @@
 // ==================== INDEXEDDB CORE ====================
 const DB_NAME = 'OarcelDB';
-const DB_VERSION = 8; // Increased version for image viewer
+const DB_VERSION = 9;
 let db = null;
 let allFiles = {};
 let allNotes = {};
@@ -70,7 +70,6 @@ function openFile(dataUrl, fileName) {
         }).catch(err=>showToast(`Failed: ${err.message}`,true));
     }
     else {
-        // For other unsupported file types
         if (confirm(`This file type may not be supported. Do you want to download "${fileName}"?`)) {
             const link = document.createElement('a');
             link.href = dataUrl;
@@ -310,6 +309,49 @@ function createCard(title, onClick, isFolder=false){
     return div;
 }
 
+// ========== PAGE FLIP NAVIGATION ==========
+function selectDepartment(d){ 
+    const app = document.querySelector('.app');
+    app.classList.add('page-flip-forward');
+    setTimeout(() => {
+        currentPath = [d]; 
+        render();
+        app.classList.remove('page-flip-forward');
+    }, 150);
+}
+
+function goBack(){ 
+    if(currentPath.length && !isSearchMode){ 
+        const app = document.querySelector('.app');
+        app.classList.add('page-flip-back');
+        setTimeout(() => {
+            currentPath.pop(); 
+            render();
+            app.classList.remove('page-flip-back');
+        }, 150);
+    } else if(isSearchMode) { 
+        clearSearch(); 
+    }
+}
+
+function navigateToBreadcrumb(idx){
+    const isGoingBack = idx < currentPath.length - 1;
+    const app = document.querySelector('.app');
+    
+    if (isGoingBack) {
+        app.classList.add('page-flip-back');
+    } else {
+        app.classList.add('page-flip-forward');
+    }
+    
+    setTimeout(() => {
+        if(idx===-1) currentPath=[];
+        else currentPath = currentPath.slice(0,idx+1);
+        render();
+        app.classList.remove('page-flip-back', 'page-flip-forward');
+    }, 150);
+}
+
 function render(){
     const query = document.getElementById('searchInput').value.trim().toLowerCase();
     if(query){
@@ -376,9 +418,22 @@ function render(){
                                <button class="action-btn" onclick="addNewFolder()"><i class="fas fa-plus"></i> Add Subfolder</button>`;
     } else actionDiv.innerHTML = `<button class="action-btn" onclick="addNewDepartment()"><i class="fas fa-building"></i> Add Department</button>`;
     document.getElementById('content').appendChild(actionDiv);
+    
     if(!isRoot && hasSubfolders){
-        for(let key in folder) document.getElementById('content').appendChild(createCard(key, ()=>{ currentPath.push(key); render(); }, true));
+        for(let key in folder) {
+            const folderCard = createCard(key, () => { 
+                const app = document.querySelector('.app');
+                app.classList.add('page-flip-forward');
+                setTimeout(() => {
+                    currentPath.push(key); 
+                    render();
+                    app.classList.remove('page-flip-forward');
+                }, 150);
+            }, true);
+            document.getElementById('content').appendChild(folderCard);
+        }
     }
+    
     if(isLeafFolder){
         if(currentActiveTab==='pdfs'){
             const files = getFilesForCurrentFolder();
@@ -402,8 +457,6 @@ function attachDepartmentPressEffects() {
     });
 }
 
-function selectDepartment(d){ currentPath=[d]; render(); }
-function goBack(){ if(currentPath.length && !isSearchMode){ currentPath.pop(); render(); } else if(isSearchMode) clearSearch(); }
 function triggerUpload(){ document.getElementById('fileInput').click(); }
 function triggerNewNote(){ openNewNoteModal(); }
 function clearSearch(){
@@ -411,11 +464,6 @@ function clearSearch(){
     isSearchMode=false;
     document.getElementById('searchInfo').classList.add('hidden');
     document.getElementById('clearSearchBtn').classList.add('hidden');
-    render();
-}
-function navigateToBreadcrumb(idx){
-    if(idx===-1) currentPath=[];
-    else currentPath = currentPath.slice(0,idx+1);
     render();
 }
 function renameCurrentFolder(){
@@ -558,6 +606,7 @@ function attachPressEffects(){
         if(window.getComputedStyle(el).cursor==='auto') el.style.cursor='pointer';
     });
 }
+
 window.selectDepartment = selectDepartment;
 window.goBack = goBack;
 window.triggerUpload = triggerUpload;
@@ -583,18 +632,15 @@ document.addEventListener('DOMContentLoaded', async ()=>{
     document.getElementById('pdfTabBtn').onclick = ()=>setActiveTab('pdfs');
     document.getElementById('notesTabBtn').onclick = ()=>setActiveTab('notes');
     
-    // Close image viewer with Escape key
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             closeImageViewer();
         }
     });
     
-    // Close image viewer button
     const closeBtn = document.getElementById('closeImageViewer');
     if(closeBtn) closeBtn.onclick = closeImageViewer;
     
-    // Click outside image to close
     const viewer = document.getElementById('imageViewer');
     if(viewer) {
         viewer.addEventListener('click', (e) => {
