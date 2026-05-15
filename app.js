@@ -114,11 +114,18 @@ function initDB() {
 }
 
 function createFurnaceDataLogs() {
-    const logs = {"Data Logs":{}};
-    for(let i=1;i<=20;i++) logs[`Data Log ${i}`]={};
+    const logs = {};
+    const logNames = [
+        "Data Log A", "Data Log B", "Data Log C", "Data Log D", "Data Log E",
+        "Data Log F", "Data Log G", "Data Log H", "Data Log I", "Data Log J",
+        "Data Log K", "Data Log L", "Data Log M", "Data Log N", "Data Log O",
+        "Data Log P", "Data Log Q", "Data Log R", "Data Log S", "Data Log T"
+    ];
+    for(let i = 0; i < logNames.length; i++) {
+        logs[logNames[i]] = {};
+    }
     return logs;
 }
-
 async function loadFromIndexedDB() {
     const folderReq = db.transaction('folderStructure','readonly').objectStore('folderStructure').get('structure');
     folderReq.onsuccess = ()=>{
