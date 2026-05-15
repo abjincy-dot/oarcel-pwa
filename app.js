@@ -113,19 +113,38 @@ function initDB() {
     });
 }
 
+// ========== UPDATED: Data Logs A to T (20 folders) ==========
 function createFurnaceDataLogs() {
     const logs = {};
     const logNames = [
-        "Data Log A", "Data Log B", "Data Log C", "Data Log D", "Data Log E",
-        "Data Log F", "Data Log G", "Data Log H", "Data Log I", "Data Log J",
-        "Data Log K", "Data Log L", "Data Log M", "Data Log N", "Data Log O",
-        "Data Log P", "Data Log Q", "Data Log R", "Data Log S", "Data Log T"
+        "Data Log A",
+        "Data Log B", 
+        "Data Log C",
+        "Data Log D",
+        "Data Log E",
+        "Data Log F",
+        "Data Log G",
+        "Data Log H",
+        "Data Log I",
+        "Data Log J",
+        "Data Log K",
+        "Data Log L",
+        "Data Log M",
+        "Data Log N",
+        "Data Log O",
+        "Data Log P",
+        "Data Log Q",
+        "Data Log R",
+        "Data Log S",
+        "Data Log T"
     ];
+    
     for(let i = 0; i < logNames.length; i++) {
         logs[logNames[i]] = {};
     }
     return logs;
 }
+
 async function loadFromIndexedDB() {
     const folderReq = db.transaction('folderStructure','readonly').objectStore('folderStructure').get('structure');
     folderReq.onsuccess = ()=>{
@@ -133,9 +152,32 @@ async function loadFromIndexedDB() {
         else {
             fileSystem = {
                 "REMELT": {
-                    "FURNACE 1": createFurnaceDataLogs(), "FURNACE 2": createFurnaceDataLogs(), "FURNACE 3": createFurnaceDataLogs(),
-                    "FURNACE 4": createFurnaceDataLogs(), "FURNACE 5": {}, "ACD": {}, "DBF": {}, "ROD FEEDER": {}, "LAUNDER HEATERS": {},
-                    "LAUNDER PANEL ": {}, "HPU 1": {}, "HPU 2": {}, "M":{}, "N":{}, "O":{}, "P":{}, "Q":{}, "R":{}, "S":{}, "T":{}, "U":{}, "V":{}, "W":{}, "X":{}, "Y":{}, "Z":{}
+                    "FURNACE 1": createFurnaceDataLogs(), 
+                    "FURNACE 2": createFurnaceDataLogs(), 
+                    "FURNACE 3": createFurnaceDataLogs(),
+                    "FURNACE 4": createFurnaceDataLogs(), 
+                    "FURNACE 5": {}, 
+                    "ACD": {}, 
+                    "DBF": {}, 
+                    "ROD FEEDER": {}, 
+                    "LAUNDER HEATERS": {},
+                    "LAUNDER PANEL ": {}, 
+                    "HPU 1": {}, 
+                    "HPU 2": {}, 
+                    "M":{}, 
+                    "N":{}, 
+                    "O":{}, 
+                    "P":{}, 
+                    "Q":{}, 
+                    "R":{}, 
+                    "S":{}, 
+                    "T":{}, 
+                    "U":{}, 
+                    "V":{}, 
+                    "W":{}, 
+                    "X":{}, 
+                    "Y":{}, 
+                    "Z":{}
                 },
                 "CASTER":{"Quality Reports":{},"Mechanical":{},"Maintenance":{},"Production Data":{},"Testing":{},"Checklists":{},"Safety":{},"Training":{}},
                 "HRM":{"Employee Records":{},"Attendance":{},"Performance":{},"Training Logs":{},"Safety Compliance":{},"Policies":{},"Reports":{},"Certifications":{}},
@@ -179,7 +221,7 @@ function deleteFileFromFolder(folderPath, fileName) {
             if(!allFiles[folderPath].length) delete allFiles[folderPath];
             saveAllFilesToDB();
             render();
-            showToast(`â Deleted "${fileName}"`);
+            showToast(`✅ Deleted "${fileName}"`);
         }
     }
 }
@@ -191,7 +233,7 @@ function renameFileInFolder(folderPath, oldName, newName){
             allFiles[folderPath][idx].name = newName;
             saveAllFilesToDB();
             render();
-            showToast(`â Renamed to "${newName}"`);
+            showToast(`✅ Renamed to "${newName}"`);
         }
     }
 }
@@ -202,7 +244,7 @@ async function addNoteToCurrentFolder(title, content){
     allNotes[folderPath].push(note);
     await saveAllNotesToDB();
     render();
-    showToast(`â Note "${title}" created`);
+    showToast(`✅ Note "${title}" created`);
 }
 async function updateNote(folderPath, noteId, title, content){
     const idx = allNotes[folderPath]?.findIndex(n=>n.id===noteId);
@@ -212,7 +254,7 @@ async function updateNote(folderPath, noteId, title, content){
         allNotes[folderPath][idx].updatedAt = new Date().toISOString();
         await saveAllNotesToDB();
         render();
-        showToast(`â Note updated`);
+        showToast(`✅ Note updated`);
         return true;
     }
     return false;
@@ -225,7 +267,7 @@ async function renameNote(folderPath, noteId, newTitle){
         allNotes[folderPath][idx].updatedAt = new Date().toISOString();
         await saveAllNotesToDB();
         render();
-        showToast(`â Note renamed to "${newTitle.trim()}"`);
+        showToast(`✅ Note renamed to "${newTitle.trim()}"`);
     }
 }
 async function deleteNoteFromFolder(folderPath, noteId){
@@ -235,12 +277,12 @@ async function deleteNoteFromFolder(folderPath, noteId){
         if(!allNotes[folderPath].length) delete allNotes[folderPath];
         await saveAllNotesToDB();
         render();
-        showToast(`ðï¸ Note "${note?.title}" deleted`);
+        showToast(`🗑️ Note "${note?.title}" deleted`);
     }
 }
 function openNote(note){
     const modal = document.getElementById('noteModal');
-    document.getElementById('noteModalTitle').textContent = `ð ${note.title}`;
+    document.getElementById('noteModalTitle').textContent = `📝 ${note.title}`;
     document.getElementById('noteTitle').value = note.title;
     document.getElementById('noteContent').value = note.content;
     editingNoteId = note.id;
@@ -440,7 +482,7 @@ function renameCurrentFolder(){
         currentPath[currentPath.length-1]=newName;
         saveFolderStructure(); saveAllFilesToDB(); saveAllNotesToDB();
         render();
-        showToast(`â Renamed to "${newName}"`);
+        showToast(`✅ Renamed to "${newName}"`);
     }
 }
 function deleteCurrentFolder(){
@@ -455,20 +497,20 @@ function deleteCurrentFolder(){
         currentPath.pop();
         saveFolderStructure(); saveAllFilesToDB(); saveAllNotesToDB();
         render();
-        showToast(`ðï¸ Folder "${name}" deleted`);
+        showToast(`🗑️ Folder "${name}" deleted`);
     }
 }
 function addNewFolder(){
     const name = prompt("Folder name:");
     if(name && name.trim()){
         const cur = getCurrentFolderObject();
-        if(cur && !cur[name]){ cur[name]={}; saveFolderStructure(); render(); showToast(`â Folder "${name}" created`); }
+        if(cur && !cur[name]){ cur[name]={}; saveFolderStructure(); render(); showToast(`✅ Folder "${name}" created`); }
         else showToast("Exists",true);
     }
 }
 function addNewDepartment(){
     const name = prompt("Department name:");
-    if(name && name.trim() && !fileSystem[name]){ fileSystem[name]={}; saveFolderStructure(); render(); showToast(`â Department "${name}" created`); }
+    if(name && name.trim() && !fileSystem[name]){ fileSystem[name]={}; saveFolderStructure(); render(); showToast(`✅ Department "${name}" created`); }
     else if(fileSystem[name]) showToast("Department exists",true);
 }
 function updateStats(){
