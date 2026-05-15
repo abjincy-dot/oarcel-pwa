@@ -1,6 +1,6 @@
 // ==================== INDEXEDDB CORE ====================
 const DB_NAME = 'OarcelDB';
-const DB_VERSION = 6;
+const DB_VERSION = 8; // Increased version for image viewer
 let db = null;
 let allFiles = {};
 let allNotes = {};
@@ -21,14 +21,64 @@ function showToast(msg, isErr = false) {
 
 function escapeHtml(str) { const div = document.createElement('div'); div.textContent = str; return div.innerHTML; }
 
-function openPDF(dataUrl, fileName) {
-    showToast(`Opening ${fileName}...`);
-    fetch(dataUrl).then(r=>r.blob()).then(blob=>{
-        const url = URL.createObjectURL(blob);
-        window.open(url, '_blank');
-        showToast(`PDF opened.`);
-        setTimeout(()=>URL.revokeObjectURL(url),60000);
-    }).catch(err=>showToast(`Failed: ${err.message}`,true));
+// ========== FILE TYPE DETECTION ==========
+function getFileIcon(fileName) {
+    const ext = fileName.split('.').pop().toLowerCase();
+    const iconMap = {
+        'pdf': 'fa-file-pdf',
+        'jpg': 'fa-file-image', 'jpeg': 'fa-file-image', 'png': 'fa-file-image', 'gif': 'fa-file-image', 'webp': 'fa-file-image', 'svg': 'fa-file-image'
+    };
+    return iconMap[ext] || 'fa-file';
+}
+
+function getFileType(fileName) {
+    const ext = fileName.split('.').pop().toLowerCase();
+    if (['jpg','jpeg','png','gif','webp','svg'].includes(ext)) return 'image';
+    if (['pdf'].includes(ext)) return 'pdf';
+    return 'other';
+}
+
+// ========== IMAGE VIEWER ==========
+function openImageViewer(imageUrl, fileName) {
+    const viewer = document.getElementById('imageViewer');
+    const viewerImage = document.getElementById('viewerImage');
+    viewerImage.src = imageUrl;
+    viewerImage.alt = fileName;
+    viewer.classList.remove('hidden');
+    showToast(`Viewing: ${fileName}`);
+}
+
+function closeImageViewer() {
+    const viewer = document.getElementById('imageViewer');
+    const viewerImage = document.getElementById('viewerImage');
+    viewer.classList.add('hidden');
+    viewerImage.src = '';
+}
+
+function openFile(dataUrl, fileName) {
+    const fileType = getFileType(fileName);
+    
+    if (fileType === 'image') {
+        openImageViewer(dataUrl, fileName);
+    } 
+    else if (fileType === 'pdf') {
+        fetch(dataUrl).then(r=>r.blob()).then(blob=>{
+            const url = URL.createObjectURL(blob);
+            window.open(url, '_blank');
+            showToast(`Opening PDF: ${fileName}`);
+            setTimeout(()=>URL.revokeObjectURL(url),60000);
+        }).catch(err=>showToast(`Failed: ${err.message}`,true));
+    }
+    else {
+        // For other unsupported file types
+        if (confirm(`This file type may not be supported. Do you want to download "${fileName}"?`)) {
+            const link = document.createElement('a');
+            link.href = dataUrl;
+            link.download = fileName;
+            link.click();
+            showToast(`Downloading: ${fileName}`);
+        }
+    }
 }
 
 async function saveAllNotesToDB() {
@@ -112,17 +162,17 @@ async function addFileToCurrentFolder(file) {
     const folderPath = currentPath.join('/');
     if(!allFiles[folderPath]) allFiles[folderPath] = [];
     const base64 = await new Promise(r=>{const rd=new FileReader(); rd.onload=e=>r(e.target.result); rd.readAsDataURL(file);});
-    allFiles[folderPath].push({name:file.name, dataUrl:base64});
+    allFiles[folderPath].push({name:file.name, dataUrl:base64, type:file.type});
     await saveAllFilesToDB();
 }
 function deleteFileFromFolder(folderPath, fileName) {
-    if(confirm(`Delete PDF "${fileName}"?`)){
+    if(confirm(`Delete "${fileName}"?`)){
         if(allFiles[folderPath]){
             allFiles[folderPath] = allFiles[folderPath].filter(f=>f.name!==fileName);
             if(!allFiles[folderPath].length) delete allFiles[folderPath];
             saveAllFilesToDB();
             render();
-            showToast(`Ã¢ÂÂ Deleted "${fileName}"`);
+            showToast(`✅ Deleted "${fileName}"`);
         }
     }
 }
@@ -131,11 +181,10 @@ function renameFileInFolder(folderPath, oldName, newName){
     if(allFiles[folderPath]){
         const idx = allFiles[folderPath].findIndex(f=>f.name===oldName);
         if(idx!==-1){
-            if(!newName.toLowerCase().endsWith('.pdf')) newName += '.pdf';
             allFiles[folderPath][idx].name = newName;
             saveAllFilesToDB();
             render();
-            showToast(`Ã¢ÂÂ Renamed to "${newName}"`);
+            showToast(`✅ Renamed to "${newName}"`);
         }
     }
 }
@@ -146,7 +195,7 @@ async function addNoteToCurrentFolder(title, content){
     allNotes[folderPath].push(note);
     await saveAllNotesToDB();
     render();
-    showToast(`Ã¢ÂÂ Note "${title}" created`);
+    showToast(`✅ Note "${title}" created`);
 }
 async function updateNote(folderPath, noteId, title, content){
     const idx = allNotes[folderPath]?.findIndex(n=>n.id===noteId);
@@ -156,7 +205,7 @@ async function updateNote(folderPath, noteId, title, content){
         allNotes[folderPath][idx].updatedAt = new Date().toISOString();
         await saveAllNotesToDB();
         render();
-        showToast(`Ã¢ÂÂ Note updated`);
+        showToast(`✅ Note updated`);
         return true;
     }
     return false;
@@ -169,7 +218,7 @@ async function renameNote(folderPath, noteId, newTitle){
         allNotes[folderPath][idx].updatedAt = new Date().toISOString();
         await saveAllNotesToDB();
         render();
-        showToast(`Ã¢ÂÂ Note renamed to "${newTitle.trim()}"`);
+        showToast(`✅ Note renamed to "${newTitle.trim()}"`);
     }
 }
 async function deleteNoteFromFolder(folderPath, noteId){
@@ -179,12 +228,12 @@ async function deleteNoteFromFolder(folderPath, noteId){
         if(!allNotes[folderPath].length) delete allNotes[folderPath];
         await saveAllNotesToDB();
         render();
-        showToast(`Ã°ÂÂÂÃ¯Â¸Â Note "${note?.title}" deleted`);
+        showToast(`🗑️ Note "${note?.title}" deleted`);
     }
 }
 function openNote(note){
     const modal = document.getElementById('noteModal');
-    document.getElementById('noteModalTitle').textContent = `Ã°ÂÂÂ ${note.title}`;
+    document.getElementById('noteModalTitle').textContent = `📝 ${note.title}`;
     document.getElementById('noteTitle').value = note.title;
     document.getElementById('noteContent').value = note.content;
     editingNoteId = note.id;
@@ -197,25 +246,26 @@ function openNote(note){
     modal.classList.add('show');
 }
 
-// ========== CARD CREATION WITH ICON-ONLY BUTTONS ==========
-function createPdfCard(file, folderPath){
+// ========== CARD CREATION ==========
+function createFileCard(file, folderPath){
+    const iconClass = getFileIcon(file.name);
     const div = document.createElement('div');
-    div.className = 'card pdf-card';
+    div.className = 'card file-card';
     div.innerHTML = `
-        <div class="card-icon"><i class="fas fa-file-pdf"></i></div>
+        <div class="card-icon"><i class="fas ${iconClass}"></i></div>
         <div class="card-filename" title="${escapeHtml(file.name)}">${escapeHtml(file.name)}</div>
         <div class="card-buttons">
-            <button class="rename-file-btn" title="Rename PDF"><i class="fas fa-edit"></i></button>
-            <button class="delete-file-btn" title="Delete PDF"><i class="fas fa-trash"></i></button>
+            <button class="rename-file-btn" title="Rename"><i class="fas fa-edit"></i></button>
+            <button class="delete-file-btn" title="Delete"><i class="fas fa-trash"></i></button>
         </div>
     `;
     div.addEventListener('click', (e)=>{
         if(e.target.closest('.rename-file-btn') || e.target.closest('.delete-file-btn')) return;
-        openPDF(file.dataUrl, file.name);
+        openFile(file.dataUrl, file.name);
     });
     div.querySelector('.rename-file-btn').addEventListener('click', (e)=>{
         e.stopPropagation();
-        const newName = prompt("New PDF name:", file.name.replace(/\.pdf$/i,''));
+        const newName = prompt("New file name:", file.name);
         if(newName?.trim()) renameFileInFolder(folderPath, file.name, newName.trim());
     });
     div.querySelector('.delete-file-btn').addEventListener('click', (e)=>{
@@ -228,9 +278,6 @@ function createPdfCard(file, folderPath){
 function createNoteCard(note, folderPath){
     const div = document.createElement('div');
     div.className = 'card note-card';
-    // === NEW: Add data-preview attribute for hover preview ===
-    const preview = note.content ? note.content.substring(0, 40).replace(/\s+/g, ' ').trim() + (note.content.length > 40 ? '...' : '') : '';
-    div.setAttribute('data-preview', preview);
     div.innerHTML = `
         <div class="card-icon"><i class="fas fa-sticky-note"></i></div>
         <div class="card-filename" title="${escapeHtml(note.title)}">${escapeHtml(note.title)}</div>
@@ -269,7 +316,7 @@ function render(){
         isSearchMode=true;
         document.getElementById('clearSearchBtn').classList.remove('hidden');
         const results=[];
-        for(const path in allFiles) if(allFiles[path]) allFiles[path].forEach(f=>{ if(f.name.toLowerCase().includes(query)) results.push({...f, folder:path, type:'pdf'});});
+        for(const path in allFiles) if(allFiles[path]) allFiles[path].forEach(f=>{ if(f.name.toLowerCase().includes(query)) results.push({...f, folder:path, type:'file'});});
         for(const path in allNotes) if(allNotes[path]) allNotes[path].forEach(n=>{ if(n.title.toLowerCase().includes(query) || n.content.toLowerCase().includes(query)) results.push({...n, folder:path, type:'note'});});
         document.getElementById('searchInfo').classList.remove('hidden');
         document.getElementById('searchInfo').innerHTML = `<i class="fas fa-search"></i> Found ${results.length} result(s) for "${escapeHtml(query)}" <button onclick="clearSearch()">Clear</button>`;
@@ -282,7 +329,7 @@ function render(){
         document.getElementById('breadcrumb').innerHTML = '';
         document.querySelector('.type-selector').style.display = 'none';
         if(!results.length) contentDiv.innerHTML = '<div class="empty-state"><i class="fas fa-search"></i><p>No results found.</p></div>';
-        else results.forEach(item => { if(item.type==='pdf') contentDiv.appendChild(createPdfCard(item, item.folder)); else contentDiv.appendChild(createNoteCard(item, item.folder)); });
+        else results.forEach(item => { if(item.type==='file') contentDiv.appendChild(createFileCard(item, item.folder)); else contentDiv.appendChild(createNoteCard(item, item.folder)); });
         updateStats();
         attachPressEffects();
         return;
@@ -304,7 +351,7 @@ function render(){
             const sub = Object.keys(fileSystem[dept]).length;
             const fcount = allFiles[dept]?.length||0;
             const ncount = allNotes[dept]?.length||0;
-            html += `<div class="dept-card" data-dept="${dept}" onclick="selectDepartment('${dept}')"><div class="dept-oval"><span>${dept}</span></div><div class="dept-arrow"><i class="fas fa-chevron-right"></i></div><div class="dept-info">${sub+fcount+ncount} items</div></div>`;
+            html += `<div class="dept-card" data-dept="${dept}"><div class="dept-oval" onclick="selectDepartment('${dept}')"><span>${dept}</span></div><div class="dept-arrow"><i class="fas fa-chevron-right"></i></div><div class="dept-info">${sub+fcount+ncount} items</div></div>`;
         }
         html += '</div>';
         document.getElementById('departmentsSection').innerHTML = html;
@@ -312,7 +359,7 @@ function render(){
         document.getElementById('newNoteBtn').classList.add('hidden');
         attachDepartmentPressEffects();
     } else document.getElementById('departmentsSection').innerHTML = '';
-
+    
     const hasSubfolders = Object.keys(folder).length>0;
     const isLeafFolder = !isRoot && !hasSubfolders;
     const typeSelector = document.querySelector('.type-selector');
@@ -336,8 +383,8 @@ function render(){
         if(currentActiveTab==='pdfs'){
             const files = getFilesForCurrentFolder();
             const path = currentPath.join('/');
-            if(files.length) files.forEach(f=>document.getElementById('content').appendChild(createPdfCard(f,path)));
-            else document.getElementById('content').innerHTML += '<div class="empty-state"><i class="fas fa-cloud-upload-alt"></i><p>No PDFs yet. Click Upload to add files.</p></div>';
+            if(files.length) files.forEach(f=>document.getElementById('content').appendChild(createFileCard(f,path)));
+            else document.getElementById('content').innerHTML += '<div class="empty-state"><i class="fas fa-cloud-upload-alt"></i><p>No files yet. Click Upload to add PDFs or Images.</p></div>';
         } else {
             const notes = getNotesForCurrentFolder();
             const path = currentPath.join('/');
@@ -386,7 +433,7 @@ function renameCurrentFolder(){
         currentPath[currentPath.length-1]=newName;
         saveFolderStructure(); saveAllFilesToDB(); saveAllNotesToDB();
         render();
-        showToast(`Ã¢ÂÂ Renamed to "${newName}"`);
+        showToast(`✅ Renamed to "${newName}"`);
     }
 }
 function deleteCurrentFolder(){
@@ -401,56 +448,32 @@ function deleteCurrentFolder(){
         currentPath.pop();
         saveFolderStructure(); saveAllFilesToDB(); saveAllNotesToDB();
         render();
-        showToast(`Ã°ÂÂÂÃ¯Â¸Â Folder "${name}" deleted`);
+        showToast(`🗑️ Folder "${name}" deleted`);
     }
 }
 function addNewFolder(){
     const name = prompt("Folder name:");
     if(name && name.trim()){
         const cur = getCurrentFolderObject();
-        if(cur && !cur[name]){ cur[name]={}; saveFolderStructure(); render(); showToast(`Ã¢ÂÂ Folder "${name}" created`); }
+        if(cur && !cur[name]){ cur[name]={}; saveFolderStructure(); render(); showToast(`✅ Folder "${name}" created`); }
         else showToast("Exists",true);
     }
 }
 function addNewDepartment(){
     const name = prompt("Department name:");
-    if(name && name.trim() && !fileSystem[name]){ fileSystem[name]={}; saveFolderStructure(); render(); showToast(`Ã¢ÂÂ Department "${name}" created`); }
+    if(name && name.trim() && !fileSystem[name]){ fileSystem[name]={}; saveFolderStructure(); render(); showToast(`✅ Department "${name}" created`); }
     else if(fileSystem[name]) showToast("Department exists",true);
 }
-
-// === NEW: Stats counter animation ===
-function animateCounter(element, target, duration = 800) {
-    const start = parseInt(element.textContent) || 0;
-    const range = target - start;
-    if (range === 0) return;
-    const startTime = performance.now();
-
-    function update(currentTime) {
-        const elapsed = currentTime - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        const easeOut = 1 - Math.pow(1 - progress, 3);
-        element.textContent = Math.round(start + range * easeOut);
-        if (progress < 1) requestAnimationFrame(update);
-    }
-    requestAnimationFrame(update);
-}
-
 function updateStats(){
     let folderCount=0, fileCount=0, notesCount=0;
     function countFolders(obj){ for(let k in obj) if(typeof obj[k]==='object'){ folderCount++; countFolders(obj[k]); } }
     countFolders(fileSystem);
     for(let k in allFiles) if(allFiles[k]) fileCount += allFiles[k].length;
     for(let k in allNotes) if(allNotes[k]) notesCount += allNotes[k].length;
-
-    const folderEl = document.getElementById('folderCount');
-    const fileEl = document.getElementById('fileCount');
-    const notesEl = document.getElementById('notesCount');
-
-    animateCounter(folderEl, folderCount);
-    animateCounter(fileEl, fileCount);
-    animateCounter(notesEl, notesCount);
+    document.getElementById('folderCount').textContent = folderCount;
+    document.getElementById('fileCount').textContent = fileCount;
+    document.getElementById('notesCount').textContent = notesCount;
 }
-
 function setActiveTab(tab){
     currentActiveTab = tab;
     const pdfBtn = document.getElementById('pdfTabBtn');
@@ -525,7 +548,7 @@ function pressHandler(e){
     addDepthEffect(this,e);
 }
 function attachPressEffects(){
-    const selectors = ['#backBtn','.type-btn','.theme-toggle','#uploadBtn','#newNoteBtn','.action-btn','.rename-file-btn','.delete-file-btn','.rename-note-btn','.delete-note-btn','.clear-search','.modal-close','.modal-footer button','.breadcrumb-item','.card'];
+    const selectors = ['#backBtn','.type-btn','.theme-toggle','#uploadBtn','#newNoteBtn','.action-btn','.rename-file-btn','.delete-file-btn','.rename-note-btn','.delete-note-btn','.clear-search','.modal-close','.modal-footer button','.breadcrumb-item','.card','.dept-oval','#closeImageViewer'];
     document.querySelectorAll(selectors.join(',')).forEach(el=>{
         el.removeEventListener('click', pressHandler);
         el.removeEventListener('touchstart', pressHandler);
@@ -545,28 +568,12 @@ window.renameCurrentFolder = renameCurrentFolder;
 window.deleteCurrentFolder = deleteCurrentFolder;
 window.addNewFolder = addNewFolder;
 window.addNewDepartment = addNewDepartment;
-window.openPDF = openPDF;
+window.openFile = openFile;
 window.openNote = openNote;
 window.closeNoteModal = closeNoteModal;
 window.renameNote = renameNote;
 window.deleteNoteFromFolder = deleteNoteFromFolder;
-
-// === NEW: Show upload progress indicator ===
-function showUploadProgress(show) {
-    const uploadBtn = document.getElementById('uploadBtn');
-    if (show) {
-        uploadBtn.classList.add('uploading');
-        if (!uploadBtn.querySelector('.upload-progress-ring')) {
-            const ring = document.createElement('div');
-            ring.className = 'upload-progress-ring';
-            uploadBtn.appendChild(ring);
-        }
-    } else {
-        uploadBtn.classList.remove('uploading');
-        const ring = uploadBtn.querySelector('.upload-progress-ring');
-        if (ring) ring.remove();
-    }
-}
+window.closeImageViewer = closeImageViewer;
 
 document.addEventListener('DOMContentLoaded', async ()=>{
     const themeBtn = document.getElementById('themeToggle');
@@ -575,12 +582,37 @@ document.addEventListener('DOMContentLoaded', async ()=>{
     updateThemeIcon();
     document.getElementById('pdfTabBtn').onclick = ()=>setActiveTab('pdfs');
     document.getElementById('notesTabBtn').onclick = ()=>setActiveTab('notes');
+    
+    // Close image viewer with Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeImageViewer();
+        }
+    });
+    
+    // Close image viewer button
+    const closeBtn = document.getElementById('closeImageViewer');
+    if(closeBtn) closeBtn.onclick = closeImageViewer;
+    
+    // Click outside image to close
+    const viewer = document.getElementById('imageViewer');
+    if(viewer) {
+        viewer.addEventListener('click', (e) => {
+            if (e.target === viewer) closeImageViewer();
+        });
+    }
+    
     document.getElementById('fileInput').addEventListener('change', async (e)=>{
         const files = Array.from(e.target.files);
-        if (files.length > 0) showUploadProgress(true);
-        for(let f of files) if(f.type==='application/pdf') await addFileToCurrentFolder(f);
-        showUploadProgress(false);
-        showToast(`${files.length} PDF(s) saved!`);
+        for(let f of files) {
+            const fileType = getFileType(f.name);
+            if (fileType === 'image' || fileType === 'pdf') {
+                await addFileToCurrentFolder(f);
+            } else {
+                showToast(`Skipped: ${f.name} (not supported)`, true);
+            }
+        }
+        showToast(`${files.length} file(s) saved!`);
         render();
         e.target.value = '';
     });
