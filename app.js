@@ -1,6 +1,6 @@
 // ==================== INDEXEDDB CORE ====================
 const DB_NAME = 'OarcelDB';
-const DB_VERSION = 8; // Increased version for image viewer
+const DB_VERSION = 8;
 let db = null;
 let allFiles = {};
 let allNotes = {};
@@ -21,7 +21,6 @@ function showToast(msg, isErr = false) {
 
 function escapeHtml(str) { const div = document.createElement('div'); div.textContent = str; return div.innerHTML; }
 
-// ========== FILE TYPE DETECTION ==========
 function getFileIcon(fileName) {
     const ext = fileName.split('.').pop().toLowerCase();
     const iconMap = {
@@ -38,7 +37,6 @@ function getFileType(fileName) {
     return 'other';
 }
 
-// ========== IMAGE VIEWER ==========
 function openImageViewer(imageUrl, fileName) {
     const viewer = document.getElementById('imageViewer');
     const viewerImage = document.getElementById('viewerImage');
@@ -57,7 +55,6 @@ function closeImageViewer() {
 
 function openFile(dataUrl, fileName) {
     const fileType = getFileType(fileName);
-    
     if (fileType === 'image') {
         openImageViewer(dataUrl, fileName);
     } 
@@ -112,7 +109,7 @@ function initDB() {
     });
 }
 
-// ========== EACH FURNACE HAS ITS OWN UNIQUE FOLDERS (NO RENAME NEEDED) ==========
+// ========== EACH FURNACE HAS ITS OWN UNIQUE FOLDERS ==========
 function createFurnace1Logs() {
     return {
         "Temperature Records F1": {},
@@ -691,6 +688,86 @@ window.closeNoteModal = closeNoteModal;
 window.renameNote = renameNote;
 window.deleteNoteFromFolder = deleteNoteFromFolder;
 window.closeImageViewer = closeImageViewer;
+
+// ========== 3D PAGE TRANSITION EFFECTS ==========
+let isTransitioning = false;
+
+function createTransitionOverlay() {
+    let overlay = document.getElementById('transitionOverlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'transitionOverlay';
+        overlay.className = 'transition-overlay';
+        overlay.innerHTML = '<div class="loader"></div>';
+        document.body.appendChild(overlay);
+    }
+    return overlay;
+}
+
+async function navigateWithTransition(navigationFn, direction = 'right') {
+    if (isTransitioning) return;
+    isTransitioning = true;
+    
+    const content = document.getElementById('content');
+    const overlay = createTransitionOverlay();
+    
+    overlay.classList.add('active');
+    
+    if (content) {
+        content.style.animation = 'pageFlip3D 0.2s ease forwards';
+    }
+    
+    setTimeout(async () => {
+        await navigationFn();
+        
+        if (content) {
+            content.style.animation = 'none';
+            content.offsetHeight;
+            const animClass = direction === 'right' ? 'page-slide-in' : 'page-slide-in-left';
+            content.classList.add(animClass);
+            setTimeout(() => content.classList.remove(animClass), 300);
+        }
+        
+        overlay.classList.remove('active');
+        isTransitioning = false;
+    }, 200);
+}
+
+// Save original functions
+const originalSelectDepartment = window.selectDepartment;
+const originalGoBack = window.goBack;
+const originalNavigateToBreadcrumb = window.navigateToBreadcrumb;
+
+// Override with transition
+window.selectDepartment = function(d) {
+    navigateWithTransition(() => originalSelectDepartment(d), 'right');
+};
+
+window.goBack = function() {
+    navigateWithTransition(() => originalGoBack(), 'left');
+};
+
+window.navigateToBreadcrumb = function(idx) {
+    const direction = (idx === -1 || idx < currentPath.length - 1) ? 'left' : 'right';
+    navigateWithTransition(() => originalNavigateToBreadcrumb(idx), direction);
+};
+
+function add3DClickEffect() {
+    document.querySelectorAll('.card, .dept-oval, .action-btn, #backBtn, .type-btn').forEach(el => {
+        el.addEventListener('click', function(e) {
+            this.style.transform = 'scale(0.97) translateY(2px)';
+            setTimeout(() => {
+                this.style.transform = '';
+            }, 100);
+        });
+    });
+}
+
+const originalRender = window.render;
+window.render = function() {
+    originalRender();
+    setTimeout(add3DClickEffect, 50);
+};
 
 document.addEventListener('DOMContentLoaded', async ()=>{
     const themeBtn = document.getElementById('themeToggle');
