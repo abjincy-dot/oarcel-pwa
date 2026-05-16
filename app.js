@@ -21,6 +21,27 @@ function showToast(msg, isErr = false) {
 
 function escapeHtml(str) { const div = document.createElement('div'); div.textContent = str; return div.innerHTML; }
 
+// ========== 3D PAGE FLIP ANIMATION (CONTENT ONLY) ==========
+function animateContent(direction, callback) {
+    const contentDiv = document.getElementById('content');
+    const deptSection = document.getElementById('departmentsSection');
+    const elementsToAnimate = [contentDiv, deptSection];
+    
+    elementsToAnimate.forEach(el => {
+        if (el && !el.classList.contains('hidden')) {
+            el.classList.add(direction === 'forward' ? 'page-flip-forward' : 'page-flip-back');
+        }
+    });
+    
+    // 250ms matches the CSS animation duration
+    setTimeout(() => {
+        callback();
+        elementsToAnimate.forEach(el => {
+            if (el) el.classList.remove('page-flip-forward', 'page-flip-back');
+        });
+    }, 250);
+}
+
 function getFileIcon(fileName) {
     const ext = fileName.split('.').pop().toLowerCase();
     const iconMap = {
@@ -424,6 +445,34 @@ function createCard(title, onClick, isFolder=false){
     return div;
 }
 
+// ========== NAVIGATION WITH 3D FLIP (REPLACES OVERLAY) ==========
+function selectDepartment(d){ 
+    animateContent('forward', () => {
+        currentPath = [d]; 
+        render();
+    });
+}
+
+function goBack(){ 
+    if(currentPath.length && !isSearchMode){ 
+        animateContent('back', () => {
+            currentPath.pop(); 
+            render();
+        });
+    } else if(isSearchMode) { 
+        clearSearch(); 
+    }
+}
+
+function navigateToBreadcrumb(idx){
+    const isGoingBack = idx < currentPath.length - 1;
+    animateContent(isGoingBack ? 'back' : 'forward', () => {
+        if(idx===-1) currentPath=[];
+        else currentPath = currentPath.slice(0,idx+1);
+        render();
+    });
+}
+
 function render(){
     const query = document.getElementById('searchInput').value.trim().toLowerCase();
     if(query){
@@ -490,9 +539,19 @@ function render(){
                                <button class="action-btn" onclick="addNewFolder()"><i class="fas fa-plus"></i> Add Subfolder</button>`;
     } else actionDiv.innerHTML = `<button class="action-btn" onclick="addNewDepartment()"><i class="fas fa-building"></i> Add Department</button>`;
     document.getElementById('content').appendChild(actionDiv);
+    
     if(!isRoot && hasSubfolders){
-        for(let key in folder) document.getElementById('content').appendChild(createCard(key, ()=>{ currentPath.push(key); render(); }, true));
+        for(let key in folder) {
+            const folderCard = createCard(key, () => { 
+                animateContent('forward', () => {
+                    currentPath.push(key); 
+                    render();
+                });
+            }, true);
+            document.getElementById('content').appendChild(folderCard);
+        }
     }
+    
     if(isLeafFolder){
         if(currentActiveTab==='pdfs'){
             const files = getFilesForCurrentFolder();
@@ -516,8 +575,6 @@ function attachDepartmentPressEffects() {
     });
 }
 
-function selectDepartment(d){ currentPath=[d]; render(); }
-function goBack(){ if(currentPath.length && !isSearchMode){ currentPath.pop(); render(); } else if(isSearchMode) clearSearch(); }
 function triggerUpload(){ document.getElementById('fileInput').click(); }
 function triggerNewNote(){ openNewNoteModal(); }
 function clearSearch(){
@@ -525,11 +582,6 @@ function clearSearch(){
     isSearchMode=false;
     document.getElementById('searchInfo').classList.add('hidden');
     document.getElementById('clearSearchBtn').classList.add('hidden');
-    render();
-}
-function navigateToBreadcrumb(idx){
-    if(idx===-1) currentPath=[];
-    else currentPath = currentPath.slice(0,idx+1);
     render();
 }
 function renameCurrentFolder(){
@@ -688,86 +740,6 @@ window.closeNoteModal = closeNoteModal;
 window.renameNote = renameNote;
 window.deleteNoteFromFolder = deleteNoteFromFolder;
 window.closeImageViewer = closeImageViewer;
-
-// ========== 3D PAGE TRANSITION EFFECTS ==========
-let isTransitioning = false;
-
-function createTransitionOverlay() {
-    let overlay = document.getElementById('transitionOverlay');
-    if (!overlay) {
-        overlay = document.createElement('div');
-        overlay.id = 'transitionOverlay';
-        overlay.className = 'transition-overlay';
-        overlay.innerHTML = '<div class="loader"></div>';
-        document.body.appendChild(overlay);
-    }
-    return overlay;
-}
-
-async function navigateWithTransition(navigationFn, direction = 'right') {
-    if (isTransitioning) return;
-    isTransitioning = true;
-    
-    const content = document.getElementById('content');
-    const overlay = createTransitionOverlay();
-    
-    overlay.classList.add('active');
-    
-    if (content) {
-        content.style.animation = 'pageFlip3D 0.2s ease forwards';
-    }
-    
-    setTimeout(async () => {
-        await navigationFn();
-        
-        if (content) {
-            content.style.animation = 'none';
-            content.offsetHeight;
-            const animClass = direction === 'right' ? 'page-slide-in' : 'page-slide-in-left';
-            content.classList.add(animClass);
-            setTimeout(() => content.classList.remove(animClass), 300);
-        }
-        
-        overlay.classList.remove('active');
-        isTransitioning = false;
-    }, 200);
-}
-
-// Save original functions
-const originalSelectDepartment = window.selectDepartment;
-const originalGoBack = window.goBack;
-const originalNavigateToBreadcrumb = window.navigateToBreadcrumb;
-
-// Override with transition
-window.selectDepartment = function(d) {
-    navigateWithTransition(() => originalSelectDepartment(d), 'right');
-};
-
-window.goBack = function() {
-    navigateWithTransition(() => originalGoBack(), 'left');
-};
-
-window.navigateToBreadcrumb = function(idx) {
-    const direction = (idx === -1 || idx < currentPath.length - 1) ? 'left' : 'right';
-    navigateWithTransition(() => originalNavigateToBreadcrumb(idx), direction);
-};
-
-function add3DClickEffect() {
-    document.querySelectorAll('.card, .dept-oval, .action-btn, #backBtn, .type-btn').forEach(el => {
-        el.addEventListener('click', function(e) {
-            this.style.transform = 'scale(0.97) translateY(2px)';
-            setTimeout(() => {
-                this.style.transform = '';
-            }, 100);
-        });
-    });
-}
-
-const originalRender = window.render;
-window.render = function() {
-    originalRender();
-    setTimeout(add3DClickEffect, 50);
-};
 
 document.addEventListener('DOMContentLoaded', async ()=>{
     const themeBtn = document.getElementById('themeToggle');
