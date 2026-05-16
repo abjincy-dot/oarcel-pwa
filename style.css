@@ -1,6 +1,6 @@
 /* ============================================
    OARCEL Document Manager - COMPLETE CSS
-   Premium Book Page Flip + Glowing Search Bar
+   Premium Book Page Flip Effect
    ============================================ */
 
 * {
@@ -288,44 +288,23 @@ body.light-mode .header-title h1 {
     font-weight: 600;
 }
 
-/* ========== GLOWING GRADIENT SEARCH BAR ========== */
 .search-container {
     flex: 1;
     position: relative;
     min-width: 180px;
-    max-width: 400px;
-    border-radius: 60px;
-    background: linear-gradient(135deg, #ff66b5, #ff99cc, #c084fc, #a855f7);
-    background-size: 200% 200%;
-    padding: 2px;
-    box-shadow: 0 0 12px rgba(255,105,180,0.5), 0 0 12px rgba(168,85,247,0.5);
-    transition: box-shadow 0.3s ease;
 }
 
-.search-container:hover {
-    box-shadow: 0 0 18px rgba(255,105,180,0.7), 0 0 18px rgba(168,85,247,0.7);
-}
-
-.search-container .fa-search {
-    position: absolute;
-    left: 16px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #aaa;
-    z-index: 2;
-    pointer-events: none;
-}
+.search-container > i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
 
 #searchInput {
     width: 100%;
-    background: #000000 !important;
-    border: none;
-    border-radius: 56px;
     padding: 12px 40px 12px 44px;
-    font-size: 16px;
-    color: white;
+    border-radius: 60px;
+    border: 1px solid var(--glass-border);
+    background: var(--input-bg);
+    color: var(--text-primary);
     outline: none;
-    margin: 0;
+    font-size: 16px !important;
 }
 
 #clearSearchBtn {
@@ -335,20 +314,11 @@ body.light-mode .header-title h1 {
     transform: translateY(-50%);
     background: rgba(255,255,255,0.1);
     border: none;
-    color: #ccc;
+    color: var(--text-muted);
     cursor: pointer;
     width: 24px;
     height: 24px;
     border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 2;
-}
-
-#clearSearchBtn:hover {
-    background: rgba(255,255,255,0.2);
-    color: white;
 }
 
 .top-bar-actions { display: flex; align-items: center; gap: 12px; }
@@ -553,7 +523,7 @@ body.light-mode .dept-info {
     background: rgba(100, 116, 139, 0.12);
 }
 
-/* Department colors (default – will be overridden by inline style for new departments) */
+/* Department colors */
 .dept-card[data-dept="REMELT"] .dept-oval { background: linear-gradient(145deg, #ea580c, #c2410c); }
 .dept-card[data-dept="CASTER"] .dept-oval { background: linear-gradient(145deg, #0d9488, #0f766e); }
 .dept-card[data-dept="HRM"] .dept-oval { background: linear-gradient(145deg, #7c3aed, #6d28d9); }
@@ -1205,4 +1175,42 @@ button, .card, .action-btn, .breadcrumb-item, .type-btn, .theme-toggle, #backBtn
 
 @media (max-width: 380px) {
     .dept-info { display: none; }
+}
+/* ========== STRONGER GRADIENT FOR DEPARTMENTS PAGE ========== */
+.departments-grid {
+    position: relative;
+    background: linear-gradient(135deg, 
+        rgba(59, 130, 246, 0.15) 0%,
+        rgba(139, 92, 246, 0.1) 50%,
+        rgba(236, 72, 153, 0.05) 100%) !important;
+    border-radius: 40px;
+    padding: 24px;
+    margin: -10px -10px 0 -10px;
+}
+
+.departments-grid::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 30% 20%, rgba(59,130,246,0.2), transparent 50%),
+                radial-gradient(circle at 70% 80%, rgba(139,92,246,0.15), transparent 50%);
+    pointer-events: none;
+    border-radius: 40px;
+    z-index: 0;
+}
+
+.dept-card {
+    position: relative;
+    z-index: 2;
+}
+body:has(.breadcrumb-item:only-child) .app {
+    background: linear-gradient(135deg, 
+        #0a0a2a 0%,
+        #12123a 50%,
+        #0f0c29 100%) !important;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06) !important;
+    border-radius: 32px;
 }
