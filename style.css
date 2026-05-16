@@ -1206,3 +1206,11 @@ button, .card, .action-btn, .breadcrumb-item, .type-btn, .theme-toggle, #backBtn
     position: relative;
     z-index: 2;
 }
+body:has(.breadcrumb-item:only-child) .app {
+    background: linear-gradient(135deg, 
+        #0a0a2a 0%,
+        #12123a 50%,
+        #0f0c29 100%) !important;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06) !important;
+    border-radius: 32px;
+}
