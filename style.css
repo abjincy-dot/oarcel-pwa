@@ -1,6 +1,6 @@
 /* ============================================
    OARCEL Document Manager - COMPLETE CSS
-   Fast 90° Page Turn (paper-like)
+   Slow 100% Page Turn (0.65s, 88° rotation)
    ============================================ */
 
 * {
@@ -539,7 +539,6 @@ body.light-mode .dept-info {
     flex-direction: column; 
     gap: 8px;
     perspective: 1200px;
-    transition: transform 0.22s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .card {
@@ -996,53 +995,53 @@ button, .card, .action-btn, .breadcrumb-item, .type-btn, .theme-toggle, #backBtn
     100% { transform: scale(2.5); opacity: 0; }
 }
 
-/* ========== FAST 90° PAGE TURN (PAPER-LIKE) ========== */
-@keyframes fastPageTurnForward {
+/* ========== SLOW 100% PAGE TURN (0.65s, 88° rotation) ========== */
+@keyframes slowPageTurnForward {
     0% {
-        transform: perspective(1000px) rotateY(0deg) scale(1);
+        transform: perspective(1200px) rotateY(0deg) scale(1);
         transform-origin: left center;
         opacity: 1;
     }
-    35% {
-        transform: perspective(1000px) rotateY(-85deg) scale(0.88);
+    45% {
+        transform: perspective(1200px) rotateY(-88deg) scale(0.92);
         transform-origin: left center;
-        opacity: 0.3;
-        filter: drop-shadow(15px 0 20px rgba(0,0,0,0.4));
+        opacity: 0.2;
+        filter: drop-shadow(18px 0 25px rgba(0,0,0,0.5));
     }
     100% {
-        transform: perspective(1000px) rotateY(0deg) scale(1);
+        transform: perspective(1200px) rotateY(0deg) scale(1);
         transform-origin: left center;
         opacity: 1;
     }
 }
 
-@keyframes fastPageTurnBack {
+@keyframes slowPageTurnBack {
     0% {
-        transform: perspective(1000px) rotateY(0deg) scale(1);
+        transform: perspective(1200px) rotateY(0deg) scale(1);
         transform-origin: right center;
         opacity: 1;
     }
-    35% {
-        transform: perspective(1000px) rotateY(85deg) scale(0.88);
+    45% {
+        transform: perspective(1200px) rotateY(88deg) scale(0.92);
         transform-origin: right center;
-        opacity: 0.3;
-        filter: drop-shadow(-15px 0 20px rgba(0,0,0,0.4));
+        opacity: 0.2;
+        filter: drop-shadow(-18px 0 25px rgba(0,0,0,0.5));
     }
     100% {
-        transform: perspective(1000px) rotateY(0deg) scale(1);
+        transform: perspective(1200px) rotateY(0deg) scale(1);
         transform-origin: right center;
         opacity: 1;
     }
 }
 
 .page-flip-forward {
-    animation: fastPageTurnForward 0.22s cubic-bezier(0.2, 0.9, 0.4, 1.2);
+    animation: slowPageTurnForward 0.65s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     backface-visibility: hidden;
     transform-style: preserve-3d;
 }
 
 .page-flip-back {
-    animation: fastPageTurnBack 0.22s cubic-bezier(0.2, 0.9, 0.4, 1.2);
+    animation: slowPageTurnBack 0.65s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     backface-visibility: hidden;
     transform-style: preserve-3d;
 }
