@@ -21,7 +21,7 @@ function showToast(msg, isErr = false) {
 
 function escapeHtml(str) { const div = document.createElement('div'); div.textContent = str; return div.innerHTML; }
 
-// ========== PAGE TURN NAVIGATION (SLOW - 0.55s) ==========
+// ========== PREMIUM PAGE FLIP NAVIGATION ==========
 function navigateWithPageTurn(navigationFn, direction = 'forward') {
     const contentDiv = document.getElementById('content');
     const deptSection = document.getElementById('departmentsSection');
@@ -48,7 +48,7 @@ function navigateWithPageTurn(navigationFn, direction = 'forward') {
                 elementsToAnimate.forEach(el => {
                     if (el) el.classList.remove('page-slide-in-right', 'page-slide-in-left');
                 });
-            }, 550);
+            }, 450);
         }, 30);
     }, 330);
 }
