@@ -1,10 +1,11 @@
 // ==================== INDEXEDDB CORE ====================
 const DB_NAME = 'OarcelDB';
-const DB_VERSION = 8;
+const DB_VERSION = 9; // version increased for deptColors
 let db = null;
 let allFiles = {};
 let allNotes = {};
 let fileSystem = {};
+let deptColors = {}; // store random gradients for departments
 let currentPath = [];
 let isSearchMode = false;
 let currentActiveTab = 'pdfs';
@@ -21,7 +22,24 @@ function showToast(msg, isErr = false) {
 
 function escapeHtml(str) { const div = document.createElement('div'); div.textContent = str; return div.innerHTML; }
 
-// ========== PREMIUM PAGE FLIP NAVIGATION ==========
+function getRandomGradient() {
+    const hue1 = Math.floor(Math.random() * 360);
+    const hue2 = (hue1 + 30 + Math.random() * 60) % 360;
+    const sat1 = 55 + Math.random() * 30;
+    const sat2 = 55 + Math.random() * 30;
+    const light1 = 45 + Math.random() * 20;
+    const light2 = 40 + Math.random() * 20;
+    return `linear-gradient(145deg, hsl(${hue1}, ${sat1}%, ${light1}%), hsl(${hue2}, ${sat2}%, ${light2}%))`;
+}
+
+async function saveDeptColors() {
+    const tx = db.transaction('folderStructure', 'readwrite');
+    const store = tx.objectStore('folderStructure');
+    store.put({ key: 'deptColors', value: deptColors });
+    tx.commit();
+}
+
+// ========== PAGE TURN NAVIGATION ==========
 function navigateWithPageTurn(navigationFn, direction = 'forward') {
     const contentDiv = document.getElementById('content');
     const deptSection = document.getElementById('departmentsSection');
@@ -312,6 +330,14 @@ async function loadFromIndexedDB() {
             };
             saveFolderStructure();
         }
+        // Load department colors
+        const deptColorsReq = db.transaction('folderStructure','readonly').objectStore('folderStructure').get('deptColors');
+        deptColorsReq.onsuccess = () => {
+            if (deptColorsReq.result) {
+                deptColors = deptColorsReq.result.value;
+            }
+        };
+        
         const fileReq = db.transaction('files','readonly').objectStore('files').getAll();
         fileReq.onsuccess = ()=>{
             allFiles = {};
@@ -522,7 +548,12 @@ function render(){
             const sub = Object.keys(fileSystem[dept]).length;
             const fcount = allFiles[dept]?.length||0;
             const ncount = allNotes[dept]?.length||0;
-            html += `<div class="dept-card" data-dept="${dept}"><div class="dept-oval" onclick="selectDepartment('${dept}')"><span>${dept}</span></div><div class="dept-arrow"><i class="fas fa-chevron-right"></i></div><div class="dept-info">${sub+fcount+ncount} items</div></div>`;
+            // Apply random color if exists, otherwise use CSS class
+            let bgStyle = '';
+            if (deptColors[dept]) {
+                bgStyle = ` style="background: ${deptColors[dept]};"`;
+            }
+            html += `<div class="dept-card" data-dept="${dept}"><div class="dept-oval"${bgStyle} onclick="selectDepartment('${dept}')"><span>${dept}</span></div><div class="dept-arrow"><i class="fas fa-chevron-right"></i></div><div class="dept-info">${sub+fcount+ncount} items</div></div>`;
         }
         html += '</div>';
         document.getElementById('departmentsSection').innerHTML = html;
@@ -635,8 +666,17 @@ function addNewFolder(){
 }
 function addNewDepartment(){
     const name = prompt("Department name:");
-    if(name && name.trim() && !fileSystem[name]){ fileSystem[name]={}; saveFolderStructure(); render(); showToast(`✅ Department "${name}" created`); }
-    else if(fileSystem[name]) showToast("Department exists",true);
+    if (name && name.trim() && !fileSystem[name]) {
+        fileSystem[name] = {};
+        // Assign random gradient for this new department
+        deptColors[name] = getRandomGradient();
+        saveFolderStructure();
+        saveDeptColors();
+        render();
+        showToast(`✅ Department "${name}" created with random color`);
+    } else if (fileSystem[name]) {
+        showToast("Department exists", true);
+    }
 }
 function updateStats(){
     let folderCount=0, fileCount=0, notesCount=0;
