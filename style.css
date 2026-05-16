@@ -1,6 +1,6 @@
 /* ============================================
    OARCEL Document Manager - COMPLETE CSS
-   Slow Page Turn Effect (0.55s) | Soft grey light mode
+   Premium Book Page Flip Effect
    ============================================ */
 
 * {
@@ -538,7 +538,7 @@ body.light-mode .dept-info {
     display: flex; 
     flex-direction: column; 
     gap: 8px;
-    perspective: 1200px;
+    perspective: 1500px;
 }
 
 .card {
@@ -995,83 +995,121 @@ button, .card, .action-btn, .breadcrumb-item, .type-btn, .theme-toggle, #backBtn
     100% { transform: scale(2.5); opacity: 0; }
 }
 
-/* ========== SLOW PAGE TURN EFFECT (0.55s) ========== */
-@keyframes pageFlipOutRight {
+/* ========== PREMIUM BOOK PAGE FLIP (0.55s) ========== */
+@keyframes premiumFlipForward {
     0% {
-        transform: perspective(800px) rotateY(0deg) scale(1);
+        transform: perspective(1500px) rotateY(0deg) scale(1);
         transform-origin: left center;
         opacity: 1;
+    }
+    20% {
+        transform: perspective(1500px) rotateY(-12deg) scale(0.98);
+        transform-origin: left center;
+        opacity: 0.9;
+        filter: drop-shadow(-5px 0 8px rgba(0,0,0,0.2));
+    }
+    45% {
+        transform: perspective(1500px) rotateY(-40deg) scale(0.94);
+        transform-origin: left center;
+        opacity: 0.6;
+        filter: drop-shadow(-12px 0 18px rgba(0,0,0,0.35));
+    }
+    70% {
+        transform: perspective(1500px) rotateY(-70deg) scale(0.9);
+        transform-origin: left center;
+        opacity: 0.25;
+        filter: drop-shadow(-18px 0 25px rgba(0,0,0,0.45));
+    }
+    100% {
+        transform: perspective(1500px) rotateY(0deg) scale(1);
+        transform-origin: left center;
+        opacity: 1;
+    }
+}
+
+@keyframes premiumFlipBack {
+    0% {
+        transform: perspective(1500px) rotateY(0deg) scale(1);
+        transform-origin: right center;
+        opacity: 1;
+    }
+    20% {
+        transform: perspective(1500px) rotateY(12deg) scale(0.98);
+        transform-origin: right center;
+        opacity: 0.9;
+        filter: drop-shadow(5px 0 8px rgba(0,0,0,0.2));
+    }
+    45% {
+        transform: perspective(1500px) rotateY(40deg) scale(0.94);
+        transform-origin: right center;
+        opacity: 0.6;
+        filter: drop-shadow(12px 0 18px rgba(0,0,0,0.35));
+    }
+    70% {
+        transform: perspective(1500px) rotateY(70deg) scale(0.9);
+        transform-origin: right center;
+        opacity: 0.25;
+        filter: drop-shadow(18px 0 25px rgba(0,0,0,0.45));
+    }
+    100% {
+        transform: perspective(1500px) rotateY(0deg) scale(1);
+        transform-origin: right center;
+        opacity: 1;
+    }
+}
+
+@keyframes premiumRevealRight {
+    0% {
+        transform: perspective(1500px) rotateY(20deg) scale(0.96);
+        transform-origin: left center;
+        opacity: 0;
+        filter: drop-shadow(-10px 0 15px rgba(0,0,0,0.3));
     }
     60% {
-        transform: perspective(800px) rotateY(-80deg) scale(0.85);
+        transform: perspective(1500px) rotateY(5deg) scale(0.99);
         transform-origin: left center;
-        opacity: 0.2;
-        filter: drop-shadow(-15px 0 20px rgba(0,0,0,0.4));
+        opacity: 0.6;
     }
     100% {
-        transform: perspective(800px) rotateY(-90deg) scale(0.8);
+        transform: perspective(1500px) rotateY(0deg) scale(1);
         transform-origin: left center;
-        opacity: 0;
-        filter: drop-shadow(-20px 0 25px rgba(0,0,0,0.5));
+        opacity: 1;
     }
 }
 
-@keyframes pageFlipOutLeft {
+@keyframes premiumRevealLeft {
     0% {
-        transform: perspective(800px) rotateY(0deg) scale(1);
+        transform: perspective(1500px) rotateY(-20deg) scale(0.96);
         transform-origin: right center;
-        opacity: 1;
+        opacity: 0;
+        filter: drop-shadow(10px 0 15px rgba(0,0,0,0.3));
     }
     60% {
-        transform: perspective(800px) rotateY(80deg) scale(0.85);
+        transform: perspective(1500px) rotateY(-5deg) scale(0.99);
         transform-origin: right center;
-        opacity: 0.2;
-        filter: drop-shadow(15px 0 20px rgba(0,0,0,0.4));
+        opacity: 0.6;
     }
     100% {
-        transform: perspective(800px) rotateY(90deg) scale(0.8);
+        transform: perspective(1500px) rotateY(0deg) scale(1);
         transform-origin: right center;
-        opacity: 0;
-        filter: drop-shadow(20px 0 25px rgba(0,0,0,0.5));
-    }
-}
-
-@keyframes pageSlideInFromRight {
-    0% {
-        transform: translateX(60px) rotateY(15deg);
-        opacity: 0;
-    }
-    100% {
-        transform: translateX(0) rotateY(0);
-        opacity: 1;
-    }
-}
-
-@keyframes pageSlideInFromLeft {
-    0% {
-        transform: translateX(-60px) rotateY(-15deg);
-        opacity: 0;
-    }
-    100% {
-        transform: translateX(0) rotateY(0);
         opacity: 1;
     }
 }
 
 .page-flip-out-right {
-    animation: pageFlipOutRight 0.55s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation: premiumFlipForward 0.55s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 .page-flip-out-left {
-    animation: pageFlipOutLeft 0.55s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation: premiumFlipBack 0.55s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 .page-slide-in-right {
-    animation: pageSlideInFromRight 0.55s cubic-bezier(0.2, 0.9, 0.4, 1.1) forwards;
+    animation: premiumRevealRight 0.45s cubic-bezier(0.2, 0.9, 0.4, 1.1) forwards;
 }
 
 .page-slide-in-left {
-    animation: pageSlideInFromLeft 0.55s cubic-bezier(0.2, 0.9, 0.4, 1.1) forwards;
+    animation: premiumRevealLeft 0.45s cubic-bezier(0.2, 0.9, 0.4, 1.1) forwards;
 }
 
 /* ========== RESPONSIVE ========== */
