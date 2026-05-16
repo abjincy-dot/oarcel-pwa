@@ -1,11 +1,11 @@
 // ==================== INDEXEDDB CORE ====================
 const DB_NAME = 'OarcelDB';
-const DB_VERSION = 9;
+const DB_VERSION = 9; // version increased for deptColors
 let db = null;
 let allFiles = {};
 let allNotes = {};
 let fileSystem = {};
-let deptColors = {};
+let deptColors = {}; // store random gradients for departments
 let currentPath = [];
 let isSearchMode = false;
 let currentActiveTab = 'pdfs';
@@ -370,7 +370,7 @@ function deleteFileFromFolder(folderPath, fileName) {
             if(!allFiles[folderPath].length) delete allFiles[folderPath];
             saveAllFilesToDB();
             render();
-            showToast(`✅ Deleted "${fileName}"`);
+            showToast(`â Deleted "${fileName}"`);
         }
     }
 }
@@ -382,7 +382,7 @@ function renameFileInFolder(folderPath, oldName, newName){
             allFiles[folderPath][idx].name = newName;
             saveAllFilesToDB();
             render();
-            showToast(`✅ Renamed to "${newName}"`);
+            showToast(`â Renamed to "${newName}"`);
         }
     }
 }
@@ -393,7 +393,7 @@ async function addNoteToCurrentFolder(title, content){
     allNotes[folderPath].push(note);
     await saveAllNotesToDB();
     render();
-    showToast(`✅ Note "${title}" created`);
+    showToast(`â Note "${title}" created`);
 }
 async function updateNote(folderPath, noteId, title, content){
     const idx = allNotes[folderPath]?.findIndex(n=>n.id===noteId);
@@ -403,7 +403,7 @@ async function updateNote(folderPath, noteId, title, content){
         allNotes[folderPath][idx].updatedAt = new Date().toISOString();
         await saveAllNotesToDB();
         render();
-        showToast(`✅ Note updated`);
+        showToast(`â Note updated`);
         return true;
     }
     return false;
@@ -416,7 +416,7 @@ async function renameNote(folderPath, noteId, newTitle){
         allNotes[folderPath][idx].updatedAt = new Date().toISOString();
         await saveAllNotesToDB();
         render();
-        showToast(`✅ Note renamed to "${newTitle.trim()}"`);
+        showToast(`â Note renamed to "${newTitle.trim()}"`);
     }
 }
 async function deleteNoteFromFolder(folderPath, noteId){
@@ -426,12 +426,12 @@ async function deleteNoteFromFolder(folderPath, noteId){
         if(!allNotes[folderPath].length) delete allNotes[folderPath];
         await saveAllNotesToDB();
         render();
-        showToast(`🗑️ Note "${note?.title}" deleted`);
+        showToast(`ðï¸ Note "${note?.title}" deleted`);
     }
 }
 function openNote(note){
     const modal = document.getElementById('noteModal');
-    document.getElementById('noteModalTitle').textContent = `📝 ${note.title}`;
+    document.getElementById('noteModalTitle').textContent = `ð ${note.title}`;
     document.getElementById('noteTitle').value = note.title;
     document.getElementById('noteContent').value = note.content;
     editingNoteId = note.id;
@@ -548,6 +548,7 @@ function render(){
             const sub = Object.keys(fileSystem[dept]).length;
             const fcount = allFiles[dept]?.length||0;
             const ncount = allNotes[dept]?.length||0;
+            // Apply random color if exists, otherwise use CSS class
             let bgStyle = '';
             if (deptColors[dept]) {
                 bgStyle = ` style="background: ${deptColors[dept]};"`;
@@ -637,7 +638,7 @@ function renameCurrentFolder(){
         currentPath[currentPath.length-1]=newName;
         saveFolderStructure(); saveAllFilesToDB(); saveAllNotesToDB();
         render();
-        showToast(`✅ Renamed to "${newName}"`);
+        showToast(`â Renamed to "${newName}"`);
     }
 }
 function deleteCurrentFolder(){
@@ -652,14 +653,14 @@ function deleteCurrentFolder(){
         currentPath.pop();
         saveFolderStructure(); saveAllFilesToDB(); saveAllNotesToDB();
         render();
-        showToast(`🗑️ Folder "${name}" deleted`);
+        showToast(`ðï¸ Folder "${name}" deleted`);
     }
 }
 function addNewFolder(){
     const name = prompt("Folder name:");
     if(name && name.trim()){
         const cur = getCurrentFolderObject();
-        if(cur && !cur[name]){ cur[name]={}; saveFolderStructure(); render(); showToast(`✅ Folder "${name}" created`); }
+        if(cur && !cur[name]){ cur[name]={}; saveFolderStructure(); render(); showToast(`â Folder "${name}" created`); }
         else showToast("Exists",true);
     }
 }
@@ -667,11 +668,12 @@ function addNewDepartment(){
     const name = prompt("Department name:");
     if (name && name.trim() && !fileSystem[name]) {
         fileSystem[name] = {};
+        // Assign random gradient for this new department
         deptColors[name] = getRandomGradient();
         saveFolderStructure();
         saveDeptColors();
         render();
-        showToast(`✅ Department "${name}" created with random color`);
+        showToast(`â Department "${name}" created with random color`);
     } else if (fileSystem[name]) {
         showToast("Department exists", true);
     }
