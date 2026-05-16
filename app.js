@@ -21,24 +21,63 @@ function showToast(msg, isErr = false) {
 
 function escapeHtml(str) { const div = document.createElement('div'); div.textContent = str; return div.innerHTML; }
 
-// ========== SLOW PAGE TURN ANIMATION (650ms) ==========
-function animateContent(direction, callback) {
+// ========== PAGE TURN NAVIGATION (SLOW - 0.55s) ==========
+function navigateWithPageTurn(navigationFn, direction = 'forward') {
     const contentDiv = document.getElementById('content');
     const deptSection = document.getElementById('departmentsSection');
     const elementsToAnimate = [contentDiv, deptSection];
     
     elementsToAnimate.forEach(el => {
         if (el && !el.classList.contains('hidden')) {
-            el.classList.add(direction === 'forward' ? 'page-flip-forward' : 'page-flip-back');
+            el.classList.add(direction === 'forward' ? 'page-flip-out-right' : 'page-flip-out-left');
         }
     });
     
     setTimeout(() => {
-        callback();
-        elementsToAnimate.forEach(el => {
-            if (el) el.classList.remove('page-flip-forward', 'page-flip-back');
-        });
-    }, 650);
+        navigationFn();
+        
+        setTimeout(() => {
+            elementsToAnimate.forEach(el => {
+                if (el) {
+                    el.classList.remove('page-flip-out-right', 'page-flip-out-left');
+                    el.classList.add(direction === 'forward' ? 'page-slide-in-right' : 'page-slide-in-left');
+                }
+            });
+            
+            setTimeout(() => {
+                elementsToAnimate.forEach(el => {
+                    if (el) el.classList.remove('page-slide-in-right', 'page-slide-in-left');
+                });
+            }, 550);
+        }, 30);
+    }, 330);
+}
+
+function selectDepartment(d){ 
+    navigateWithPageTurn(() => {
+        currentPath = [d]; 
+        render();
+    }, 'forward');
+}
+
+function goBack(){ 
+    if(currentPath.length && !isSearchMode){ 
+        navigateWithPageTurn(() => {
+            currentPath.pop(); 
+            render();
+        }, 'back');
+    } else if(isSearchMode) { 
+        clearSearch(); 
+    }
+}
+
+function navigateToBreadcrumb(idx){
+    const isGoingBack = idx < currentPath.length - 1;
+    navigateWithPageTurn(() => {
+        if(idx===-1) currentPath=[];
+        else currentPath = currentPath.slice(0,idx+1);
+        render();
+    }, isGoingBack ? 'back' : 'forward');
 }
 
 function getFileIcon(fileName) {
@@ -129,7 +168,6 @@ function initDB() {
     });
 }
 
-// ========== EACH FURNACE HAS ITS OWN UNIQUE FOLDERS ==========
 function createFurnace1Logs() {
     return {
         "Temperature Records F1": {},
@@ -380,7 +418,6 @@ function openNote(note){
     modal.classList.add('show');
 }
 
-// ========== CARD CREATION ==========
 function createFileCard(file, folderPath){
     const iconClass = getFileIcon(file.name);
     const div = document.createElement('div');
@@ -442,34 +479,6 @@ function createCard(title, onClick, isFolder=false){
     div.innerHTML = `<div class="card-icon"><i class="fas ${isFolder ? 'fa-folder' : 'fa-folder-open'}"></i></div><div class="card-filename">${escapeHtml(title)}</div><div class="card-buttons"></div>`;
     div.onclick = onClick;
     return div;
-}
-
-// ========== NAVIGATION WITH SLOW PAGE TURN ==========
-function selectDepartment(d){ 
-    animateContent('forward', () => {
-        currentPath = [d]; 
-        render();
-    });
-}
-
-function goBack(){ 
-    if(currentPath.length && !isSearchMode){ 
-        animateContent('back', () => {
-            currentPath.pop(); 
-            render();
-        });
-    } else if(isSearchMode) { 
-        clearSearch(); 
-    }
-}
-
-function navigateToBreadcrumb(idx){
-    const isGoingBack = idx < currentPath.length - 1;
-    animateContent(isGoingBack ? 'back' : 'forward', () => {
-        if(idx===-1) currentPath=[];
-        else currentPath = currentPath.slice(0,idx+1);
-        render();
-    });
 }
 
 function render(){
@@ -542,10 +551,10 @@ function render(){
     if(!isRoot && hasSubfolders){
         for(let key in folder) {
             const folderCard = createCard(key, () => { 
-                animateContent('forward', () => {
+                navigateWithPageTurn(() => {
                     currentPath.push(key); 
                     render();
-                });
+                }, 'forward');
             }, true);
             document.getElementById('content').appendChild(folderCard);
         }
