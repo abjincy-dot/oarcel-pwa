@@ -1,11 +1,11 @@
 // ==================== INDEXEDDB CORE ====================
 const DB_NAME = 'OarcelDB';
-const DB_VERSION = 9; // version increased for deptColors
+const DB_VERSION = 9;
 let db = null;
 let allFiles = {};
 let allNotes = {};
 let fileSystem = {};
-let deptColors = {}; // store random gradients for departments
+let deptColors = {};
 let currentPath = [];
 let isSearchMode = false;
 let currentActiveTab = 'pdfs';
@@ -548,7 +548,6 @@ function render(){
             const sub = Object.keys(fileSystem[dept]).length;
             const fcount = allFiles[dept]?.length||0;
             const ncount = allNotes[dept]?.length||0;
-            // Apply random color if exists, otherwise use CSS class
             let bgStyle = '';
             if (deptColors[dept]) {
                 bgStyle = ` style="background: ${deptColors[dept]};"`;
@@ -668,7 +667,6 @@ function addNewDepartment(){
     const name = prompt("Department name:");
     if (name && name.trim() && !fileSystem[name]) {
         fileSystem[name] = {};
-        // Assign random gradient for this new department
         deptColors[name] = getRandomGradient();
         saveFolderStructure();
         saveDeptColors();
