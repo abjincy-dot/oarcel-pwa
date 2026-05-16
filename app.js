@@ -21,7 +21,7 @@ function showToast(msg, isErr = false) {
 
 function escapeHtml(str) { const div = document.createElement('div'); div.textContent = str; return div.innerHTML; }
 
-// ========== 3D PAGE CURL ANIMATION (350ms) ==========
+// ========== 3D PAGE TURN ANIMATION (450ms) ==========
 function animateContent(direction, callback) {
     const contentDiv = document.getElementById('content');
     const deptSection = document.getElementById('departmentsSection');
@@ -38,7 +38,7 @@ function animateContent(direction, callback) {
         elementsToAnimate.forEach(el => {
             if (el) el.classList.remove('page-flip-forward', 'page-flip-back');
         });
-    }, 350); // matches CSS animation duration
+    }, 450); // matches CSS animation duration
 }
 
 function getFileIcon(fileName) {
@@ -444,7 +444,7 @@ function createCard(title, onClick, isFolder=false){
     return div;
 }
 
-// ========== NAVIGATION WITH 3D PAGE CURL ==========
+// ========== NAVIGATION WITH 3D PAGE TURN ==========
 function selectDepartment(d){ 
     animateContent('forward', () => {
         currentPath = [d]; 
