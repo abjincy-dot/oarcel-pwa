@@ -702,14 +702,23 @@ function setActiveTab(tab){
     const exitClass  = tab === 'notes' ? 'tab-exit-left'  : 'tab-exit-right';
     const enterClass = tab === 'notes' ? 'tab-enter-right' : 'tab-enter-left';
 
+    // Step 1: exit animation
     contentDiv.classList.add(exitClass);
 
     setTimeout(() => {
+        // Step 2: hide content BEFORE render to avoid flash
+        contentDiv.style.opacity = '0';
+        contentDiv.style.visibility = 'hidden';
         contentDiv.classList.remove(exitClass);
-        render(); // render handles uploadBtn/newNoteBtn internally
 
+        // Step 3: render new content while invisible
+        render();
+
+        // Step 4: show and animate in on next paint
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
+                contentDiv.style.visibility = '';
+                contentDiv.style.opacity = '';
                 contentDiv.classList.add(enterClass);
                 setTimeout(() => contentDiv.classList.remove(enterClass), 320);
             });
