@@ -707,7 +707,7 @@ body.light-mode .theme-toggle i { color: #f59e0b !important; }
     padding: 8px 16px;
     background: rgba(0,0,0,0.25);
     backdrop-filter: blur(12px);
-    border: 1px solid var(--glass-border);
+    border: 1px solid rgba(100, 160, 255, 0.22);
     border-radius: var(--radius-full);
     width: fit-content;
 }
