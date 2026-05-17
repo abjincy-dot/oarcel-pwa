@@ -1130,123 +1130,184 @@ button, .card, .action-btn, .breadcrumb-item, .type-btn, .theme-toggle, #backBtn
     100% { transform: scale(2.5); opacity: 0; }
 }
 
-/* ========== PREMIUM BOOK PAGE FLIP (0.55s) ========== */
+/* ========== ULTRA 3D PAGE FLIP ========== */
+/*
+   Real 3D depth technique:
+   - perspective on PARENT (.content) for true shared vanishing point
+   - rotateY + translateZ gives actual depth recession
+   - brightness() + contrast() simulates page lighting/shadow
+   - scaleX compression at peak mimics paper thickness perspective
+   - cubic-bezier with slight overshoot = physical feel
+*/
+
+.content {
+    perspective: 1200px;
+    perspective-origin: center center;
+}
+
 @keyframes premiumFlipForward {
     0% {
-        transform: perspective(1500px) rotateY(0deg) scale(1);
-        transform-origin: left center;
+        transform: rotateY(0deg) translateZ(0px) scaleX(1);
+        filter: brightness(1);
         opacity: 1;
     }
-    20% {
-        transform: perspective(1500px) rotateY(-12deg) scale(0.98);
-        transform-origin: left center;
-        opacity: 0.9;
-        filter: drop-shadow(-5px 0 8px rgba(0,0,0,0.2));
+    15% {
+        transform: rotateY(-15deg) translateZ(-20px) scaleX(0.98);
+        filter: brightness(0.92) drop-shadow(-8px 4px 16px rgba(0,0,0,0.5));
+        opacity: 1;
     }
-    45% {
-        transform: perspective(1500px) rotateY(-40deg) scale(0.94);
-        transform-origin: left center;
-        opacity: 0.6;
-        filter: drop-shadow(-12px 0 18px rgba(0,0,0,0.35));
+    40% {
+        transform: rotateY(-55deg) translateZ(-60px) scaleX(0.88);
+        filter: brightness(0.65) drop-shadow(-20px 8px 30px rgba(0,0,0,0.7));
+        opacity: 0.85;
     }
-    70% {
-        transform: perspective(1500px) rotateY(-70deg) scale(0.9);
-        transform-origin: left center;
-        opacity: 0.25;
-        filter: drop-shadow(-18px 0 25px rgba(0,0,0,0.45));
+    65% {
+        transform: rotateY(-82deg) translateZ(-80px) scaleX(0.72);
+        filter: brightness(0.3) drop-shadow(-28px 10px 40px rgba(0,0,0,0.85));
+        opacity: 0.4;
+    }
+    80% {
+        transform: rotateY(-90deg) translateZ(-85px) scaleX(0.6);
+        filter: brightness(0.1);
+        opacity: 0.1;
     }
     100% {
-        transform: perspective(1500px) rotateY(0deg) scale(1);
-        transform-origin: left center;
-        opacity: 1;
+        transform: rotateY(-90deg) translateZ(-85px) scaleX(0.6);
+        filter: brightness(0.1);
+        opacity: 0;
     }
 }
 
 @keyframes premiumFlipBack {
     0% {
-        transform: perspective(1500px) rotateY(0deg) scale(1);
-        transform-origin: right center;
+        transform: rotateY(0deg) translateZ(0px) scaleX(1);
+        filter: brightness(1);
         opacity: 1;
     }
-    20% {
-        transform: perspective(1500px) rotateY(12deg) scale(0.98);
-        transform-origin: right center;
-        opacity: 0.9;
-        filter: drop-shadow(5px 0 8px rgba(0,0,0,0.2));
+    15% {
+        transform: rotateY(15deg) translateZ(-20px) scaleX(0.98);
+        filter: brightness(0.92) drop-shadow(8px 4px 16px rgba(0,0,0,0.5));
+        opacity: 1;
     }
-    45% {
-        transform: perspective(1500px) rotateY(40deg) scale(0.94);
-        transform-origin: right center;
-        opacity: 0.6;
-        filter: drop-shadow(12px 0 18px rgba(0,0,0,0.35));
+    40% {
+        transform: rotateY(55deg) translateZ(-60px) scaleX(0.88);
+        filter: brightness(0.65) drop-shadow(20px 8px 30px rgba(0,0,0,0.7));
+        opacity: 0.85;
     }
-    70% {
-        transform: perspective(1500px) rotateY(70deg) scale(0.9);
-        transform-origin: right center;
-        opacity: 0.25;
-        filter: drop-shadow(18px 0 25px rgba(0,0,0,0.45));
+    65% {
+        transform: rotateY(82deg) translateZ(-80px) scaleX(0.72);
+        filter: brightness(0.3) drop-shadow(28px 10px 40px rgba(0,0,0,0.85));
+        opacity: 0.4;
+    }
+    80% {
+        transform: rotateY(90deg) translateZ(-85px) scaleX(0.6);
+        filter: brightness(0.1);
+        opacity: 0.1;
     }
     100% {
-        transform: perspective(1500px) rotateY(0deg) scale(1);
-        transform-origin: right center;
-        opacity: 1;
+        transform: rotateY(90deg) translateZ(-85px) scaleX(0.6);
+        filter: brightness(0.1);
+        opacity: 0;
     }
 }
 
 @keyframes premiumRevealRight {
     0% {
-        transform: perspective(1500px) rotateY(20deg) scale(0.96);
-        transform-origin: left center;
+        transform: rotateY(90deg) translateZ(-85px) scaleX(0.6);
+        filter: brightness(0.1);
         opacity: 0;
-        filter: drop-shadow(-10px 0 15px rgba(0,0,0,0.3));
     }
-    60% {
-        transform: perspective(1500px) rotateY(5deg) scale(0.99);
-        transform-origin: left center;
-        opacity: 0.6;
+    25% {
+        transform: rotateY(70deg) translateZ(-70px) scaleX(0.75);
+        filter: brightness(0.25) drop-shadow(-22px 8px 35px rgba(0,0,0,0.8));
+        opacity: 0.3;
+    }
+    55% {
+        transform: rotateY(30deg) translateZ(-35px) scaleX(0.9);
+        filter: brightness(0.7) drop-shadow(-12px 5px 20px rgba(0,0,0,0.55));
+        opacity: 0.8;
+    }
+    78% {
+        transform: rotateY(8deg) translateZ(-8px) scaleX(0.99);
+        filter: brightness(0.95) drop-shadow(-3px 2px 6px rgba(0,0,0,0.2));
+        opacity: 1;
+    }
+    90% {
+        transform: rotateY(-2deg) translateZ(2px) scaleX(1.002);
+        filter: brightness(1.02);
+        opacity: 1;
     }
     100% {
-        transform: perspective(1500px) rotateY(0deg) scale(1);
-        transform-origin: left center;
+        transform: rotateY(0deg) translateZ(0px) scaleX(1);
+        filter: brightness(1);
         opacity: 1;
     }
 }
 
 @keyframes premiumRevealLeft {
     0% {
-        transform: perspective(1500px) rotateY(-20deg) scale(0.96);
-        transform-origin: right center;
+        transform: rotateY(-90deg) translateZ(-85px) scaleX(0.6);
+        filter: brightness(0.1);
         opacity: 0;
-        filter: drop-shadow(10px 0 15px rgba(0,0,0,0.3));
     }
-    60% {
-        transform: perspective(1500px) rotateY(-5deg) scale(0.99);
-        transform-origin: right center;
-        opacity: 0.6;
+    25% {
+        transform: rotateY(-70deg) translateZ(-70px) scaleX(0.75);
+        filter: brightness(0.25) drop-shadow(22px 8px 35px rgba(0,0,0,0.8));
+        opacity: 0.3;
+    }
+    55% {
+        transform: rotateY(-30deg) translateZ(-35px) scaleX(0.9);
+        filter: brightness(0.7) drop-shadow(12px 5px 20px rgba(0,0,0,0.55));
+        opacity: 0.8;
+    }
+    78% {
+        transform: rotateY(-8deg) translateZ(-8px) scaleX(0.99);
+        filter: brightness(0.95) drop-shadow(3px 2px 6px rgba(0,0,0,0.2));
+        opacity: 1;
+    }
+    90% {
+        transform: rotateY(2deg) translateZ(2px) scaleX(1.002);
+        filter: brightness(1.02);
+        opacity: 1;
     }
     100% {
-        transform: perspective(1500px) rotateY(0deg) scale(1);
-        transform-origin: right center;
+        transform: rotateY(0deg) translateZ(0px) scaleX(1);
+        filter: brightness(1);
         opacity: 1;
     }
 }
 
 .page-flip-out-right {
-    animation: premiumFlipForward 0.55s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation: premiumFlipForward 0.52s cubic-bezier(0.55, 0, 0.7, 0.4) forwards;
+    transform-origin: left center;
+    transform-style: preserve-3d;
+    will-change: transform, filter, opacity;
+    backface-visibility: hidden;
 }
 
 .page-flip-out-left {
-    animation: premiumFlipBack 0.55s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation: premiumFlipBack 0.52s cubic-bezier(0.55, 0, 0.7, 0.4) forwards;
+    transform-origin: right center;
+    transform-style: preserve-3d;
+    will-change: transform, filter, opacity;
+    backface-visibility: hidden;
 }
 
 .page-slide-in-right {
-    animation: premiumRevealRight 0.45s cubic-bezier(0.2, 0.9, 0.4, 1.1) forwards;
+    animation: premiumRevealRight 0.5s cubic-bezier(0.15, 0.8, 0.3, 1.05) forwards;
+    transform-origin: left center;
+    transform-style: preserve-3d;
+    will-change: transform, filter, opacity;
+    backface-visibility: hidden;
 }
 
 .page-slide-in-left {
-    animation: premiumRevealLeft 0.45s cubic-bezier(0.2, 0.9, 0.4, 1.1) forwards;
+    animation: premiumRevealLeft 0.5s cubic-bezier(0.15, 0.8, 0.3, 1.05) forwards;
+    transform-origin: right center;
+    transform-style: preserve-3d;
+    will-change: transform, filter, opacity;
+    backface-visibility: hidden;
 }
-
 /* ========== RESPONSIVE ========== */
 @media (max-width: 640px) {
     .app { padding: 16px 14px 32px; }
