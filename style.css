@@ -705,11 +705,44 @@ body.light-mode .theme-toggle i { color: #f59e0b !important; }
     flex-wrap: wrap;
     margin-bottom: 20px;
     padding: 8px 16px;
-    background: rgba(0,0,0,0.25);
+    background: #0c1120;
     backdrop-filter: blur(12px);
-    border: 1px solid rgba(100, 160, 255, 0.45);
+    border: none;
     border-radius: var(--radius-full);
     width: fit-content;
+    position: relative;
+    z-index: 0;
+    transform: translateY(-2px) translateZ(6px);
+    box-shadow:
+        0 6px 0 rgba(0, 0, 0, 0.4),
+        0 4px 14px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.breadcrumb::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius-full);
+    padding: 1px;
+    background: linear-gradient(90deg, #c026d3 0%, #7c3aed 45%, #2563eb 100%);
+    box-shadow:
+        0 0 5px 1px rgba(192, 38, 211, 0.55),
+        0 0 12px 2px rgba(192, 38, 211, 0.22),
+        0 0 5px 1px rgba(37, 99, 235, 0.55),
+        0 0 12px 2px rgba(37, 99, 235, 0.22);
+    -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: searchLinePulse 3.5s ease-in-out infinite;
+    pointer-events: none;
+    z-index: -1;
 }
 
 .breadcrumb-item {
