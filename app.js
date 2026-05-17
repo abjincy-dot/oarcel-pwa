@@ -699,31 +699,26 @@ function setActiveTab(tab){
     if(tab==='pdfs'){ pdfBtn.classList.add('active'); notesBtn.classList.remove('active'); }
     else { pdfBtn.classList.remove('active'); notesBtn.classList.add('active'); }
 
-    const exitClass  = tab === 'notes' ? 'tab-exit-left'  : 'tab-exit-right';
     const enterClass = tab === 'notes' ? 'tab-enter-right' : 'tab-enter-left';
 
-    // Step 1: exit animation
-    contentDiv.classList.add(exitClass);
+    // Instantly hide, render, then animate in — no exit animation to avoid blank frame
+    contentDiv.style.transition = 'none';
+    contentDiv.style.opacity = '0';
+    contentDiv.style.transform = tab === 'notes' ? 'translateX(20px)' : 'translateX(-20px)';
 
-    setTimeout(() => {
-        // Step 2: hide content BEFORE render to avoid flash
-        contentDiv.style.opacity = '0';
-        contentDiv.style.visibility = 'hidden';
-        contentDiv.classList.remove(exitClass);
-
-        // Step 3: render new content while invisible
+    requestAnimationFrame(() => {
         render();
-
-        // Step 4: show and animate in on next paint
         requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                contentDiv.style.visibility = '';
+            contentDiv.style.transition = 'opacity 0.28s ease, transform 0.32s cubic-bezier(0.0, 0.8, 0.2, 1.05)';
+            contentDiv.style.opacity = '1';
+            contentDiv.style.transform = 'translateX(0px)';
+            setTimeout(() => {
+                contentDiv.style.transition = '';
+                contentDiv.style.transform = '';
                 contentDiv.style.opacity = '';
-                contentDiv.classList.add(enterClass);
-                setTimeout(() => contentDiv.classList.remove(enterClass), 320);
-            });
+            }, 340);
         });
-    }, 200);
+    });
 }
 function openNewNoteModal(){
     editingNoteId = null;
