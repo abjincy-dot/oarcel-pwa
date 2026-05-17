@@ -1,15 +1,20 @@
 {
   "name": "OARCEL Document Manager",
   "short_name": "OARCEL",
-  "description": "Professional document management system for organizing and viewing PDF files with folder structure and offline access",
-  "start_url": "/oarcel-pwa/index.html",
-  "scope": "/oarcel-pwa/",
+  "description": "Professional document management system",
+  "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
-  "theme_color": "#6366f1",
-  "background_color": "#0f0c29",
-  "orientation": "portrait",
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
+  "theme_color": "#0a1128",
+  "background_color": "#0a1128",
+  "orientation": "portrait-primary",
   "lang": "en",
   "dir": "ltr",
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "https://img.icons8.com/fluency/96/folder-invoices.png",
@@ -22,30 +27,20 @@
       "type": "image/png"
     },
     {
-      "src": "https://img.icons8.com/fluency/144/folder-invoices.png",
-      "sizes": "144x144",
+      "src": "https://img.icons8.com/fluency/152/folder-invoices.png",
+      "sizes": "152x152",
       "type": "image/png"
     },
     {
-      "src": "https://img.icons8.com/fluency/152/folder-invoices.png",
-      "sizes": "152x152",
+      "src": "https://img.icons8.com/fluency/180/folder-invoices.png",
+      "sizes": "180x180",
       "type": "image/png"
     },
     {
       "src": "https://img.icons8.com/fluency/192/folder-invoices.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "https://img.icons8.com/fluency/256/folder-invoices.png",
-      "sizes": "256x256",
-      "type": "image/png"
-    },
-    {
-      "src": "https://img.icons8.com/fluency/384/folder-invoices.png",
-      "sizes": "384x384",
-      "type": "image/png"
+      "purpose": "any"
     },
     {
       "src": "https://img.icons8.com/fluency/512/folder-invoices.png",
@@ -54,15 +49,15 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["productivity", "business"],
-  "screenshots": [],
-  "prefer_related_applications": false,
+  "categories": [
+    "productivity",
+    "business"
+  ],
   "shortcuts": [
     {
       "name": "Open OARCEL",
       "short_name": "Open",
-      "description": "Open Document Manager",
-      "url": "/oarcel-pwa/index.html",
+      "url": "./index.html",
       "icons": [
         {
           "src": "https://img.icons8.com/fluency/96/folder-invoices.png",
