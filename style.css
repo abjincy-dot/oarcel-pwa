@@ -621,21 +621,82 @@ body.light-mode #clearSearchBtn {
 .theme-toggle {
     width: 48px !important;
     height: 48px !important;
-    background: linear-gradient(135deg, rgba(168,85,247,0.25), rgba(236,72,153,0.2)) !important;
-    border: 1px solid rgba(168,85,247, 0.5) !important;
+    border: none !important;
     border-radius: 50% !important;
     cursor: pointer;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    transition: all 0.28s cubic-bezier(0.22, 1, 0.36, 1) !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
+                box-shadow 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+
+    /* Glossy 3D sphere */
+    background:
+        radial-gradient(circle 18px at 38% 32%,
+            rgba(255, 255, 255, 0.45) 0%,
+            transparent 65%),
+        radial-gradient(circle at 60% 70%,
+            rgba(236, 72, 153, 0.4) 0%,
+            transparent 60%),
+        linear-gradient(145deg,
+            #3b1f6e 0%,
+            #5b21b6 30%,
+            #4c1d95 60%,
+            #2d1260 100%
+        );
+
+    box-shadow:
+        0 6px 0 rgba(20, 5, 50, 0.9),
+        0 8px 18px rgba(88, 28, 135, 0.6),
+        0 0 0 1px rgba(168, 85, 247, 0.4),
+        inset 0 2px 4px rgba(220, 180, 255, 0.3),
+        inset 0 -3px 5px rgba(0, 0, 30, 0.5) !important;
 }
 
-.theme-toggle:hover { transform: scale(1.08) !important; border-color: rgba(168,85,247, 0.8) !important; box-shadow: 0 8px 20px rgba(168,85,247, 0.5) !important; }
-.theme-toggle i { font-size: 1.3rem !important; transition: color 0.2s ease; }
+/* Gloss shine */
+.theme-toggle::before {
+    content: '';
+    position: absolute;
+    top: 4px;
+    left: 20%;
+    width: 60%;
+    height: 40%;
+    border-radius: 50%;
+    background: radial-gradient(ellipse,
+        rgba(255,255,255,0.35) 0%,
+        transparent 70%
+    );
+    pointer-events: none;
+    z-index: 1;
+}
+
+.theme-toggle:active {
+    transform: translateY(4px) scale(0.95) !important;
+    box-shadow:
+        0 2px 0 rgba(20, 5, 50, 0.9),
+        0 3px 8px rgba(88, 28, 135, 0.5),
+        inset 0 1px 3px rgba(220, 180, 255, 0.2) !important;
+    transition: transform 0.06s ease, box-shadow 0.06s ease !important;
+}
+
+.theme-toggle i { font-size: 1.2rem !important; transition: color 0.2s ease; position: relative; z-index: 2; }
 .theme-toggle i { color: #fbbf24 !important; }
 body.light-mode .theme-toggle i { color: #f59e0b !important; }
+
+body.light-mode .theme-toggle {
+    background:
+        radial-gradient(circle 18px at 38% 32%,
+            rgba(255, 255, 255, 0.55) 0%,
+            transparent 65%),
+        linear-gradient(145deg,
+            #6d28d9 0%,
+            #7c3aed 35%,
+            #5b21b6 70%,
+            #4c1d95 100%
+        );
+}
 
 /* ========== UPLOAD & NEW NOTE BUTTONS ========== */
 #uploadBtn, #newNoteBtn {
