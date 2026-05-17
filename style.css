@@ -657,6 +657,61 @@ body.light-mode .theme-toggle i { color: #f59e0b !important; }
     border-radius: var(--radius-lg);
     position: relative;
     cursor: default;
+    background: rgba(8, 10, 22, 0.6);
+    z-index: 0;
+}
+
+/* Thin yellow-white neon glow border — image style */
+.dept-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius-lg);
+    padding: 1px;
+    background: linear-gradient(
+        135deg,
+        rgba(255, 220, 80, 0.9) 0%,
+        rgba(255, 255, 200, 1) 30%,
+        rgba(255, 200, 50, 0.95) 60%,
+        rgba(255, 160, 20, 0.85) 100%
+    );
+    box-shadow:
+        /* tight bright inner glow — the thin line feel */
+        0 0 4px 1px rgba(255, 220, 60, 0.9),
+        /* mid spread */
+        0 0 12px 3px rgba(255, 180, 20, 0.55),
+        /* soft outer bloom */
+        0 0 28px 6px rgba(220, 120, 0, 0.3),
+        /* faint deep halo */
+        0 0 50px 10px rgba(180, 70, 0, 0.12);
+    -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: deptCardGlow 4s ease-in-out infinite;
+    pointer-events: none;
+    z-index: -1;
+}
+
+@keyframes deptCardGlow {
+    0%, 100% {
+        box-shadow:
+            0 0 4px 1px rgba(255, 220, 60, 0.85),
+            0 0 12px 3px rgba(255, 180, 20, 0.5),
+            0 0 28px 6px rgba(220, 120, 0, 0.28),
+            0 0 50px 10px rgba(180, 70, 0, 0.1);
+    }
+    50% {
+        box-shadow:
+            0 0 6px 2px rgba(255, 235, 80, 1),
+            0 0 18px 5px rgba(255, 190, 30, 0.7),
+            0 0 40px 10px rgba(230, 130, 0, 0.4),
+            0 0 70px 16px rgba(180, 70, 0, 0.18);
+    }
 }
 
 .dept-oval {
