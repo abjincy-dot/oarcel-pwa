@@ -139,10 +139,41 @@ body::before {
     padding: 18px 24px;
     background: var(--glass-bg);
     backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-border);
     border-radius: var(--radius-xl);
-    box-shadow: 0 0 0 2px rgba(59,130,246,0.4), 0 0 20px rgba(59,130,246,0.6), 0 4px 12px rgba(0,0,0,0.3);
+    border: none;
+    position: relative;
+    z-index: 0;
     transition: all var(--transition-base);
+}
+
+.header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius-xl);
+    padding: 1px;
+    background: linear-gradient(135deg,
+        rgba(120, 160, 255, 0.9) 0%,
+        rgba(180, 210, 255, 1) 35%,
+        rgba(100, 140, 255, 0.85) 65%,
+        rgba(80, 120, 240, 0.8) 100%
+    );
+    box-shadow:
+        0 0 4px 1px rgba(140, 180, 255, 0.85),
+        0 0 14px 3px rgba(100, 150, 255, 0.45),
+        0 0 30px 6px rgba(60, 100, 240, 0.22),
+        0 0 55px 12px rgba(40, 80, 200, 0.1);
+    -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: containerGlowPulse 4s ease-in-out infinite;
+    pointer-events: none;
+    z-index: -1;
 }
 
 .header:hover {
@@ -243,10 +274,41 @@ body.light-mode .header-title h1 {
     padding: 10px 20px;
     background: var(--glass-bg);
     backdrop-filter: blur(16px);
-    border: 1px solid var(--glass-border);
     border-radius: 24px;
+    border: none;
     flex-wrap: wrap;
-    box-shadow: 0 0 0 2px rgba(59,130,246,0.5), 0 0 25px rgba(59,130,246,0.7), 0 8px 20px rgba(0,0,0,0.3);
+    position: relative;
+    z-index: 0;
+}
+
+.top-bar::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 24px;
+    padding: 1px;
+    background: linear-gradient(135deg,
+        rgba(120, 160, 255, 0.9) 0%,
+        rgba(180, 210, 255, 1) 35%,
+        rgba(100, 140, 255, 0.85) 65%,
+        rgba(80, 120, 240, 0.8) 100%
+    );
+    box-shadow:
+        0 0 4px 1px rgba(140, 180, 255, 0.85),
+        0 0 14px 3px rgba(100, 150, 255, 0.45),
+        0 0 30px 6px rgba(60, 100, 240, 0.22),
+        0 0 55px 12px rgba(40, 80, 200, 0.1);
+    -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: containerGlowPulse 4s ease-in-out infinite;
+    pointer-events: none;
+    z-index: -1;
 }
 
 .type-selector {
@@ -578,9 +640,40 @@ body.light-mode .theme-toggle i { color: #f59e0b !important; }
     padding: 14px 24px;
     background: var(--glass-bg);
     backdrop-filter: blur(16px);
-    border: 1px solid var(--glass-border);
     border-radius: var(--radius-lg);
-    box-shadow: 0 0 0 2px rgba(59,130,246,0.4), 0 0 20px rgba(59,130,246,0.6);
+    border: none;
+    position: relative;
+    z-index: 0;
+}
+
+.stats-bar::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius-lg);
+    padding: 1px;
+    background: linear-gradient(135deg,
+        rgba(120, 160, 255, 0.9) 0%,
+        rgba(180, 210, 255, 1) 35%,
+        rgba(100, 140, 255, 0.85) 65%,
+        rgba(80, 120, 240, 0.8) 100%
+    );
+    box-shadow:
+        0 0 4px 1px rgba(140, 180, 255, 0.85),
+        0 0 14px 3px rgba(100, 150, 255, 0.45),
+        0 0 30px 6px rgba(60, 100, 240, 0.22),
+        0 0 55px 12px rgba(40, 80, 200, 0.1);
+    -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: containerGlowPulse 4s ease-in-out infinite;
+    pointer-events: none;
+    z-index: -1;
 }
 
 .stat-item { display: flex; align-items: center; gap: 10px; flex: 1 1 auto; min-width: 0; }
@@ -1623,6 +1716,24 @@ body.light-mode .type-selector::before {
 
 body.light-mode .type-selector {
     background: rgba(248, 250, 255, 0.92);
+}
+
+/* Shared container glow pulse */
+@keyframes containerGlowPulse {
+    0%, 100% {
+        box-shadow:
+            0 0 4px 1px rgba(140, 180, 255, 0.85),
+            0 0 14px 3px rgba(100, 150, 255, 0.45),
+            0 0 30px 6px rgba(60, 100, 240, 0.22),
+            0 0 55px 12px rgba(40, 80, 200, 0.1);
+    }
+    50% {
+        box-shadow:
+            0 0 6px 2px rgba(160, 200, 255, 1),
+            0 0 20px 5px rgba(120, 170, 255, 0.65),
+            0 0 42px 10px rgba(70, 120, 255, 0.32),
+            0 0 75px 18px rgba(40, 80, 200, 0.16);
+    }
 }
 
 /* ========== RESPONSIVE ========== */
