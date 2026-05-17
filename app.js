@@ -43,32 +43,62 @@ async function saveDeptColors() {
 function navigateWithPageTurn(navigationFn, direction = 'forward') {
     const contentDiv = document.getElementById('content');
     const deptSection = document.getElementById('departmentsSection');
-    const elementsToAnimate = [contentDiv, deptSection];
-    
-    elementsToAnimate.forEach(el => {
-        if (el && !el.classList.contains('hidden')) {
-            el.classList.add(direction === 'forward' ? 'page-flip-out-right' : 'page-flip-out-left');
-        }
+    const elements = [contentDiv, deptSection].filter(el => el && !el.classList.contains('hidden'));
+    const allEls = [contentDiv, deptSection].filter(Boolean);
+
+    const isForward = direction === 'forward';
+
+    // Step 1: Fade + slide out smoothly
+    elements.forEach(el => {
+        el.style.transition = 'none';
+        el.style.opacity = '1';
+        el.style.transform = 'translateX(0) scale(1)';
     });
-    
-    setTimeout(() => {
-        navigationFn();
-        
+
+    requestAnimationFrame(() => {
+        elements.forEach(el => {
+            el.style.transition = 'opacity 0.18s ease, transform 0.22s cubic-bezier(0.4, 0, 1, 0.8)';
+            el.style.opacity = '0';
+            el.style.transform = isForward
+                ? 'translateX(-18px) scale(0.97)'
+                : 'translateX(18px) scale(0.97)';
+        });
+
+        // Step 2: After exit, render new content while invisible
         setTimeout(() => {
-            elementsToAnimate.forEach(el => {
-                if (el) {
-                    el.classList.remove('page-flip-out-right', 'page-flip-out-left');
-                    el.classList.add(direction === 'forward' ? 'page-slide-in-right' : 'page-slide-in-left');
-                }
+            // Clear transitions, hide
+            allEls.forEach(el => {
+                el.style.transition = 'none';
+                el.style.opacity = '0';
+                el.style.transform = isForward
+                    ? 'translateX(18px) scale(0.97)'
+                    : 'translateX(-18px) scale(0.97)';
             });
-            
-            setTimeout(() => {
-                elementsToAnimate.forEach(el => {
-                    if (el) el.classList.remove('page-slide-in-right', 'page-slide-in-left');
+
+            // Render new content
+            navigationFn();
+
+            // Step 3: Animate in on next paint
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    allEls.forEach(el => {
+                        el.style.transition = 'opacity 0.26s ease, transform 0.32s cubic-bezier(0.0, 0.8, 0.25, 1.05)';
+                        el.style.opacity = '1';
+                        el.style.transform = 'translateX(0) scale(1)';
+                    });
+
+                    // Cleanup
+                    setTimeout(() => {
+                        allEls.forEach(el => {
+                            el.style.transition = '';
+                            el.style.opacity = '';
+                            el.style.transform = '';
+                        });
+                    }, 340);
                 });
-            }, 450);
-        }, 30);
-    }, 330);
+            });
+        }, 200);
+    });
 }
 
 function selectDepartment(d){ 
