@@ -1017,9 +1017,8 @@ body.light-mode .card {
         rgba(160, 190, 255, 0.75) 100%
     );
     box-shadow:
-        0 0 3px 0.5px rgba(220, 235, 255, 0.5),
-        0 0 7px 1px rgba(180, 210, 255, 0.18),
-        0 0 14px 2px rgba(120, 160, 255, 0.08);
+        0 0 2px 0.5px rgba(220, 235, 255, 0.25),
+        0 0 5px 1px rgba(180, 210, 255, 0.08);
     -webkit-mask:
         linear-gradient(#fff 0 0) content-box,
         linear-gradient(#fff 0 0);
@@ -1037,9 +1036,8 @@ body.light-mode .card {
 .file-card:hover::after,
 .note-card:hover::after {
     box-shadow:
-        0 0 4px 1px rgba(230, 240, 255, 0.65),
-        0 0 11px 2px rgba(180, 210, 255, 0.3),
-        0 0 22px 4px rgba(120, 160, 255, 0.13);
+        0 0 3px 0.5px rgba(230, 240, 255, 0.4),
+        0 0 8px 1px rgba(180, 210, 255, 0.15);
 }
 
 /* Light mode — subtle grey-blue thin line */
