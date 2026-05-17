@@ -288,63 +288,73 @@ body.light-mode .header-title h1 {
     font-weight: 600;
 }
 
-/* ========== GLOWING SEARCH BAR — BORDER GRADIENT STYLE ========== */
-/*
-   Technique: wrapper div handles gradient border via padding trick.
-   .search-container = gradient border shell
-   #searchInput sits inside with dark bg
-   Left corner = purple glow, Right corner = blue glow (exactly like image)
-*/
-
+/* ========== GLOWING SEARCH BAR — THIN LINE + PROPORTIONAL GLOW ========== */
 .search-container {
     flex: 1;
     position: relative;
     min-width: 180px;
-    border-radius: 18px;
-    padding: 1.5px; /* creates the gradient border thickness */
-    background: linear-gradient(90deg, #b44fff 0%, #2563eb 100%);
-    box-shadow:
-        /* left corner purple spot glow */
-        -18px 0px 28px 4px rgba(160, 50, 255, 0.6),
-        /* right corner blue spot glow */
-        18px 0px 28px 4px rgba(37, 99, 235, 0.6),
-        /* very subtle center glow on border */
-        0 0 12px 0px rgba(130, 60, 220, 0.25);
-    animation: searchBorderPulse 3.5s ease-in-out infinite;
-    transition: box-shadow 0.3s ease;
+    border-radius: 16px;
+    background: #0c1120;
 }
 
-@keyframes searchBorderPulse {
-    0%, 100% {
-        box-shadow:
-            -18px 0px 28px 4px rgba(160, 50, 255, 0.6),
-            18px 0px 28px 4px rgba(37, 99, 235, 0.6),
-            0 0 12px 0px rgba(130, 60, 220, 0.25);
-    }
-    50% {
-        box-shadow:
-            -24px 0px 38px 8px rgba(160, 50, 255, 0.82),
-            24px 0px 38px 8px rgba(37, 99, 235, 0.82),
-            0 0 18px 2px rgba(130, 60, 220, 0.35);
-    }
-}
-
-.search-container:focus-within {
-    animation: none;
-    box-shadow:
-        -28px 0px 44px 10px rgba(170, 50, 255, 0.95),
-        28px 0px 44px 10px rgba(37, 99, 235, 0.95),
-        0 0 22px 4px rgba(130, 60, 220, 0.45);
-}
-
-/* Inner dark pill — gives the "dark bar with gradient border" look */
+/* THE THIN GLOWING BORDER LINE */
 .search-container::before {
     content: '';
     position: absolute;
-    inset: 1.5px;
+    inset: 0;
     border-radius: 16px;
-    background: #0d1220;
-    z-index: 0;
+    padding: 1px;
+    background: linear-gradient(90deg,
+        #c026d3 0%,
+        #7c3aed 45%,
+        #2563eb 100%
+    );
+    box-shadow:
+        0 0 5px 1px rgba(192, 38, 211, 0.7),
+        0 0 16px 3px rgba(192, 38, 211, 0.32),
+        0 0 5px 1px rgba(37, 99, 235, 0.7),
+        0 0 16px 3px rgba(37, 99, 235, 0.32),
+        0 0 28px 5px rgba(120, 50, 220, 0.14);
+    -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: searchLinePulse 3.5s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 1;
+}
+
+@keyframes searchLinePulse {
+    0%, 100% {
+        box-shadow:
+            0 0 5px 1px rgba(192, 38, 211, 0.65),
+            0 0 14px 3px rgba(192, 38, 211, 0.28),
+            0 0 5px 1px rgba(37, 99, 235, 0.65),
+            0 0 14px 3px rgba(37, 99, 235, 0.28),
+            0 0 26px 5px rgba(120, 50, 220, 0.12);
+    }
+    50% {
+        box-shadow:
+            0 0 7px 2px rgba(192, 38, 211, 0.92),
+            0 0 20px 5px rgba(192, 38, 211, 0.42),
+            0 0 7px 2px rgba(37, 99, 235, 0.92),
+            0 0 20px 5px rgba(37, 99, 235, 0.42),
+            0 0 36px 8px rgba(120, 50, 220, 0.2);
+    }
+}
+
+.search-container:focus-within::before {
+    animation: none;
+    box-shadow:
+        0 0 8px 2px rgba(192, 38, 211, 1),
+        0 0 24px 7px rgba(192, 38, 211, 0.52),
+        0 0 8px 2px rgba(37, 99, 235, 1),
+        0 0 24px 7px rgba(37, 99, 235, 0.52),
+        0 0 42px 11px rgba(120, 50, 220, 0.26);
 }
 
 .search-container > i {
@@ -352,14 +362,14 @@ body.light-mode .header-title h1 {
     left: 16px;
     top: 50%;
     transform: translateY(-50%);
-    color: rgba(255, 255, 255, 0.4);
+    color: rgba(255, 255, 255, 0.38);
     transition: color 0.2s ease;
     pointer-events: none;
     z-index: 2;
 }
 
 .search-container:focus-within > i {
-    color: rgba(180, 79, 255, 0.9);
+    color: rgba(192, 38, 211, 0.9);
 }
 
 #searchInput {
@@ -374,12 +384,13 @@ body.light-mode .header-title h1 {
     outline: none;
     font-size: 16px !important;
     font-family: 'Inter', sans-serif;
-    caret-color: #b44fff;
+    caret-color: #c026d3;
 }
 
 #searchInput::placeholder {
-    color: rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.28);
     font-weight: 300;
+    letter-spacing: 0.01em;
 }
 
 #clearSearchBtn {
@@ -387,9 +398,9 @@ body.light-mode .header-title h1 {
     right: 10px;
     top: 50%;
     transform: translateY(-50%);
-    background: rgba(139, 92, 246, 0.2);
-    border: 1px solid rgba(139, 92, 246, 0.4);
-    color: rgba(255, 255, 255, 0.65);
+    background: rgba(124, 58, 237, 0.18);
+    border: 1px solid rgba(124, 58, 237, 0.38);
+    color: rgba(255, 255, 255, 0.6);
     cursor: pointer;
     width: 26px;
     height: 26px;
@@ -403,58 +414,48 @@ body.light-mode .header-title h1 {
 }
 
 #clearSearchBtn:hover {
-    background: rgba(139, 92, 246, 0.45);
+    background: rgba(124, 58, 237, 0.4);
     color: white;
     transform: translateY(-50%) scale(1.1);
 }
 
-/* Light mode — softer border, same corner glow concept */
+/* Light mode */
 body.light-mode .search-container {
-    background: linear-gradient(90deg, #a855f7 0%, #3b82f6 100%);
-    box-shadow:
-        -14px 0px 22px 4px rgba(168, 85, 247, 0.4),
-        14px 0px 22px 4px rgba(59, 130, 246, 0.4),
-        0 0 10px 0px rgba(130, 60, 220, 0.15);
-    animation: searchBorderPulseLight 3.5s ease-in-out infinite;
-}
-
-@keyframes searchBorderPulseLight {
-    0%, 100% {
-        box-shadow:
-            -14px 0px 22px 4px rgba(168, 85, 247, 0.4),
-            14px 0px 22px 4px rgba(59, 130, 246, 0.4),
-            0 0 10px 0px rgba(130, 60, 220, 0.15);
-    }
-    50% {
-        box-shadow:
-            -20px 0px 30px 6px rgba(168, 85, 247, 0.6),
-            20px 0px 30px 6px rgba(59, 130, 246, 0.6),
-            0 0 16px 2px rgba(130, 60, 220, 0.25);
-    }
+    background: rgba(248, 250, 255, 0.92);
 }
 
 body.light-mode .search-container::before {
-    background: rgba(240, 245, 255, 0.95);
+    background: linear-gradient(90deg, #a855f7 0%, #6366f1 50%, #3b82f6 100%);
+    animation: searchLinePulseLight 3.5s ease-in-out infinite;
 }
 
-body.light-mode #searchInput {
-    color: var(--text-primary);
+@keyframes searchLinePulseLight {
+    0%, 100% {
+        box-shadow:
+            0 0 4px 1px rgba(168, 85, 247, 0.5),
+            0 0 12px 3px rgba(168, 85, 247, 0.2),
+            0 0 4px 1px rgba(59, 130, 246, 0.5),
+            0 0 12px 3px rgba(59, 130, 246, 0.2),
+            0 0 20px 4px rgba(120, 50, 220, 0.08);
+    }
+    50% {
+        box-shadow:
+            0 0 6px 2px rgba(168, 85, 247, 0.75),
+            0 0 18px 5px rgba(168, 85, 247, 0.32),
+            0 0 6px 2px rgba(59, 130, 246, 0.75),
+            0 0 18px 5px rgba(59, 130, 246, 0.32),
+            0 0 30px 7px rgba(120, 50, 220, 0.15);
+    }
 }
 
-body.light-mode #searchInput::placeholder {
-    color: rgba(30, 41, 59, 0.38);
-}
-
-body.light-mode .search-container > i {
-    color: rgba(30, 41, 59, 0.4);
-}
-
+body.light-mode #searchInput { color: var(--text-primary); }
+body.light-mode #searchInput::placeholder { color: rgba(30, 41, 59, 0.36); }
+body.light-mode .search-container > i { color: rgba(30, 41, 59, 0.38); }
 body.light-mode #clearSearchBtn {
-    background: rgba(99, 102, 241, 0.12);
-    border-color: rgba(99, 102, 241, 0.35);
-    color: rgba(30, 41, 59, 0.6);
+    background: rgba(99, 102, 241, 0.1);
+    border-color: rgba(99, 102, 241, 0.3);
+    color: rgba(30, 41, 59, 0.55);
 }
-
 .top-bar-actions { display: flex; align-items: center; gap: 12px; }
 
 /* ========== THEME TOGGLE ========== */
