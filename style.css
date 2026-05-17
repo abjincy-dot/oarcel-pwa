@@ -1063,13 +1063,15 @@ body.light-mode .note-card::after {
     backdrop-filter: blur(20px) !important;
     border: 1px solid rgba(255,255,255,0.2) !important;
     border-radius: 60px !important;
-    padding: 10px 16px !important;
-    margin: 16px 0 20px 0 !important;
+    padding: 8px 12px !important;
+    margin: 12px 0 16px 0 !important;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
     display: flex;
-    gap: 10px;
+    gap: 6px;
     justify-content: center;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    align-items: center;
+    overflow-x: auto;
 }
 
 body.light-mode .action-bar {
@@ -1081,12 +1083,15 @@ body.light-mode .action-bar {
     background: #1e293b !important;
     border: 1px solid #3b82f6 !important;
     border-radius: 40px !important;
-    padding: 8px 18px !important;
+    padding: 7px 13px !important;
     font-weight: 600 !important;
+    font-size: 0.78rem !important;
     color: #f1f5f9 !important;
     box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2) !important;
     transition: all 0.08s ease !important;
     cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .action-btn:active {
