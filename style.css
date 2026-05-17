@@ -1433,21 +1433,61 @@ button, .card, .action-btn, .breadcrumb-item, .type-btn, .theme-toggle, #backBtn
     animation: tabSlideInLeft 0.3s cubic-bezier(0.0, 0.8, 0.2, 1.05) forwards;
 }
 
-/* Tab button active indicator — animated underline pill */
+/* Tab button — 3D flip press transition */
 .type-btn {
     position: relative;
-    transition: color 0.2s ease, background 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+    transition:
+        transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
+        background 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
+        box-shadow 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
+        color 0.2s ease !important;
+    transform-style: preserve-3d;
+    perspective: 600px;
+    will-change: transform;
 }
 
+/* Inactive — slightly recessed, dim */
+.type-btn:not(.active) {
+    transform: translateY(0px) translateZ(0px) rotateX(0deg) scale(1) !important;
+    color: var(--text-secondary) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+/* Active — pops forward in Z, tilts slightly, glows */
 .type-btn.active {
     background: linear-gradient(135deg, #3b82f6, #8b5cf6) !important;
-    box-shadow: 0 2px 12px rgba(59,130,246,0.5), 0 0 0 1px rgba(139,92,246,0.3) !important;
-    transform: scale(1.04) !important;
-    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+    color: white !important;
+    transform: translateY(-3px) translateZ(12px) rotateX(6deg) scale(1.06) !important;
+    box-shadow:
+        0 8px 0 rgba(0, 0, 0, 0.35),
+        0 6px 20px rgba(59, 130, 246, 0.55),
+        0 0 0 1px rgba(139, 92, 246, 0.4),
+        inset 0 1px 0 rgba(255,255,255,0.25) !important;
+    transition:
+        transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+        background 0.28s ease,
+        box-shadow 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
 }
 
-.type-btn:not(.active) {
-    transform: scale(1) !important;
+/* Press down effect on tap */
+.type-btn.active:active {
+    transform: translateY(2px) translateZ(4px) rotateX(2deg) scale(1.02) !important;
+    box-shadow:
+        0 3px 0 rgba(0, 0, 0, 0.35),
+        0 2px 8px rgba(59, 130, 246, 0.4) !important;
+    transition: transform 0.06s ease, box-shadow 0.06s ease !important;
+}
+
+.type-btn:not(.active):active {
+    transform: translateY(2px) translateZ(-4px) scale(0.97) !important;
+    transition: transform 0.06s ease !important;
+}
+
+/* Type selector container — perspective origin */
+.type-selector {
+    perspective: 500px;
+    perspective-origin: center bottom;
 }
 
 
