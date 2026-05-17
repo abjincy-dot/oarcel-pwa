@@ -59,10 +59,18 @@ body.light-mode {
 body {
     font-family: 'Inter', sans-serif;
     min-height: 100vh;
+    min-height: -webkit-fill-available; /* iOS fix */
     background: var(--bg-deep);
     color: var(--text-primary);
     overflow-x: hidden;
     line-height: 1.5;
+    /* Prevent overscroll bounce — app feel */
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+}
+
+html {
+    height: -webkit-fill-available;
 }
 
 body::before {
@@ -121,7 +129,11 @@ body::before {
     z-index: 2;
     max-width: 900px;
     margin: 0 auto;
-    padding: 24px 20px 40px;
+    /* iOS safe area — notch top, home indicator bottom */
+    padding: max(24px, env(safe-area-inset-top)) 
+             max(20px, env(safe-area-inset-right)) 
+             max(40px, calc(env(safe-area-inset-bottom) + 24px))
+             max(20px, env(safe-area-inset-left));
     animation: fadeInUp 0.5s ease-out;
 }
 
