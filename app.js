@@ -39,65 +39,39 @@ async function saveDeptColors() {
     tx.commit();
 }
 
-// ========== PAGE TURN NAVIGATION ==========
+// ========== PAGE TURN NAVIGATION — Modern iOS style ==========
 function navigateWithPageTurn(navigationFn, direction = 'forward') {
     const contentDiv = document.getElementById('content');
     const deptSection = document.getElementById('departmentsSection');
-    const elements = [contentDiv, deptSection].filter(el => el && !el.classList.contains('hidden'));
     const allEls = [contentDiv, deptSection].filter(Boolean);
-
     const isForward = direction === 'forward';
 
-    // Step 1: Fade + slide out smoothly
-    elements.forEach(el => {
+    // Instantly hide with no transition
+    allEls.forEach(el => {
         el.style.transition = 'none';
-        el.style.opacity = '1';
-        el.style.transform = 'translateX(0) scale(1)';
+        el.style.opacity = '0';
+        el.style.transform = isForward ? 'translateX(40px)' : 'translateX(-40px)';
     });
 
+    // Render while invisible
+    navigationFn();
+
+    // Two rAFs ensure browser has painted the new DOM
     requestAnimationFrame(() => {
-        elements.forEach(el => {
-            el.style.transition = 'opacity 0.18s ease, transform 0.22s cubic-bezier(0.4, 0, 1, 0.8)';
-            el.style.opacity = '0';
-            el.style.transform = isForward
-                ? 'translateX(-18px) scale(0.97)'
-                : 'translateX(18px) scale(0.97)';
-        });
-
-        // Step 2: After exit, render new content while invisible
-        setTimeout(() => {
-            // Clear transitions, hide
+        requestAnimationFrame(() => {
             allEls.forEach(el => {
-                el.style.transition = 'none';
-                el.style.opacity = '0';
-                el.style.transform = isForward
-                    ? 'translateX(18px) scale(0.97)'
-                    : 'translateX(-18px) scale(0.97)';
+                el.style.transition = 'opacity 0.3s cubic-bezier(0.25,0.46,0.45,0.94), transform 0.35s cubic-bezier(0.25,0.46,0.45,0.94)';
+                el.style.opacity = '1';
+                el.style.transform = 'translateX(0)';
             });
-
-            // Render new content
-            navigationFn();
-
-            // Step 3: Animate in on next paint
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    allEls.forEach(el => {
-                        el.style.transition = 'opacity 0.26s ease, transform 0.32s cubic-bezier(0.0, 0.8, 0.25, 1.05)';
-                        el.style.opacity = '1';
-                        el.style.transform = 'translateX(0) scale(1)';
-                    });
-
-                    // Cleanup
-                    setTimeout(() => {
-                        allEls.forEach(el => {
-                            el.style.transition = '';
-                            el.style.opacity = '';
-                            el.style.transform = '';
-                        });
-                    }, 340);
+            setTimeout(() => {
+                allEls.forEach(el => {
+                    el.style.transition = '';
+                    el.style.opacity = '';
+                    el.style.transform = '';
                 });
-            });
-        }, 200);
+            }, 380);
+        });
     });
 }
 
