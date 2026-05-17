@@ -56,21 +56,24 @@ body.light-mode {
     --input-bg: rgba(255, 255, 255, 0.85);
 }
 
+html {
+    height: -webkit-fill-available;
+    overflow-x: hidden;
+    width: 100%;
+}
+
 body {
     font-family: 'Inter', sans-serif;
     min-height: 100vh;
-    min-height: -webkit-fill-available; /* iOS fix */
+    min-height: -webkit-fill-available;
     background: var(--bg-deep);
     color: var(--text-primary);
     overflow-x: hidden;
+    width: 100%;
+    max-width: 100vw;
     line-height: 1.5;
-    /* Prevent overscroll bounce — app feel */
     overscroll-behavior: none;
     -webkit-overflow-scrolling: touch;
-}
-
-html {
-    height: -webkit-fill-available;
 }
 
 body::before {
@@ -128,12 +131,14 @@ body::before {
     position: relative;
     z-index: 2;
     max-width: 900px;
+    width: 100%;
     margin: 0 auto;
-    /* iOS safe area — notch top, home indicator bottom */
+    box-sizing: border-box;
+    overflow-x: hidden;
     padding: max(24px, env(safe-area-inset-top)) 
-             max(20px, env(safe-area-inset-right)) 
+             max(16px, env(safe-area-inset-right)) 
              max(40px, calc(env(safe-area-inset-bottom) + 24px))
-             max(20px, env(safe-area-inset-left));
+             max(16px, env(safe-area-inset-left));
     animation: fadeInUp 0.5s ease-out;
 }
 
@@ -1967,6 +1972,18 @@ body.light-mode .type-selector {
             0 0 42px 10px rgba(70, 120, 255, 0.32),
             0 0 75px 18px rgba(40, 80, 200, 0.16);
     }
+}
+
+/* ========== GLOBAL OVERFLOW FIX ==========*/
+.header, .top-bar, .stats-bar, .breadcrumb,
+.dept-card, .action-bar, .content, #departmentsSection {
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.header, .top-bar, .stats-bar,
+.dept-card, .content, #departmentsSection {
+    width: 100%;
 }
 
 /* ========== RESPONSIVE ========== */
