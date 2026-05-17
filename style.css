@@ -1723,56 +1723,93 @@ button, .card, .action-btn, .breadcrumb-item, .type-btn, .theme-toggle, #backBtn
     animation: tabSlideInLeft 0.3s cubic-bezier(0.0, 0.8, 0.2, 1.05) forwards;
 }
 
-/* Tab button — 3D flip press transition */
+/* Tab button — Glossy 3D pill */
 .type-btn {
     position: relative;
+    border: none !important;
+    color: rgba(255,255,255,0.5) !important;
+    transform-style: preserve-3d;
+    will-change: transform;
+    overflow: hidden;
     transition:
         transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
-        background 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
         box-shadow 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
         color 0.2s ease !important;
-    transform-style: preserve-3d;
-    perspective: 600px;
-    will-change: transform;
 }
 
-/* Inactive — slightly recessed, dim */
+/* Inactive — flat dark pill */
 .type-btn:not(.active) {
-    transform: translateY(0px) translateZ(0px) rotateX(0deg) scale(1) !important;
-    color: var(--text-secondary) !important;
-    background: transparent !important;
+    background: rgba(15, 20, 50, 0.5) !important;
     box-shadow: none !important;
+    transform: translateY(0px) translateZ(0px) scale(1) !important;
+    color: rgba(255,255,255,0.45) !important;
 }
 
-/* Active — pops forward in Z, tilts slightly, glows */
+/* Active — glossy 3D pill like image */
 .type-btn.active {
-    background: linear-gradient(135deg, #3b82f6, #8b5cf6) !important;
     color: white !important;
-    transform: translateY(-3px) translateZ(12px) rotateX(6deg) scale(1.06) !important;
+    transform: translateY(-3px) translateZ(10px) scale(1.05) !important;
+
+    background:
+        radial-gradient(ellipse 85% 38% at 50% 8%,
+            rgba(220, 230, 255, 0.6) 0%,
+            transparent 70%),
+        radial-gradient(ellipse 70% 50% at 50% 85%,
+            rgba(160, 80, 180, 0.45) 0%,
+            transparent 70%),
+        linear-gradient(180deg,
+            #12166e 0%,
+            #1e28b8 20%,
+            #1a22a8 50%,
+            #0e1580 80%,
+            #090e58 100%
+        ) !important;
+
     box-shadow:
-        0 8px 0 rgba(0, 0, 0, 0.35),
-        0 6px 20px rgba(59, 130, 246, 0.55),
-        0 0 0 1px rgba(139, 92, 246, 0.4),
-        inset 0 1px 0 rgba(255,255,255,0.25) !important;
+        0 5px 0 rgba(4, 6, 45, 0.9),
+        0 8px 18px rgba(15, 25, 130, 0.65),
+        0 0 0 1px rgba(80, 100, 220, 0.45),
+        inset 0 2px 4px rgba(200, 215, 255, 0.3),
+        inset 0 -3px 5px rgba(0, 0, 50, 0.5) !important;
+
     transition:
         transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
-        background 0.28s ease,
         box-shadow 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
 }
 
-/* Press down effect on tap */
+/* Gloss shine on active button */
+.type-btn.active::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 8%;
+    width: 84%;
+    height: 44%;
+    border-radius: 40px 40px 60% 60%;
+    background: linear-gradient(180deg,
+        rgba(255, 255, 255, 0.3) 0%,
+        rgba(255, 255, 255, 0.06) 60%,
+        transparent 100%
+    );
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Press down */
 .type-btn.active:active {
-    transform: translateY(2px) translateZ(4px) rotateX(2deg) scale(1.02) !important;
+    transform: translateY(2px) translateZ(3px) scale(1.01) !important;
     box-shadow:
-        0 3px 0 rgba(0, 0, 0, 0.35),
-        0 2px 8px rgba(59, 130, 246, 0.4) !important;
+        0 2px 0 rgba(4, 6, 45, 0.9),
+        0 3px 8px rgba(15, 25, 130, 0.5),
+        inset 0 1px 3px rgba(200, 215, 255, 0.2) !important;
     transition: transform 0.06s ease, box-shadow 0.06s ease !important;
 }
 
 .type-btn:not(.active):active {
-    transform: translateY(2px) translateZ(-4px) scale(0.97) !important;
+    transform: translateY(2px) scale(0.97) !important;
     transition: transform 0.06s ease !important;
 }
+
 
 /* Type selector container — perspective origin */
 .type-selector {
