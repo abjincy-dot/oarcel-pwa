@@ -996,7 +996,7 @@ body.light-mode .card {
 .file-card,
 .note-card {
     box-shadow: none !important;
-    border: 1px solid rgba(100, 160, 255, 0.22) !important;
+    border: 1px solid rgba(100, 160, 255, 0.45) !important;
 }
 
 body.light-mode .card.glow-folder,
