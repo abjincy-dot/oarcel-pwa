@@ -689,49 +689,25 @@ function updateStats(){
     document.getElementById('notesCount').textContent = notesCount;
 }
 function setActiveTab(tab){
-    if(tab === currentActiveTab) return; // no-op if same tab
-
-    const prevTab = currentActiveTab;
+    if(tab === currentActiveTab) return;
     currentActiveTab = tab;
 
     const pdfBtn = document.getElementById('pdfTabBtn');
     const notesBtn = document.getElementById('notesTabBtn');
-    const uploadBtn = document.getElementById('uploadBtn');
-    const newNoteBtn = document.getElementById('newNoteBtn');
     const contentDiv = document.getElementById('content');
 
-    // Tab button styles
-    if(tab==='pdfs'){
-        pdfBtn.classList.add('active');
-        notesBtn.classList.remove('active');
-    } else {
-        pdfBtn.classList.remove('active');
-        notesBtn.classList.add('active');
-    }
+    if(tab==='pdfs'){ pdfBtn.classList.add('active'); notesBtn.classList.remove('active'); }
+    else { pdfBtn.classList.remove('active'); notesBtn.classList.add('active'); }
 
-    // Determine slide direction: pdfs=left, notes=right
-    // switching TO notes → content exits left, enters from right
-    // switching TO pdfs  → content exits right, enters from left
     const exitClass  = tab === 'notes' ? 'tab-exit-left'  : 'tab-exit-right';
     const enterClass = tab === 'notes' ? 'tab-enter-right' : 'tab-enter-left';
 
-    // Step 1: animate current content OUT
     contentDiv.classList.add(exitClass);
 
     setTimeout(() => {
         contentDiv.classList.remove(exitClass);
+        render(); // render handles uploadBtn/newNoteBtn internally
 
-        // Step 2: update buttons + render new content
-        if(tab==='pdfs'){
-            uploadBtn.classList.remove('hidden');
-            newNoteBtn.classList.add('hidden');
-        } else {
-            uploadBtn.classList.add('hidden');
-            newNoteBtn.classList.remove('hidden');
-        }
-        render();
-
-        // Step 3: animate new content IN (after render paints)
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
                 contentDiv.classList.add(enterClass);
