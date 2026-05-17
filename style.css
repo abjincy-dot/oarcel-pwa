@@ -1310,6 +1310,147 @@ button, .card, .action-btn, .breadcrumb-item, .type-btn, .theme-toggle, #backBtn
     will-change: transform, filter, opacity;
     backface-visibility: hidden;
 }
+/* ========== TAB SWITCH ANIMATION ========== */
+
+/* Content area gets a clip-path + transform transition */
+.content, #departmentsSection {
+    transition: none; /* handled via classes */
+}
+
+/* Slide out upward when switching tabs */
+@keyframes tabSlideOutUp {
+    0% {
+        transform: translateY(0px) scale(1);
+        opacity: 1;
+        filter: blur(0px);
+    }
+    100% {
+        transform: translateY(-22px) scale(0.97);
+        opacity: 0;
+        filter: blur(3px);
+    }
+}
+
+/* Slide in from below */
+@keyframes tabSlideInUp {
+    0% {
+        transform: translateY(28px) scale(0.97);
+        opacity: 0;
+        filter: blur(3px);
+    }
+    60% {
+        filter: blur(0px);
+    }
+    85% {
+        transform: translateY(-4px) scale(1.005);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(0px) scale(1);
+        opacity: 1;
+        filter: blur(0px);
+    }
+}
+
+/* Files → Notes: slide from right */
+@keyframes tabSlideOutLeft {
+    0% {
+        transform: translateX(0px) scale(1);
+        opacity: 1;
+        filter: blur(0px);
+    }
+    100% {
+        transform: translateX(-28px) scale(0.96);
+        opacity: 0;
+        filter: blur(2px);
+    }
+}
+
+@keyframes tabSlideInRight {
+    0% {
+        transform: translateX(32px) scale(0.96);
+        opacity: 0;
+        filter: blur(2px);
+    }
+    70% {
+        filter: blur(0px);
+    }
+    88% {
+        transform: translateX(-3px) scale(1.003);
+        opacity: 1;
+    }
+    100% {
+        transform: translateX(0px) scale(1);
+        opacity: 1;
+    }
+}
+
+/* Notes → Files: slide from left */
+@keyframes tabSlideOutRight {
+    0% {
+        transform: translateX(0px) scale(1);
+        opacity: 1;
+        filter: blur(0px);
+    }
+    100% {
+        transform: translateX(28px) scale(0.96);
+        opacity: 0;
+        filter: blur(2px);
+    }
+}
+
+@keyframes tabSlideInLeft {
+    0% {
+        transform: translateX(-32px) scale(0.96);
+        opacity: 0;
+        filter: blur(2px);
+    }
+    70% {
+        filter: blur(0px);
+    }
+    88% {
+        transform: translateX(3px) scale(1.003);
+        opacity: 1;
+    }
+    100% {
+        transform: translateX(0px) scale(1);
+        opacity: 1;
+    }
+}
+
+.tab-exit-left {
+    animation: tabSlideOutLeft 0.22s cubic-bezier(0.4, 0, 1, 1) forwards;
+    pointer-events: none;
+}
+.tab-enter-right {
+    animation: tabSlideInRight 0.3s cubic-bezier(0.0, 0.8, 0.2, 1.05) forwards;
+}
+.tab-exit-right {
+    animation: tabSlideOutRight 0.22s cubic-bezier(0.4, 0, 1, 1) forwards;
+    pointer-events: none;
+}
+.tab-enter-left {
+    animation: tabSlideInLeft 0.3s cubic-bezier(0.0, 0.8, 0.2, 1.05) forwards;
+}
+
+/* Tab button active indicator — animated underline pill */
+.type-btn {
+    position: relative;
+    transition: color 0.2s ease, background 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+.type-btn.active {
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6) !important;
+    box-shadow: 0 2px 12px rgba(59,130,246,0.5), 0 0 0 1px rgba(139,92,246,0.3) !important;
+    transform: scale(1.04) !important;
+    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+.type-btn:not(.active) {
+    transform: scale(1) !important;
+}
+
+
 /* ========== RESPONSIVE ========== */
 @media (max-width: 640px) {
     .app { padding: 16px 14px 32px; }
