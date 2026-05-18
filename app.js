@@ -39,58 +39,37 @@ async function saveDeptColors() {
     tx.commit();
 }
 
-// ========== PAGE TURN NAVIGATION — iOS Settings Style ==========
+// ========== INSTANT iOS-STYLE PAGE TRANSITION (NO OUTGOING DELAY) ==========
 function navigateWithPageTurn(navigationFn, direction = 'forward') {
-    const isForward = direction !== 'back';
-    const appEl = document.querySelector('.app');
-    if (!appEl) { navigationFn(); return; }
-
-    // Snapshot current screen as outgoing layer
-    const snapshot = appEl.cloneNode(true);
-    snapshot.style.cssText = `
-        position: fixed;
-        top: 0; left: 0; right: 0; bottom: 0;
-        z-index: 100;
-        pointer-events: none;
-        will-change: transform;
-        overflow: hidden;
-        background: var(--bg-deep);
-        padding: ${getComputedStyle(appEl).padding};
-        max-width: ${getComputedStyle(appEl).maxWidth};
-        margin: 0 auto;
-    `;
-    document.body.appendChild(snapshot);
-
-    // Render new content underneath
+    // Execute navigation immediately (changes state + re-renders)
     navigationFn();
-
-    // Position incoming off-screen
-    appEl.style.transition = 'none';
-    appEl.style.transform = isForward ? 'translateX(100%)' : 'translateX(-30%)';
-    appEl.style.opacity = isForward ? '1' : '0.7';
-
-    // Animate both simultaneously
-    requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-            const ease = 'cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-            const dur = '320ms';
-
-            snapshot.style.transition = `transform ${dur} ${ease}, opacity ${dur} ${ease}`;
-            snapshot.style.transform = isForward ? 'translateX(-30%)' : 'translateX(100%)';
-            snapshot.style.opacity = isForward ? '0.7' : '1';
-
-            appEl.style.transition = `transform ${dur} ${ease}, opacity ${dur} ${ease}`;
-            appEl.style.transform = 'translateX(0)';
-            appEl.style.opacity = '1';
-
-            setTimeout(() => {
-                snapshot.remove();
-                appEl.style.transition = '';
-                appEl.style.transform = '';
-                appEl.style.opacity = '';
-            }, 340);
-        });
+    
+    // Get newly rendered elements
+    const newContent = document.getElementById('content');
+    const newDeptSection = document.getElementById('departmentsSection');
+    const newElements = [newContent, newDeptSection].filter(el => el && !el.classList.contains('hidden'));
+    
+    if (newElements.length === 0) return;
+    
+    // Force reflow to ensure smooth animation
+    void newElements[0].offsetHeight;
+    
+    // Determine incoming animation class
+    const incomingClass = direction === 'forward' ? 'page-slide-in-right' : 'page-slide-in-left';
+    
+    // Apply slide-in animation to the new content
+    newElements.forEach(el => {
+        el.classList.add(incomingClass);
+        el.style.willChange = 'transform, opacity';
     });
+    
+    // Remove animation classes after it finishes
+    setTimeout(() => {
+        newElements.forEach(el => {
+            el.classList.remove(incomingClass);
+            el.style.willChange = '';
+        });
+    }, 180);
 }
 
 function selectDepartment(d){ 
@@ -112,6 +91,8 @@ function goBack(){
 }
 
 function navigateToBreadcrumb(idx){
+    if(idx===-1 && currentPath.length===0) return;
+    if(idx >= 0 && idx === currentPath.length - 1) return;
     const isGoingBack = idx < currentPath.length - 1;
     navigateWithPageTurn(() => {
         if(idx===-1) currentPath=[];
@@ -392,7 +373,7 @@ function deleteFileFromFolder(folderPath, fileName) {
             if(!allFiles[folderPath].length) delete allFiles[folderPath];
             saveAllFilesToDB();
             render();
-            showToast(`â Deleted "${fileName}"`);
+            showToast(`✅ Deleted "${fileName}"`);
         }
     }
 }
@@ -404,7 +385,7 @@ function renameFileInFolder(folderPath, oldName, newName){
             allFiles[folderPath][idx].name = newName;
             saveAllFilesToDB();
             render();
-            showToast(`â Renamed to "${newName}"`);
+            showToast(`✅ Renamed to "${newName}"`);
         }
     }
 }
@@ -415,7 +396,7 @@ async function addNoteToCurrentFolder(title, content){
     allNotes[folderPath].push(note);
     await saveAllNotesToDB();
     render();
-    showToast(`â Note "${title}" created`);
+    showToast(`✅ Note "${title}" created`);
 }
 async function updateNote(folderPath, noteId, title, content){
     const idx = allNotes[folderPath]?.findIndex(n=>n.id===noteId);
@@ -425,7 +406,7 @@ async function updateNote(folderPath, noteId, title, content){
         allNotes[folderPath][idx].updatedAt = new Date().toISOString();
         await saveAllNotesToDB();
         render();
-        showToast(`â Note updated`);
+        showToast(`✅ Note updated`);
         return true;
     }
     return false;
@@ -438,7 +419,7 @@ async function renameNote(folderPath, noteId, newTitle){
         allNotes[folderPath][idx].updatedAt = new Date().toISOString();
         await saveAllNotesToDB();
         render();
-        showToast(`â Note renamed to "${newTitle.trim()}"`);
+        showToast(`✅ Note renamed to "${newTitle.trim()}"`);
     }
 }
 async function deleteNoteFromFolder(folderPath, noteId){
@@ -448,12 +429,12 @@ async function deleteNoteFromFolder(folderPath, noteId){
         if(!allNotes[folderPath].length) delete allNotes[folderPath];
         await saveAllNotesToDB();
         render();
-        showToast(`ðï¸ Note "${note?.title}" deleted`);
+        showToast(`🗑️ Note "${note?.title}" deleted`);
     }
 }
 function openNote(note){
     const modal = document.getElementById('noteModal');
-    document.getElementById('noteModalTitle').textContent = `ð ${note.title}`;
+    document.getElementById('noteModalTitle').textContent = `📝 ${note.title}`;
     document.getElementById('noteTitle').value = note.title;
     document.getElementById('noteContent').value = note.content;
     editingNoteId = note.id;
@@ -570,7 +551,6 @@ function render(){
             const sub = Object.keys(fileSystem[dept]).length;
             const fcount = allFiles[dept]?.length||0;
             const ncount = allNotes[dept]?.length||0;
-            // Apply random color if exists, otherwise use CSS class
             let bgStyle = '';
             if (deptColors[dept]) {
                 bgStyle = ` style="background: ${deptColors[dept]};"`;
@@ -660,7 +640,7 @@ function renameCurrentFolder(){
         currentPath[currentPath.length-1]=newName;
         saveFolderStructure(); saveAllFilesToDB(); saveAllNotesToDB();
         render();
-        showToast(`â Renamed to "${newName}"`);
+        showToast(`✅ Renamed to "${newName}"`);
     }
 }
 function deleteCurrentFolder(){
@@ -675,14 +655,14 @@ function deleteCurrentFolder(){
         currentPath.pop();
         saveFolderStructure(); saveAllFilesToDB(); saveAllNotesToDB();
         render();
-        showToast(`ðï¸ Folder "${name}" deleted`);
+        showToast(`🗑️ Folder "${name}" deleted`);
     }
 }
 function addNewFolder(){
     const name = prompt("Folder name:");
     if(name && name.trim()){
         const cur = getCurrentFolderObject();
-        if(cur && !cur[name]){ cur[name]={}; saveFolderStructure(); render(); showToast(`â Folder "${name}" created`); }
+        if(cur && !cur[name]){ cur[name]={}; saveFolderStructure(); render(); showToast(`✅ Folder "${name}" created`); }
         else showToast("Exists",true);
     }
 }
@@ -690,12 +670,11 @@ function addNewDepartment(){
     const name = prompt("Department name:");
     if (name && name.trim() && !fileSystem[name]) {
         fileSystem[name] = {};
-        // Assign random gradient for this new department
         deptColors[name] = getRandomGradient();
         saveFolderStructure();
         saveDeptColors();
         render();
-        showToast(`â Department "${name}" created with random color`);
+        showToast(`✅ Department "${name}" created with random color`);
     } else if (fileSystem[name]) {
         showToast("Department exists", true);
     }
