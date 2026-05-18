@@ -39,40 +39,36 @@ async function saveDeptColors() {
     tx.commit();
 }
 
-// ========== PAGE TURN NAVIGATION — Modern iOS style ==========
+// ========== PAGE TURN NAVIGATION ==========
 function navigateWithPageTurn(navigationFn, direction = 'forward') {
     const contentDiv = document.getElementById('content');
     const deptSection = document.getElementById('departmentsSection');
-    const allEls = [contentDiv, deptSection].filter(Boolean);
-    const isForward = direction === 'forward';
-
-    // Instantly hide with no transition
-    allEls.forEach(el => {
-        el.style.transition = 'none';
-        el.style.opacity = '0';
-        el.style.transform = isForward ? 'translateX(40px)' : 'translateX(-40px)';
+    const elementsToAnimate = [contentDiv, deptSection];
+    
+    elementsToAnimate.forEach(el => {
+        if (el && !el.classList.contains('hidden')) {
+            el.classList.add(direction === 'forward' ? 'page-flip-out-right' : 'page-flip-out-left');
+        }
     });
-
-    // Render while invisible
-    navigationFn();
-
-    // Two rAFs ensure browser has painted the new DOM
-    requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-            allEls.forEach(el => {
-                el.style.transition = 'opacity 0.3s cubic-bezier(0.25,0.46,0.45,0.94), transform 0.35s cubic-bezier(0.25,0.46,0.45,0.94)';
-                el.style.opacity = '1';
-                el.style.transform = 'translateX(0)';
+    
+    setTimeout(() => {
+        navigationFn();
+        
+        setTimeout(() => {
+            elementsToAnimate.forEach(el => {
+                if (el) {
+                    el.classList.remove('page-flip-out-right', 'page-flip-out-left');
+                    el.classList.add(direction === 'forward' ? 'page-slide-in-right' : 'page-slide-in-left');
+                }
             });
+            
             setTimeout(() => {
-                allEls.forEach(el => {
-                    el.style.transition = '';
-                    el.style.opacity = '';
-                    el.style.transform = '';
+                elementsToAnimate.forEach(el => {
+                    if (el) el.classList.remove('page-slide-in-right', 'page-slide-in-left');
                 });
-            }, 380);
-        });
-    });
+            }, 450);
+        }, 30);
+    }, 330);
 }
 
 function selectDepartment(d){ 
@@ -94,6 +90,11 @@ function goBack(){
 }
 
 function navigateToBreadcrumb(idx){
+    // Already at home — do nothing
+    if(idx===-1 && currentPath.length===0) return;
+    // Already at this breadcrumb level — do nothing
+    if(idx >= 0 && idx === currentPath.length - 1) return;
+
     const isGoingBack = idx < currentPath.length - 1;
     navigateWithPageTurn(() => {
         if(idx===-1) currentPath=[];
@@ -693,36 +694,14 @@ function updateStats(){
     document.getElementById('notesCount').textContent = notesCount;
 }
 function setActiveTab(tab){
-    if(tab === currentActiveTab) return;
     currentActiveTab = tab;
-
     const pdfBtn = document.getElementById('pdfTabBtn');
     const notesBtn = document.getElementById('notesTabBtn');
-    const contentDiv = document.getElementById('content');
-
-    if(tab==='pdfs'){ pdfBtn.classList.add('active'); notesBtn.classList.remove('active'); }
-    else { pdfBtn.classList.remove('active'); notesBtn.classList.add('active'); }
-
-    const enterClass = tab === 'notes' ? 'tab-enter-right' : 'tab-enter-left';
-
-    // Instantly hide, render, then animate in — no exit animation to avoid blank frame
-    contentDiv.style.transition = 'none';
-    contentDiv.style.opacity = '0';
-    contentDiv.style.transform = tab === 'notes' ? 'translateX(20px)' : 'translateX(-20px)';
-
-    requestAnimationFrame(() => {
-        render();
-        requestAnimationFrame(() => {
-            contentDiv.style.transition = 'opacity 0.28s ease, transform 0.32s cubic-bezier(0.0, 0.8, 0.2, 1.05)';
-            contentDiv.style.opacity = '1';
-            contentDiv.style.transform = 'translateX(0px)';
-            setTimeout(() => {
-                contentDiv.style.transition = '';
-                contentDiv.style.transform = '';
-                contentDiv.style.opacity = '';
-            }, 340);
-        });
-    });
+    const uploadBtn = document.getElementById('uploadBtn');
+    const newNoteBtn = document.getElementById('newNoteBtn');
+    if(tab==='pdfs'){ pdfBtn.classList.add('active'); notesBtn.classList.remove('active'); uploadBtn.classList.remove('hidden'); newNoteBtn.classList.add('hidden'); }
+    else { pdfBtn.classList.remove('active'); notesBtn.classList.add('active'); uploadBtn.classList.add('hidden'); newNoteBtn.classList.remove('hidden'); }
+    render();
 }
 function openNewNoteModal(){
     editingNoteId = null;
