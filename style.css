@@ -126,10 +126,8 @@ body::before {
     will-change: transform;
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
+    overflow-x: hidden;
 }
-
-/* Prevent horizontal overflow during iOS slide */
-body { overflow-x: hidden; }
 
 @keyframes fadeInUp {
     from { opacity: 0; transform: translateY(15px); }
