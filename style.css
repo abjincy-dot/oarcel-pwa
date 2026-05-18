@@ -128,7 +128,7 @@ body::before {
     -webkit-backface-visibility: hidden;
 }
 
-/* iOS nav — outgoing snapshot */
+/* Prevent horizontal overflow during iOS slide */
 body { overflow-x: hidden; }
 
 @keyframes fadeInUp {
