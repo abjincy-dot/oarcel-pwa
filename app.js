@@ -39,66 +39,58 @@ async function saveDeptColors() {
     tx.commit();
 }
 
-// ========== PAGE TURN NAVIGATION ==========
+// ========== PAGE TURN NAVIGATION — iOS Settings Style ==========
 function navigateWithPageTurn(navigationFn, direction = 'forward') {
     const isForward = direction !== 'back';
-    const container = document.getElementById('content');
-    const deptSection = document.getElementById('departmentsSection');
+    const appEl = document.querySelector('.app');
+    if (!appEl) { navigationFn(); return; }
 
-    // Snapshot current content as outgoing
-    const outgoing = document.createElement('div');
-    outgoing.style.cssText = `
+    // Step 1: Snapshot current screen as outgoing layer
+    const snapshot = appEl.cloneNode(true);
+    snapshot.style.cssText = `
         position: fixed;
         top: 0; left: 0; right: 0; bottom: 0;
-        z-index: 50;
+        z-index: 100;
         pointer-events: none;
         will-change: transform;
-        background: var(--bg-deep);
         overflow: hidden;
+        background: var(--bg-deep);
+        padding: ${getComputedStyle(appEl).padding};
+        max-width: ${getComputedStyle(appEl).maxWidth};
+        margin: 0 auto;
     `;
-    // Clone visible content into snapshot
-    const appEl = document.querySelector('.app');
-    outgoing.innerHTML = appEl ? appEl.innerHTML : '';
-    outgoing.style.padding = getComputedStyle(appEl).padding;
-    document.body.appendChild(outgoing);
+    document.body.appendChild(snapshot);
 
-    // Immediately render new content underneath
+    // Step 2: Render new content instantly underneath
     navigationFn();
 
-    // Animate outgoing slide out + incoming slide in
-    const easing = 'cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-    const duration = '320ms';
-    const dist = '100%';
+    // Step 3: Position new content off-screen
+    appEl.style.transition = 'none';
+    appEl.style.transform = isForward ? 'translateX(100%)' : 'translateX(-30%)';
+    appEl.style.opacity = isForward ? '1' : '0.6';
 
-    // Start positions
-    outgoing.style.transform = 'translateX(0)';
-    outgoing.style.transition = 'none';
-
-    // New content starts off-screen
-    if (appEl) {
-        appEl.style.transition = 'none';
-        appEl.style.transform = isForward ? `translateX(${dist})` : `translateX(-${dist})`;
-    }
-
+    // Step 4: Animate both simultaneously on next paint
     requestAnimationFrame(() => {
         requestAnimationFrame(() => {
+            const ease = 'cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+            const dur = '340ms';
+
             // Outgoing slides out
-            outgoing.style.transition = `transform ${duration} ${easing}`;
-            outgoing.style.transform = isForward ? `translateX(-30%)` : `translateX(${dist})`;
+            snapshot.style.transition = `transform ${dur} ${ease}, opacity ${dur} ${ease}`;
+            snapshot.style.transform = isForward ? 'translateX(-30%)' : 'translateX(100%)';
+            snapshot.style.opacity = isForward ? '0.6' : '1';
 
             // Incoming slides in
-            if (appEl) {
-                appEl.style.transition = `transform ${duration} ${easing}`;
-                appEl.style.transform = 'translateX(0)';
-            }
+            appEl.style.transition = `transform ${dur} ${ease}, opacity ${dur} ${ease}`;
+            appEl.style.transform = 'translateX(0)';
+            appEl.style.opacity = '1';
 
             setTimeout(() => {
-                outgoing.remove();
-                if (appEl) {
-                    appEl.style.transition = '';
-                    appEl.style.transform = '';
-                }
-            }, 330);
+                snapshot.remove();
+                appEl.style.transition = '';
+                appEl.style.transform = '';
+                appEl.style.opacity = '';
+            }, 360);
         });
     });
 }
