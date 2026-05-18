@@ -1,6 +1,6 @@
 /* ============================================
    OARCEL Document Manager - COMPLETE CSS
-   iOS Style Slide Transitions (Smooth & Fast)
+   iOS Style Instant Slide Transitions
    ============================================ */
 
 * {
@@ -380,7 +380,6 @@ body.light-mode .header-title h1 {
     z-index: 0;
     transform-style: preserve-3d;
     transition: transform 0.12s ease, box-shadow 0.12s ease;
-
     background:
         radial-gradient(ellipse 80% 40% at 50% 10%,
             rgba(160, 180, 255, 0.55) 0%,
@@ -392,7 +391,6 @@ body.light-mode .header-title h1 {
             #0f1a8a 80%,
             #080e55 100%
         );
-
     box-shadow:
         0 6px 0 rgba(4, 8, 50, 0.9),
         0 8px 20px rgba(10, 20, 120, 0.6),
@@ -616,7 +614,6 @@ body.light-mode #clearSearchBtn {
     overflow: hidden;
     transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
                 box-shadow 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
-
     background:
         radial-gradient(circle 18px at 38% 32%,
             rgba(255, 255, 255, 0.45) 0%,
@@ -630,7 +627,6 @@ body.light-mode #clearSearchBtn {
             #4c1d95 60%,
             #2d1260 100%
         );
-
     box-shadow:
         0 6px 0 rgba(20, 5, 50, 0.9),
         0 8px 18px rgba(88, 28, 135, 0.6),
@@ -932,7 +928,6 @@ body.light-mode .theme-toggle {
     cursor: pointer;
     transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1),
                 box-shadow 0.12s cubic-bezier(0.34, 1.56, 0.64, 1);
-
     box-shadow:
         0 7px 0 rgba(0, 0, 0, 0.45),
         0 10px 20px rgba(0, 0, 0, 0.35),
@@ -1492,42 +1487,31 @@ button, .card, .action-btn, .breadcrumb-item, .type-btn, .theme-toggle, #backBtn
     100% { transform: scale(2.5); opacity: 0; }
 }
 
-/* ========== iOS STYLE SLIDE ANIMATIONS (Smooth, No Jerk) ========== */
-@keyframes iosSlideOutLeft {
-    0% { transform: translateX(0); opacity: 1; }
-    100% { transform: translateX(-100%); opacity: 0; }
-}
+/* ========== INSTANT iOS STYLE SLIDE (NO OUTGOING DELAY) ========== */
 @keyframes iosSlideInRight {
     0% { transform: translateX(100%); opacity: 0; }
     100% { transform: translateX(0); opacity: 1; }
-}
-@keyframes iosSlideOutRight {
-    0% { transform: translateX(0); opacity: 1; }
-    100% { transform: translateX(100%); opacity: 0; }
 }
 @keyframes iosSlideInLeft {
     0% { transform: translateX(-100%); opacity: 0; }
     100% { transform: translateX(0); opacity: 1; }
 }
 
-.page-flip-out-right {
-    animation: iosSlideOutLeft 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards !important;
-    will-change: transform, opacity;
-}
-.page-flip-out-left {
-    animation: iosSlideOutRight 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards !important;
-    will-change: transform, opacity;
-}
 .page-slide-in-right {
-    animation: iosSlideInRight 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards !important;
+    animation: iosSlideInRight 0.15s cubic-bezier(0.2, 0.9, 0.4, 1.1) forwards !important;
     will-change: transform, opacity;
 }
 .page-slide-in-left {
-    animation: iosSlideInLeft 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards !important;
+    animation: iosSlideInLeft 0.15s cubic-bezier(0.2, 0.9, 0.4, 1.1) forwards !important;
     will-change: transform, opacity;
 }
 
-/* Ensure no residual 3D styles that could cause jank */
+/* Outgoing animations are disabled (no delay) */
+.page-flip-out-right, .page-flip-out-left {
+    display: none;
+}
+
+/* Ensure no residual 3D styles */
 #content, #departmentsSection {
     backface-visibility: visible;
     transform-style: flat;
@@ -1570,92 +1554,11 @@ button, .card, .action-btn, .breadcrumb-item, .type-btn, .theme-toggle, #backBtn
 .tab-exit-right { animation: tabSlideOutRight 0.22s cubic-bezier(0.4, 0, 1, 1) forwards; pointer-events: none; }
 .tab-enter-left { animation: tabSlideInLeft 0.3s cubic-bezier(0.0, 0.8, 0.2, 1.05) forwards; }
 
-/* Tab button styling */
-.type-btn {
-    position: relative;
-    border: none !important;
-    color: rgba(255,255,255,0.5) !important;
-    transform-style: preserve-3d;
-    will-change: transform;
-    overflow: hidden;
-    transition:
-        transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
-        box-shadow 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
-        color 0.2s ease !important;
-}
-
-.type-btn:not(.active) {
-    background: rgba(15, 20, 50, 0.5) !important;
-    box-shadow: none !important;
-    transform: translateY(0px) translateZ(0px) scale(1) !important;
-    color: rgba(255,255,255,0.45) !important;
-}
-
-.type-btn.active {
-    color: white !important;
-    transform: translateY(-2px) translateZ(6px) scale(1.0) !important;
-    background:
-        radial-gradient(ellipse 85% 38% at 50% 8%,
-            rgba(220, 230, 255, 0.6) 0%,
-            transparent 70%),
-        radial-gradient(ellipse 70% 50% at 50% 85%,
-            rgba(160, 80, 180, 0.45) 0%,
-            transparent 70%),
-        linear-gradient(180deg,
-            #12166e 0%,
-            #1e28b8 20%,
-            #1a22a8 50%,
-            #0e1580 80%,
-            #090e58 100%
-        ) !important;
-    box-shadow:
-        0 5px 0 rgba(4, 6, 45, 0.9),
-        0 8px 18px rgba(15, 25, 130, 0.65),
-        0 0 0 1px rgba(80, 100, 220, 0.45),
-        inset 0 2px 4px rgba(200, 215, 255, 0.3),
-        inset 0 -3px 5px rgba(0, 0, 50, 0.5) !important;
-    transition:
-        transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
-        box-shadow 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
-}
-
-.type-btn.active::after {
-    content: '';
-    position: absolute;
-    top: 3px;
-    left: 8%;
-    width: 84%;
-    height: 44%;
-    border-radius: 40px 40px 60% 60%;
-    background: linear-gradient(180deg,
-        rgba(255, 255, 255, 0.3) 0%,
-        rgba(255, 255, 255, 0.06) 60%,
-        transparent 100%
-    );
-    pointer-events: none;
-    z-index: 1;
-}
-
-.type-btn.active:active {
-    transform: translateY(2px) translateZ(3px) scale(1.01) !important;
-    box-shadow:
-        0 2px 0 rgba(4, 6, 45, 0.9),
-        0 3px 8px rgba(15, 25, 130, 0.5),
-        inset 0 1px 3px rgba(200, 215, 255, 0.2) !important;
-    transition: transform 0.06s ease, box-shadow 0.06s ease !important;
-}
-
-.type-btn:not(.active):active {
-    transform: translateY(2px) scale(0.97) !important;
-    transition: transform 0.06s ease !important;
-}
-
 .type-selector {
     perspective: 500px;
     perspective-origin: center bottom;
 }
 
-/* Light mode adjustments */
 body.light-mode #backBtn {
     background: rgba(248, 250, 255, 0.92);
     color: #1e293b;
