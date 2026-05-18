@@ -41,34 +41,66 @@ async function saveDeptColors() {
 
 // ========== PAGE TURN NAVIGATION ==========
 function navigateWithPageTurn(navigationFn, direction = 'forward') {
-    const contentDiv = document.getElementById('content');
+    const isForward = direction !== 'back';
+    const container = document.getElementById('content');
     const deptSection = document.getElementById('departmentsSection');
-    const elementsToAnimate = [contentDiv, deptSection];
-    
-    elementsToAnimate.forEach(el => {
-        if (el && !el.classList.contains('hidden')) {
-            el.classList.add(direction === 'forward' ? 'page-flip-out-right' : 'page-flip-out-left');
-        }
-    });
-    
-    setTimeout(() => {
-        navigationFn();
-        
-        setTimeout(() => {
-            elementsToAnimate.forEach(el => {
-                if (el) {
-                    el.classList.remove('page-flip-out-right', 'page-flip-out-left');
-                    el.classList.add(direction === 'forward' ? 'page-slide-in-right' : 'page-slide-in-left');
-                }
-            });
-            
+
+    // Snapshot current content as outgoing
+    const outgoing = document.createElement('div');
+    outgoing.style.cssText = `
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        z-index: 50;
+        pointer-events: none;
+        will-change: transform;
+        background: var(--bg-deep);
+        overflow: hidden;
+    `;
+    // Clone visible content into snapshot
+    const appEl = document.querySelector('.app');
+    outgoing.innerHTML = appEl ? appEl.innerHTML : '';
+    outgoing.style.padding = getComputedStyle(appEl).padding;
+    document.body.appendChild(outgoing);
+
+    // Immediately render new content underneath
+    navigationFn();
+
+    // Animate outgoing slide out + incoming slide in
+    const easing = 'cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+    const duration = '320ms';
+    const dist = '100%';
+
+    // Start positions
+    outgoing.style.transform = 'translateX(0)';
+    outgoing.style.transition = 'none';
+
+    // New content starts off-screen
+    if (appEl) {
+        appEl.style.transition = 'none';
+        appEl.style.transform = isForward ? `translateX(${dist})` : `translateX(-${dist})`;
+    }
+
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            // Outgoing slides out
+            outgoing.style.transition = `transform ${duration} ${easing}`;
+            outgoing.style.transform = isForward ? `translateX(-30%)` : `translateX(${dist})`;
+
+            // Incoming slides in
+            if (appEl) {
+                appEl.style.transition = `transform ${duration} ${easing}`;
+                appEl.style.transform = 'translateX(0)';
+            }
+
             setTimeout(() => {
-                elementsToAnimate.forEach(el => {
-                    if (el) el.classList.remove('page-slide-in-right', 'page-slide-in-left');
-                });
-            }, 450);
-        }, 30);
-    }, 330);
+                outgoing.remove();
+                if (appEl) {
+                    appEl.style.transition = '';
+                    appEl.style.transform = '';
+                }
+            }, 330);
+        });
+    });
 }
 
 function selectDepartment(d){ 
@@ -90,11 +122,6 @@ function goBack(){
 }
 
 function navigateToBreadcrumb(idx){
-    // Already at home — do nothing
-    if(idx===-1 && currentPath.length===0) return;
-    // Already at this breadcrumb level — do nothing
-    if(idx >= 0 && idx === currentPath.length - 1) return;
-
     const isGoingBack = idx < currentPath.length - 1;
     navigateWithPageTurn(() => {
         if(idx===-1) currentPath=[];
