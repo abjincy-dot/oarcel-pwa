@@ -4,140 +4,70 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
 <title>OARCEL | Document Manager</title>
-
-<!-- PWA Core -->
 <link rel="manifest" href="manifest.json">
-
-<!-- iOS PWA — Critical for home screen app feel -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="OARCEL">
-<meta name="mobile-web-app-capable" content="yes">
-
-<!-- iOS Splash Screens — portrait for common iPhone sizes -->
-<link rel="apple-touch-startup-image"
-  media="screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)"
-  href="https://img.icons8.com/fluency/512/folder-invoices.png">
-<link rel="apple-touch-startup-image"
-  media="screen and (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3)"
-  href="https://img.icons8.com/fluency/512/folder-invoices.png">
-<link rel="apple-touch-startup-image"
-  media="screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)"
-  href="https://img.icons8.com/fluency/512/folder-invoices.png">
-
-<!-- iOS Icons -->
-<link rel="apple-touch-icon" href="https://img.icons8.com/fluency/180/folder-invoices.png">
-<link rel="apple-touch-icon" sizes="152x152" href="https://img.icons8.com/fluency/152/folder-invoices.png">
-<link rel="apple-touch-icon" sizes="167x167" href="https://img.icons8.com/fluency/192/folder-invoices.png">
-<link rel="apple-touch-icon" sizes="180x180" href="https://img.icons8.com/fluency/192/folder-invoices.png">
-
-<!-- Theme -->
-<meta name="theme-color" content="#0a1128" media="(prefers-color-scheme: dark)">
-<meta name="theme-color" content="#1e3a5f" media="(prefers-color-scheme: light)">
-
-<!-- Prevent tap highlight on iOS -->
-<style>
-  * { -webkit-tap-highlight-color: transparent; }
-  body { -webkit-touch-callout: none; }
-  input, textarea, select { -webkit-touch-callout: default; }
-</style>
-
-<!-- Fonts & Icons -->
+<meta name="theme-color" content="#0a1128">
+<link rel="apple-touch-icon" href="https://img.icons8.com/fluency/192/folder-invoices.png">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=13">
-
+<link rel="stylesheet" href="style.css?v=12">
 <style>
-  /* iOS safe area padding */
-  .app {
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: calc(env(safe-area-inset-bottom) + 16px);
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
-  }
+    .modal-body input, .modal-body textarea { font-size: 16px; }
+    .card-buttons button { touch-action: manipulation; }
 
-  /* Splash screen overlay */
-  #splashScreen {
-    position: fixed;
-    inset: 0;
-    background: #0a1128;
-    z-index: 99999;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 20px;
-    transition: opacity 0.5s ease, visibility 0.5s ease;
-  }
+    /* iOS splash screen */
+    #splashScreen {
+        position: fixed;
+        inset: 0;
+        background: #0a1128;
+        z-index: 99999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+        transition: opacity 0.5s ease, visibility 0.5s ease;
+    }
+    #splashScreen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+    .splash-icon {
+        width: 96px; height: 96px; border-radius: 22px;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 46px;
+        box-shadow: 0 20px 60px rgba(99,102,241,0.5);
+        animation: splashPulse 1.5s ease-in-out infinite;
+    }
+    .splash-title {
+        font-family: 'Inter', sans-serif; font-size: 2rem;
+        font-weight: 800; color: white; letter-spacing: 4px;
+    }
+    .splash-sub {
+        font-family: 'Inter', sans-serif; font-size: 0.75rem;
+        color: rgba(255,255,255,0.4); letter-spacing: 2px;
+    }
+    .splash-loader { width: 40px; height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
+    .splash-loader-bar { height: 100%; background: linear-gradient(90deg,#6366f1,#c026d3); border-radius: 2px; animation: splashLoad 1.2s ease-in-out forwards; }
+    @keyframes splashPulse {
+        0%,100% { transform: scale(1); } 50% { transform: scale(1.05); }
+    }
+    @keyframes splashLoad { 0% { width:0%; } 60% { width:80%; } 100% { width:100%; } }
 
-  #splashScreen.hidden {
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-  }
-
-  .splash-icon {
-    width: 100px;
-    height: 100px;
-    border-radius: 22px;
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 48px;
-    box-shadow: 0 20px 60px rgba(99, 102, 241, 0.5);
-    animation: splashPulse 1.5s ease-in-out infinite;
-  }
-
-  .splash-title {
-    font-family: 'Inter', sans-serif;
-    font-size: 2rem;
-    font-weight: 800;
-    color: white;
-    letter-spacing: 4px;
-  }
-
-  .splash-sub {
-    font-family: 'Inter', sans-serif;
-    font-size: 0.8rem;
-    color: rgba(255,255,255,0.4);
-    letter-spacing: 2px;
-  }
-
-  .splash-loader {
-    width: 40px;
-    height: 3px;
-    background: rgba(255,255,255,0.1);
-    border-radius: 2px;
-    overflow: hidden;
-    margin-top: 10px;
-  }
-
-  .splash-loader-bar {
-    height: 100%;
-    background: linear-gradient(90deg, #6366f1, #c026d3);
-    border-radius: 2px;
-    animation: splashLoad 1.2s ease-in-out forwards;
-  }
-
-  @keyframes splashPulse {
-    0%, 100% { transform: scale(1); box-shadow: 0 20px 60px rgba(99,102,241,0.5); }
-    50% { transform: scale(1.05); box-shadow: 0 25px 70px rgba(99,102,241,0.7); }
-  }
-
-  @keyframes splashLoad {
-    0% { width: 0%; }
-    60% { width: 80%; }
-    100% { width: 100%; }
-  }
-
-  .modal-body input, .modal-body textarea { font-size: 16px; }
-  .card-buttons button { touch-action: manipulation; }
+    /* Offline banner */
+    #offlineBanner {
+        display: none; position: fixed;
+        bottom: 20px; left: 50%; transform: translateX(-50%);
+        background: rgba(239,68,68,0.95); color: white;
+        padding: 8px 20px; border-radius: 20px; font-size: 0.8rem;
+        font-family: 'Inter',sans-serif; font-weight: 600;
+        z-index: 9999; white-space: nowrap;
+    }
 </style>
 </head>
 <body>
 
-<!-- iOS Splash Screen -->
+<!-- Splash Screen -->
 <div id="splashScreen">
   <div class="splash-icon">📁</div>
   <div class="splash-title">OARCEL</div>
@@ -220,28 +150,19 @@
 <div id="toast" class="toast hidden"><div class="toast-icon"><i class="fas fa-check-circle"></i></div><span></span></div>
 <div id="loadingOverlay" class="loading-overlay hidden"><div class="loading-spinner"><div class="spinner-ring"></div><div class="spinner-ring"></div><div class="spinner-ring"></div></div><p>Loading...</p></div>
 
-<!-- Offline banner -->
-<div id="offlineBanner" style="
-  display:none; position:fixed; bottom: calc(env(safe-area-inset-bottom) + 12px);
-  left:50%; transform:translateX(-50%);
-  background: rgba(239,68,68,0.95); color:white;
-  padding: 8px 20px; border-radius:20px; font-size:0.8rem;
-  font-family:'Inter',sans-serif; font-weight:600;
-  backdrop-filter:blur(10px); z-index:9999;
-  box-shadow: 0 4px 20px rgba(239,68,68,0.4);
-">📡 Offline Mode</div>
+<div id="offlineBanner">📡 Offline Mode</div>
 
-<script src="app.js?v=13"></script>
+<script src="app.js?v=12"></script>
 
 <script>
   // Service Worker
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js')
-      .then(reg => console.log('SW registered'))
-      .catch(err => console.log('SW failed:', err));
+      .then(reg => console.log('SW registered:', reg))
+      .catch(err => console.log('SW registration failed:', err));
   }
 
-  // Splash screen — hide after app loads
+  // Splash — hide after load
   window.addEventListener('load', () => {
     setTimeout(() => {
       const splash = document.getElementById('splashScreen');
@@ -249,24 +170,11 @@
     }, 1400);
   });
 
-  // Offline / online detection
+  // Offline banner
   const offlineBanner = document.getElementById('offlineBanner');
-  window.addEventListener('offline', () => { offlineBanner.style.display = 'block'; });
-  window.addEventListener('online', () => { offlineBanner.style.display = 'none'; });
+  window.addEventListener('offline', () => offlineBanner.style.display = 'block');
+  window.addEventListener('online', () => offlineBanner.style.display = 'none');
   if (!navigator.onLine) offlineBanner.style.display = 'block';
-
-  // iOS: prevent overscroll bounce (app-like feel)
-  document.addEventListener('touchmove', function(e) {
-    if (e.target === document.body) e.preventDefault();
-  }, { passive: false });
-
-  // iOS: prevent double-tap zoom
-  let lastTap = 0;
-  document.addEventListener('touchend', function(e) {
-    const now = Date.now();
-    if (now - lastTap < 300) e.preventDefault();
-    lastTap = now;
-  }, { passive: false });
 </script>
 </body>
 </html>
