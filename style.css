@@ -1,6 +1,6 @@
 /* ============================================
    OARCEL Document Manager - COMPLETE CSS
-   iOS Style Slide Transitions
+   iOS Style Slide Transitions (Smooth & Fast)
    ============================================ */
 
 * {
@@ -323,7 +323,6 @@ body.light-mode .header-title h1 {
     clip-path: inset(-12px -4px -12px -4px round var(--radius-full));
 }
 
-/* Thin gradient glow border on type-selector pill */
 .type-selector::before {
     content: '';
     position: absolute;
@@ -382,7 +381,6 @@ body.light-mode .header-title h1 {
     transform-style: preserve-3d;
     transition: transform 0.12s ease, box-shadow 0.12s ease;
 
-    /* Glossy 3D pill */
     background:
         radial-gradient(ellipse 80% 40% at 50% 10%,
             rgba(160, 180, 255, 0.55) 0%,
@@ -566,7 +564,6 @@ body.light-mode .header-title h1 {
     transform: translateY(-50%) scale(1.1);
 }
 
-/* Light mode */
 body.light-mode .search-container {
     background: rgba(248, 250, 255, 0.92);
 }
@@ -620,7 +617,6 @@ body.light-mode #clearSearchBtn {
     transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
                 box-shadow 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
 
-    /* Glossy 3D sphere */
     background:
         radial-gradient(circle 18px at 38% 32%,
             rgba(255, 255, 255, 0.45) 0%,
@@ -847,7 +843,7 @@ body.light-mode .theme-toggle {
 
 .breadcrumb-item:first-child { color: #3b82f6; }
 
-/* ========== DEPARTMENTS - ONLY OVAL IS CLICKABLE ========== */
+/* ========== DEPARTMENTS ========== */
 .section-title {
     font-size: 0.85rem;
     font-weight: 700;
@@ -1496,88 +1492,42 @@ button, .card, .action-btn, .breadcrumb-item, .type-btn, .theme-toggle, #backBtn
     100% { transform: scale(2.5); opacity: 0; }
 }
 
-/* ========== iOS STYLE SLIDE ANIMATIONS (Replaces 3D Flip) ========== */
-
-/* Forward navigation (push): current screen slides out to left */
+/* ========== iOS STYLE SLIDE ANIMATIONS (Smooth, No Jerk) ========== */
 @keyframes iosSlideOutLeft {
-    0% {
-        transform: translateX(0);
-        opacity: 1;
-    }
-    100% {
-        transform: translateX(-100%);
-        opacity: 0;
-    }
+    0% { transform: translateX(0); opacity: 1; }
+    100% { transform: translateX(-100%); opacity: 0; }
 }
-
-/* Forward navigation (push): new screen slides in from right */
 @keyframes iosSlideInRight {
-    0% {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-    100% {
-        transform: translateX(0);
-        opacity: 1;
-    }
+    0% { transform: translateX(100%); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
 }
-
-/* Backward navigation (pop): current screen slides out to right */
 @keyframes iosSlideOutRight {
-    0% {
-        transform: translateX(0);
-        opacity: 1;
-    }
-    100% {
-        transform: translateX(100%);
-        opacity: 0;
-    }
+    0% { transform: translateX(0); opacity: 1; }
+    100% { transform: translateX(100%); opacity: 0; }
 }
-
-/* Backward navigation (pop): new screen slides in from left */
 @keyframes iosSlideInLeft {
-    0% {
-        transform: translateX(-100%);
-        opacity: 0;
-    }
-    100% {
-        transform: translateX(0);
-        opacity: 1;
-    }
+    0% { transform: translateX(-100%); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
 }
 
-/* Apply animations to elements during navigation */
 .page-flip-out-right {
-    animation: iosSlideOutLeft 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1) forwards !important;
-    transform-origin: center center;
+    animation: iosSlideOutLeft 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards !important;
     will-change: transform, opacity;
 }
-
 .page-flip-out-left {
-    animation: iosSlideOutRight 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1) forwards !important;
-    transform-origin: center center;
+    animation: iosSlideOutRight 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards !important;
     will-change: transform, opacity;
 }
-
 .page-slide-in-right {
-    animation: iosSlideInRight 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1) forwards !important;
-    transform-origin: center center;
+    animation: iosSlideInRight 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards !important;
+    will-change: transform, opacity;
+}
+.page-slide-in-left {
+    animation: iosSlideInLeft 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards !important;
     will-change: transform, opacity;
 }
 
-.page-slide-in-left {
-    animation: iosSlideInLeft 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1) forwards !important;
-    transform-origin: center center;
-    will-change: transform, opacity;
-}
-
-/* Optional depth shadow on incoming screens (iOS style) */
-.page-slide-in-right,
-.page-slide-in-left {
-    box-shadow: -5px 0 15px rgba(0, 0, 0, 0.15);
-}
-
-/* Ensure no residual 3D styles */
+/* Ensure no residual 3D styles that could cause jank */
 #content, #departmentsSection {
     backface-visibility: visible;
     transform-style: flat;
@@ -1585,118 +1535,42 @@ button, .card, .action-btn, .breadcrumb-item, .type-btn, .theme-toggle, #backBtn
 
 /* ========== TAB SWITCH ANIMATION ========== */
 @keyframes tabSlideOutUp {
-    0% {
-        transform: translateY(0px) scale(1);
-        opacity: 1;
-        filter: blur(0px);
-    }
-    100% {
-        transform: translateY(-22px) scale(0.97);
-        opacity: 0;
-        filter: blur(3px);
-    }
+    0% { transform: translateY(0px) scale(1); opacity: 1; filter: blur(0px); }
+    100% { transform: translateY(-22px) scale(0.97); opacity: 0; filter: blur(3px); }
 }
-
 @keyframes tabSlideInUp {
-    0% {
-        transform: translateY(28px) scale(0.97);
-        opacity: 0;
-        filter: blur(3px);
-    }
-    60% {
-        filter: blur(0px);
-    }
-    85% {
-        transform: translateY(-4px) scale(1.005);
-        opacity: 1;
-    }
-    100% {
-        transform: translateY(0px) scale(1);
-        opacity: 1;
-        filter: blur(0px);
-    }
+    0% { transform: translateY(28px) scale(0.97); opacity: 0; filter: blur(3px); }
+    60% { filter: blur(0px); }
+    85% { transform: translateY(-4px) scale(1.005); opacity: 1; }
+    100% { transform: translateY(0px) scale(1); opacity: 1; filter: blur(0px); }
 }
-
 @keyframes tabSlideOutLeft {
-    0% {
-        transform: translateX(0px) scale(1);
-        opacity: 1;
-        filter: blur(0px);
-    }
-    100% {
-        transform: translateX(-28px) scale(0.96);
-        opacity: 0;
-        filter: blur(2px);
-    }
+    0% { transform: translateX(0px) scale(1); opacity: 1; filter: blur(0px); }
+    100% { transform: translateX(-28px) scale(0.96); opacity: 0; filter: blur(2px); }
 }
-
 @keyframes tabSlideInRight {
-    0% {
-        transform: translateX(32px) scale(0.96);
-        opacity: 0;
-        filter: blur(2px);
-    }
-    70% {
-        filter: blur(0px);
-    }
-    88% {
-        transform: translateX(-3px) scale(1.003);
-        opacity: 1;
-    }
-    100% {
-        transform: translateX(0px) scale(1);
-        opacity: 1;
-    }
+    0% { transform: translateX(32px) scale(0.96); opacity: 0; filter: blur(2px); }
+    70% { filter: blur(0px); }
+    88% { transform: translateX(-3px) scale(1.003); opacity: 1; }
+    100% { transform: translateX(0px) scale(1); opacity: 1; }
 }
-
 @keyframes tabSlideOutRight {
-    0% {
-        transform: translateX(0px) scale(1);
-        opacity: 1;
-        filter: blur(0px);
-    }
-    100% {
-        transform: translateX(28px) scale(0.96);
-        opacity: 0;
-        filter: blur(2px);
-    }
+    0% { transform: translateX(0px) scale(1); opacity: 1; filter: blur(0px); }
+    100% { transform: translateX(28px) scale(0.96); opacity: 0; filter: blur(2px); }
 }
-
 @keyframes tabSlideInLeft {
-    0% {
-        transform: translateX(-32px) scale(0.96);
-        opacity: 0;
-        filter: blur(2px);
-    }
-    70% {
-        filter: blur(0px);
-    }
-    88% {
-        transform: translateX(3px) scale(1.003);
-        opacity: 1;
-    }
-    100% {
-        transform: translateX(0px) scale(1);
-        opacity: 1;
-    }
+    0% { transform: translateX(-32px) scale(0.96); opacity: 0; filter: blur(2px); }
+    70% { filter: blur(0px); }
+    88% { transform: translateX(3px) scale(1.003); opacity: 1; }
+    100% { transform: translateX(0px) scale(1); opacity: 1; }
 }
 
-.tab-exit-left {
-    animation: tabSlideOutLeft 0.22s cubic-bezier(0.4, 0, 1, 1) forwards;
-    pointer-events: none;
-}
-.tab-enter-right {
-    animation: tabSlideInRight 0.3s cubic-bezier(0.0, 0.8, 0.2, 1.05) forwards;
-}
-.tab-exit-right {
-    animation: tabSlideOutRight 0.22s cubic-bezier(0.4, 0, 1, 1) forwards;
-    pointer-events: none;
-}
-.tab-enter-left {
-    animation: tabSlideInLeft 0.3s cubic-bezier(0.0, 0.8, 0.2, 1.05) forwards;
-}
+.tab-exit-left { animation: tabSlideOutLeft 0.22s cubic-bezier(0.4, 0, 1, 1) forwards; pointer-events: none; }
+.tab-enter-right { animation: tabSlideInRight 0.3s cubic-bezier(0.0, 0.8, 0.2, 1.05) forwards; }
+.tab-exit-right { animation: tabSlideOutRight 0.22s cubic-bezier(0.4, 0, 1, 1) forwards; pointer-events: none; }
+.tab-enter-left { animation: tabSlideInLeft 0.3s cubic-bezier(0.0, 0.8, 0.2, 1.05) forwards; }
 
-/* Tab button 3D pill styling */
+/* Tab button styling */
 .type-btn {
     position: relative;
     border: none !important;
@@ -1720,7 +1594,6 @@ button, .card, .action-btn, .breadcrumb-item, .type-btn, .theme-toggle, #backBtn
 .type-btn.active {
     color: white !important;
     transform: translateY(-2px) translateZ(6px) scale(1.0) !important;
-
     background:
         radial-gradient(ellipse 85% 38% at 50% 8%,
             rgba(220, 230, 255, 0.6) 0%,
@@ -1735,14 +1608,12 @@ button, .card, .action-btn, .breadcrumb-item, .type-btn, .theme-toggle, #backBtn
             #0e1580 80%,
             #090e58 100%
         ) !important;
-
     box-shadow:
         0 5px 0 rgba(4, 6, 45, 0.9),
         0 8px 18px rgba(15, 25, 130, 0.65),
         0 0 0 1px rgba(80, 100, 220, 0.45),
         inset 0 2px 4px rgba(200, 215, 255, 0.3),
         inset 0 -3px 5px rgba(0, 0, 50, 0.5) !important;
-
     transition:
         transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
         box-shadow 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
@@ -1826,7 +1697,6 @@ body.light-mode .type-selector {
 /* ========== RESPONSIVE ========== */
 @media (max-width: 640px) {
     .app { padding: 16px 14px 32px; }
-    
     .card {
         display: flex !important;
         flex-direction: row !important;
@@ -1835,7 +1705,6 @@ body.light-mode .type-selector {
         padding: 4px 12px !important;
         gap: 8px !important;
     }
-    
     .card-filename {
         flex: 1;
         white-space: nowrap !important;
@@ -1843,7 +1712,6 @@ body.light-mode .type-selector {
         text-overflow: ellipsis !important;
         min-width: 0;
     }
-    
     .card-buttons {
         display: flex !important;
         flex-direction: row !important;
@@ -1853,17 +1721,12 @@ body.light-mode .type-selector {
         margin-left: auto !important;
         gap: 6px !important;
     }
-    
     .card-buttons button {
         width: 28px !important;
         height: 28px !important;
         padding: 0 !important;
     }
-    
-    .card-buttons button i {
-        font-size: 0.75rem !important;
-    }
-    
+    .card-buttons button i { font-size: 0.75rem !important; }
     #uploadBtn, #newNoteBtn { 
         padding: 10px !important; 
         width: 48px !important; 
@@ -1872,23 +1735,18 @@ body.light-mode .type-selector {
         justify-content: center !important; 
     }
     #uploadBtn span, #newNoteBtn span { display: none !important; }
-    
     .stats-bar { gap: 4px; padding: 10px 12px; }
     .stat-icon-bg { width: 36px; height: 36px; }
     .stat-number { font-size: 1rem; }
     .stat-data label { font-size: 0.55rem; }
-    
-    .close-viewer-btn {
-        padding: 8px 16px;
-        font-size: 0.85rem;
-    }
+    .close-viewer-btn { padding: 8px 16px; font-size: 0.85rem; }
 }
 
 @media (max-width: 380px) {
     .dept-info { display: none; }
 }
 
-/* ========== STRONGER GRADIENT FOR DEPARTMENTS PAGE ========== */
+/* ========== DEPARTMENTS PAGE STRONGER GRADIENT ========== */
 .departments-grid {
     position: relative;
     background: linear-gradient(135deg, 
