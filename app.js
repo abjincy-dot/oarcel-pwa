@@ -45,7 +45,7 @@ function navigateWithPageTurn(navigationFn, direction = 'forward') {
     const appEl = document.querySelector('.app');
     if (!appEl) { navigationFn(); return; }
 
-    // Step 1: Snapshot current screen as outgoing layer
+    // Snapshot current screen as outgoing layer
     const snapshot = appEl.cloneNode(true);
     snapshot.style.cssText = `
         position: fixed;
@@ -61,26 +61,24 @@ function navigateWithPageTurn(navigationFn, direction = 'forward') {
     `;
     document.body.appendChild(snapshot);
 
-    // Step 2: Render new content instantly underneath
+    // Render new content underneath
     navigationFn();
 
-    // Step 3: Position new content off-screen
+    // Position incoming off-screen
     appEl.style.transition = 'none';
     appEl.style.transform = isForward ? 'translateX(100%)' : 'translateX(-30%)';
-    appEl.style.opacity = isForward ? '1' : '0.6';
+    appEl.style.opacity = isForward ? '1' : '0.7';
 
-    // Step 4: Animate both simultaneously on next paint
+    // Animate both simultaneously
     requestAnimationFrame(() => {
         requestAnimationFrame(() => {
             const ease = 'cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-            const dur = '340ms';
+            const dur = '320ms';
 
-            // Outgoing slides out
             snapshot.style.transition = `transform ${dur} ${ease}, opacity ${dur} ${ease}`;
             snapshot.style.transform = isForward ? 'translateX(-30%)' : 'translateX(100%)';
-            snapshot.style.opacity = isForward ? '0.6' : '1';
+            snapshot.style.opacity = isForward ? '0.7' : '1';
 
-            // Incoming slides in
             appEl.style.transition = `transform ${dur} ${ease}, opacity ${dur} ${ease}`;
             appEl.style.transform = 'translateX(0)';
             appEl.style.opacity = '1';
@@ -90,7 +88,7 @@ function navigateWithPageTurn(navigationFn, direction = 'forward') {
                 appEl.style.transition = '';
                 appEl.style.transform = '';
                 appEl.style.opacity = '';
-            }, 360);
+            }, 340);
         });
     });
 }
